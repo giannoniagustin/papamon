@@ -11,6 +11,7 @@ class FileUtil:
     @staticmethod
     def write_file(file_path, content):
         try:
+            print('File path write: '+file_path)
             with open(file_path, 'w') as file:
                 file.write(content)
             return True

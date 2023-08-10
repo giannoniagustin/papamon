@@ -1,5 +1,5 @@
 from flask import Flask,request, jsonify,send_file
-from controller.apiController import ApiController
+from controller.ApiController import ApiController
 
 app = Flask(__name__)
 
@@ -11,12 +11,10 @@ def me():
 def getStatus():
      return ApiController.getStatus()
 
-@app.route('/send', methods=['POST'])
-def send_data():
-    global data
-    new_data = request.json
-    data.update(new_data)
-    return jsonify({"message": "Data received successfully"}), 200
+@app.route('/status', methods=['PUT'])
+def updateStatus():
+       return ApiController.updateStatus()
+
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
