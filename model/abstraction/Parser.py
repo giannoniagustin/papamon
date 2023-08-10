@@ -1,7 +1,12 @@
-from abc import ABC, abstractmethod
+import json
+from dataclasses import asdict
+from model.Status import Status
 
-class Parser(ABC):
+class Parser:
     
-    @abstractmethod
-    def toJson(self):
-        pass
+#Status
+    def statusFromJson(self,json_str: str):
+        statusJson = json.loads(json_str)
+        status = Status(**statusJson) 
+        print('Json to Status   --'+status.lastImage)
+        return status    

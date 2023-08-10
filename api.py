@@ -1,45 +1,15 @@
 from flask import Flask,request, jsonify,send_file
-import json
-import os
-import constants.paths as paths
-from util import file
-
-from model.response import SuccessResponse,ErrorResponse
-from model.Status import Status
-from dataclasses import asdict
-
-with open('config'+os.sep+'me.json') as me_file:
-    meConfig = json.load(me_file)
+from controller.apiController import ApiController
 
 app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def me():
-   return jsonify( SuccessResponse(data=meConfig, message="Data config Raspberry").serialize())
+    return ApiController.getMe()
     
 @app.route('/status', methods=['GET']) 
-def get_status():
-    statusFile={}
-    json_str = '{"cameraRunning": true, "lastImage": "20-12-2023 17:45:12"}'
-    statusJson = json.loads(json_str)
-    status = Status(**statusJson) 
-    saludo= status.toJson()
-    
-    print(f"cameraRunning: {status.cameraRunning}, Name: {status.lastImage}") 
-    try:
-            statusFile =file.FileUtil.read_file(paths.STATUS_RB) 
-    except FileNotFoundError as e:
-        print(f"Error: File '{statusFile}' not found.")
-        return jsonify(ErrorResponse(data=statusFile, message="An error occurred: "+e.strerror).serialize())
-    except IOError as e:
-                return jsonify(ErrorResponse(data=statusFile, message="An error occurred: "+e.strerror).serialize())  
-    except Exception as e:
-                print("An error occurred:", e)
-                return jsonify(ErrorResponse(data=statusFile, message="An error occurred: ").serialize())
-    else:
-        print("File read successfully.")        
-        return jsonify( SuccessResponse(data=statusFile, message="Status Raspberry").serialize())
-
+def getStatus():
+     return ApiController.getStatus()
 
 @app.route('/send', methods=['POST'])
 def send_data():
