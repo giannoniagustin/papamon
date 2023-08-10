@@ -36,7 +36,6 @@ class ApiController:
             for key, value in new_data.items():
                 if key in fileUpdate:
                     fileUpdate[key] = value
-            fileUpdate.update(new_data)
             mapper = StatusMapper()
             # Lo convierte a nueva instancia
             status_instance = mapper.toStatus(dictFile=fileUpdate) 
