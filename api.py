@@ -1,8 +1,16 @@
-from flask import Flask,request, jsonify,send_file
+from flask import Flask,request, jsonify
 from controller.ApiController import ApiController
+import uuid
+import os
+
 
 app = Flask(__name__)
-
+# Diccionario para almacenar identificadores de solicitud
+request_ids = {}
+@app.before_request
+def set_request_id():
+    request_id = str(uuid.uuid4())
+    request_ids[request] = request_id    
 @app.route('/', methods=['GET'])
 def me():
     return ApiController.getMe()
@@ -16,22 +24,23 @@ def updateStatus():
        return ApiController.updateStatus()
 
 
-@app.route('/upload', methods=['POST'])
-def upload_image():
+@app.route('/image', methods=['POST'])
+def uploadImage():
     if 'image' not in request.files:
         return jsonify({"error": "No image provided"}), 400
-    data1 = request.form['data']
-    print(data1)
     image = request.files['image']
-    image.save('received_image_'+image.filename+'.jpg')  # Guardar la imagen en el servidor
+    image.save('received_image.jpg')  # Guardar la imagen en el servidor
 
     return jsonify({"message": "Image uploaded successfully"}), 200
 
-@app.route('/get_image', methods=['GET'])
-def get_image():
-    filename = 'received_image.jpg'  # Ruta de la imagen que deseas enviar
-    return send_file(filename, mimetype='image/jpeg')
+@app.route('/image', methods=['GET'])
+def geImage(): 
+    key, currentRequestId = request_ids.popitem()
+    return ApiController.getImage(key,currentRequestId)
 
+@app.route('/raspberry', methods=['GET'])
+def raspberry():
+    return ApiController.getRaspberry()
 
 
 if __name__ == '__main__':

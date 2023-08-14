@@ -1,1 +1,0 @@
-{"DEBUG": true,"DATABASE_URI": "sqlite:///mydb.db","SECRET_KEY": "mysecretkey"}
