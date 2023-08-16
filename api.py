@@ -1,7 +1,7 @@
 from flask import Flask,request, jsonify
 from controller.ApiController import ApiController
+from controller.RaspberryController import RaspberryController
 import uuid
-import os
 
 
 app = Flask(__name__)
@@ -44,5 +44,6 @@ def raspberry():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='192.168.1.105', port=5000)
  
+  

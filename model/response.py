@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+RESPONSE_OK=200
 
 class AbstractResponse(ABC):
     def __init__(self, data=None, message=None):

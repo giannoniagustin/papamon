@@ -5,8 +5,8 @@ from util import File
 import subprocess
 from model.Response import SuccessResponse,ErrorResponse
 from mappers.StatusMapper import StatusMapper
-from mappers.MeMapper import MeMapper
 from mappers.RaspberryMapper import RaspberryMapper
+from controller.RaspberryController import RaspberryController
 
 import os
 
@@ -15,7 +15,7 @@ class ApiController:
     def getStatus():
             statusFile={}
             try:
-                statusFile =File.FileUtil.read_file(Paths.STATUS_RB) 
+                statusFile =File.FileUtil.readFile(Paths.STATUS_RB) 
                 statusMapper = StatusMapper()
                 status_instance = statusMapper.toStatus(dictFile=statusFile) 
             except FileNotFoundError as e:
@@ -35,7 +35,7 @@ class ApiController:
 
             # Abre el archivo JSON y actualiza los datos
             new_data = request.get_json()  # Obtén los datos JSON de la solicitud
-            fileUpdate =File.FileUtil.read_file(Paths.STATUS_RB) 
+            fileUpdate =File.FileUtil.readFile(Paths.STATUS_RB) 
             #Ver que no agregue el campo si no existe ya,solo que actualice si existe
             for key, value in new_data.items():
                 if key in fileUpdate:
@@ -45,7 +45,7 @@ class ApiController:
             status_instance = mapper.toStatus(dictFile=fileUpdate) 
             print('File path write: '+Paths.STATUS_RB)
             content = mapper.toJson(status_instance)
-            File.FileUtil.write_file(Paths.STATUS_RB,content=content)
+            File.FileUtil.writeFile(Paths.STATUS_RB,content=content)
         except FileNotFoundError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
         except IOError as e:
@@ -63,10 +63,11 @@ class ApiController:
             try:
                 path=Paths.ME
                 print('Path Me: '+path)
-                meFile =File.FileUtil.read_file(path) 
-                meMapper = MeMapper()
-                status_instance = meMapper.toMe(dictFile=meFile) 
+                meFile =File.FileUtil.readFile(path) 
+                meMapper = RaspberryMapper()
+                status_instance = meMapper.toRaspberry(dictFile=meFile) 
             except FileNotFoundError as e:
+                print("An error occurred File Not Found:", e)
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
             except IOError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())  
@@ -81,11 +82,7 @@ class ApiController:
             #Lista de raspberry a pedir las imagenes
             file={}
             try:
-                path=Paths.RASPBERRY
-                print('Path Raspberry: '+path)
-                file =File.FileUtil.read_file(path) 
-                mapper = RaspberryMapper()
-                instance = mapper.toRaspberry(dictFile=file) 
+                instance = RaspberryController.getRaspberries()
             except FileNotFoundError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
             except IOError as e:

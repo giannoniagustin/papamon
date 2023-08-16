@@ -1,0 +1,4 @@
+Instalar dependencias
+pip install requests
+Flask 
+

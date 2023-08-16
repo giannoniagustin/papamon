@@ -1,6 +1,7 @@
 from dataclasses import dataclass,asdict
 @dataclass
-class Me:
+class Raspberry:
      id: str
      name: str
      ip: str
+     port:str
