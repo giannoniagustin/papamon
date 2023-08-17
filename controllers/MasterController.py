@@ -1,15 +1,16 @@
 
-from controller.RaspberryController import RaspberryController
+from controllers.RaspberryController import RaspberryController
 import constants.Paths as Paths
-from util import File
-import uuid
+from util import File,Time
 import constants.EndPoints as EndPoint
 import requests
+from datetime import datetime
+
 
 class MasterController:
     @staticmethod
     def getImages():
-        request_id = str(uuid.uuid4())
+        request_id = Time.TimeUtil.timeToString(datetime.now(),Time.TimeUtil.formato)
         # Crear la carpeta con el ID de solicitud actual
         localPathImage =Paths.BUILD_IMAGE_FOLDER.format(request_id)
         File.FileUtil.createFolder(localPathImage)

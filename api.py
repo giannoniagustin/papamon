@@ -1,6 +1,5 @@
 from flask import Flask,request, jsonify
-from controller.ApiController import ApiController
-from controller.RaspberryController import RaspberryController
+from controllers.ApiController import ApiController
 import uuid
 
 
@@ -30,7 +29,6 @@ def uploadImage():
         return jsonify({"error": "No image provided"}), 400
     image = request.files['image']
     image.save('received_image.jpg')  # Guardar la imagen en el servidor
-
     return jsonify({"message": "Image uploaded successfully"}), 200
 
 @app.route('/image', methods=['GET'])

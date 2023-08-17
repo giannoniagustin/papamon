@@ -1,23 +1,24 @@
 
-from flask import request,jsonify,json,send_file
+from flask import request,jsonify,send_file
+import os
 import constants.Paths as Paths
 from util import File
+from util.Time import TimeUtil
+
 import subprocess
 from model.Response import SuccessResponse,ErrorResponse
-from mappers.StatusMapper import StatusMapper
-from mappers.RaspberryMapper import RaspberryMapper
-from controller.RaspberryController import RaspberryController
+from mappers.status.StatusMapper import StatusMapper
+from mappers.raspberry.RaspberryMapper import RaspberryMapper
+from controllers.status.StatusController import StatusController
+from controllers.RaspberryController import RaspberryController
+from datetime import datetime
 
-import os
 
 class ApiController:
     @staticmethod
     def getStatus():
-            statusFile={}
             try:
-                statusFile =File.FileUtil.readFile(Paths.STATUS_RB) 
-                statusMapper = StatusMapper()
-                status_instance = statusMapper.toStatus(dictFile=statusFile) 
+                status_instance= StatusController.get()
             except FileNotFoundError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
             except IOError as e:
@@ -26,26 +27,17 @@ class ApiController:
                 print("An error occurred:", e)
                 return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())
             else:
-             print("File read successfully.")        
-            return jsonify( SuccessResponse(data=status_instance, message="Status Raspberry").serialize())
+                print("File read successfully.")        
+                return jsonify( SuccessResponse(data=status_instance, message="Status Raspberry").serialize())
    
     @staticmethod
     def updateStatus():
         try:
-
             # Abre el archivo JSON y actualiza los datos
             new_data = request.get_json()  # Obtén los datos JSON de la solicitud
-            fileUpdate =File.FileUtil.readFile(Paths.STATUS_RB) 
-            #Ver que no agregue el campo si no existe ya,solo que actualice si existe
-            for key, value in new_data.items():
-                if key in fileUpdate:
-                    fileUpdate[key] = value
             mapper = StatusMapper()
-            # Lo convierte a nueva instancia
-            status_instance = mapper.toStatus(dictFile=fileUpdate) 
-            print('File path write: '+Paths.STATUS_RB)
-            content = mapper.toJson(status_instance)
-            File.FileUtil.writeFile(Paths.STATUS_RB,content=content)
+            newInstance = mapper.toStatus(new_data)
+            StatusController.update(newInstance)
         except FileNotFoundError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
         except IOError as e:
@@ -54,29 +46,20 @@ class ApiController:
                 print("An error occurred:", e)
                 return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())
         else:
-                print("File read successfully.")        
-                return jsonify( SuccessResponse(data=status_instance, message="Update status success").serialize())
+                return jsonify( SuccessResponse(data=newInstance, message="Update status success").serialize())
 
     @staticmethod
     def getMe():
-            meFile={}
             try:
-                path=Paths.ME
-                print('Path Me: '+path)
-                meFile =File.FileUtil.readFile(path) 
-                meMapper = RaspberryMapper()
-                status_instance = meMapper.toRaspberry(dictFile=meFile) 
+                status_instance = RaspberryController.getMe()
             except FileNotFoundError as e:
-                print("An error occurred File Not Found:", e)
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
             except IOError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())  
             except Exception as e:
-                print("An error occurred:", e)
                 return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())
             else:
-             print("File read successfully.")        
-            return jsonify( SuccessResponse(data=status_instance, message="Status Raspberry").serialize())
+             return jsonify( SuccessResponse(data=status_instance, message="Status Raspberry").serialize())
     @staticmethod
     def getRaspberry():
             #Lista de raspberry a pedir las imagenes
@@ -88,11 +71,9 @@ class ApiController:
             except IOError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())  
             except Exception as e:
-                print("An error occurred:", e)
                 return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())
             else:
-             print("File read successfully.")        
-            return jsonify( SuccessResponse(data=instance, message="Status Raspberry").serialize())
+                return jsonify( SuccessResponse(data=instance, message="Status Raspberry").serialize())
     @staticmethod
     def callTakeImage(pathImge:str):
         # Comando y argumentos
@@ -118,9 +99,8 @@ class ApiController:
     def getImage(key, currentRequestId: str):
         nombre_carpeta=''
         try:
-            # Crear la carpeta con el ID de solicitud actual
-            nombre_carpeta = currentRequestId
-            localPathImage = Paths.IMAGES+nombre_carpeta
+            nombre_carpeta = TimeUtil.timeToString(datetime.now(),TimeUtil.formato)
+            localPathImage =Paths.BUILD_IMAGE_FOLDER.format(nombre_carpeta)
             File.FileUtil.createFolder(localPathImage)
 
         except FileExistsError as e:
