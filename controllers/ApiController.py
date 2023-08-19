@@ -1,7 +1,7 @@
 
 from flask import request,jsonify,send_file
 import os
-import constants.Paths as Paths
+import constants. as Paths
 from util import File
 from util.Time import TimeUtil
 
