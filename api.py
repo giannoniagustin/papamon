@@ -34,6 +34,7 @@ def uploadImage():
 @app.route('/image', methods=['GET'])
 def geImage(): 
     key, currentRequestId = request_ids.popitem()
+    
     return ApiController.getImage(key,currentRequestId)
 
 @app.route('/raspberry', methods=['GET'])

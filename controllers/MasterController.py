@@ -16,8 +16,10 @@ class MasterController:
         File.FileUtil.createFolder(localPathImage)
         listRasperr = RaspberryController.getRaspberries()
         for rB in listRasperr:
-            url= EndPoint.buildUrl(rB.ip,EndPoint.IMAGE,rB.port)
-            response = requests.get(url)
+            url= EndPoint.url_template.format(rB.ip,rB.port,EndPoint.IMAGE) #EndPoint.buildUrl(rB.ip,EndPoint.IMAGE,rB.port)
+            print("Url RB ",url)
+            params = {f"data": {request_id}}
+            response = requests.get(url,params=params)
             if response.status_code == 200:
                 imageFile=Paths.BUILD_IMAGE_FILE.format(request_id,request_id,rB.id,".jpg")
                 File.FileUtil.writeImage(imageFile,response.content)

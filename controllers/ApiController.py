@@ -99,6 +99,8 @@ class ApiController:
     def getImage(key, currentRequestId: str):
         nombre_carpeta=''
         try:
+            parametro1 = request.args.get('data')
+            print(f"Parametro {parametro1} " )
             nombre_carpeta = TimeUtil.timeToString(datetime.now(),TimeUtil.formato)
             localPathImage =Paths.BUILD_IMAGE_FOLDER.format(nombre_carpeta)
             File.FileUtil.createFolder(localPathImage)

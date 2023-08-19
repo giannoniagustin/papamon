@@ -9,7 +9,3 @@ IMAGE='image'
 #RASPBERRY
 RASPBERRY='raspberry'
 
-@staticmethod
-def buildUrl(ip,endPoint,port:str):
-   return url_template.format(ip,port,endPoint)      
-   
