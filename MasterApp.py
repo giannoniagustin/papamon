@@ -3,7 +3,8 @@ from controllers.status.StatusController import StatusController
 from model.Status import Status
 
 def main():
-  MasterController.getImages()
+  MasterController.getStatus()
+ # MasterController.getImages()
  #StatusController.update(Status(True,'2023-12-2525'))
 
 if __name__ == "__main__":
