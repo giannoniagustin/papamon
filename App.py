@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 '''Acordarse de ejecutar la app desde el path del file app.py , primero hacer CD path y lugo ejecutar python3 ....Otra opcion
  es cambiar el directorio de trabajo desde el script
 
