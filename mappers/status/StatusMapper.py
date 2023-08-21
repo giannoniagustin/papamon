@@ -1,4 +1,4 @@
-from dataclasses import make_dataclass,asdict
+from dataclasses import asdict
 from model.Status import Status
 import json
 
@@ -10,7 +10,7 @@ class StatusMapper:
     
     def toJson( self,dictFile: Status) :
         # Convert Persona instance to dictionary and then to JSON
-        status_dict = asdict(dictFile)
-        status_json = json.dumps(status_dict, indent=4)
-        print('Status to Json --'+status_json)
-        return status_json
+        dict = asdict(dictFile)
+        jsonObject = json.dumps(dict, indent=4)
+        print('Status to Json --'+jsonObject)
+        return jsonObject

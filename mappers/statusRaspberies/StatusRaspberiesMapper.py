@@ -20,13 +20,14 @@ class StatusRaspberiesMapper:
     
     def toJson( self,dictFile: StatusRaspberies) :
         # Convert Persona instance to dictionary and then to JSON
-        objectDict = asdict(dictFile)
-        objectJson = json.dumps(objectDict, indent=4)
-        print('StatusRaspberies to Json --'+objectJson)
-        return objectJson
+        dict = asdict(dictFile)
+        jsonObject = json.dumps(dict, indent=4)
+        print('StatusRaspberies to Json --'+jsonObject)
+        return jsonObject
+    
     def toJsonList( self,dictFile: list[StatusRaspberies]) :
         # Convert Persona instance to dictionary and then to JSON
-        objectDict = [asdict(obj) for obj in dictFile]
-        objectJson = json.dumps(objectDict, indent=4)
-        print('List StatusRaspberies to Json --'+objectJson)
-        return objectJson
+        dict = [asdict(obj) for obj in dictFile]
+        jsonObject = json.dumps(dict, indent=4)
+        print('List StatusRaspberies to Json --'+jsonObject)
+        return jsonObject

@@ -1,11 +1,9 @@
-from dataclasses import  make_dataclass
 from model.Raspberry import Raspberry
 
 class RaspberryMapper:
 
     def toRaspberies( self,dictFile: dict)-> list[Raspberry] :
         print("Parseando toRaspberies")
-        from model.Raspberry import Raspberry
         # Crear lista de objetos Persona
         listRaspberry = []
         for objectJson in dictFile:
@@ -15,7 +13,5 @@ class RaspberryMapper:
         return listRaspberry
     
     def toRaspberry( self,dictFile: dict) :
-        from model.Raspberry import Raspberry
-        Raspberry = make_dataclass("Raspberry", dictFile.keys())
         instance = Raspberry(**dictFile)
         return instance

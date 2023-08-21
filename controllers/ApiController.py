@@ -10,7 +10,7 @@ from model.Response import SuccessResponse,ErrorResponse
 from mappers.status.StatusMapper import StatusMapper
 from mappers.raspberry.RaspberryMapper import RaspberryMapper
 from controllers.status.StatusController import StatusController
-from controllers.RaspberryController import RaspberryController
+from controllers.raspberry.RaspberryController import RaspberryController
 from datetime import datetime
 
 
