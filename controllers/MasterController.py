@@ -6,6 +6,9 @@ import constants.EndPoints as EndPoint
 import requests
 from datetime import datetime
 from mappers.status.StatusMapper import StatusMapper
+from mappers.statusRaspberies.StatusRaspberiesMapper import StatusRaspberiesMapper
+from controllers.statusRaspberies.StatusRaspberiesController import StatusRaspberiesController
+
 from model.StatusRaspberies import StatusRaspberies
 from model.Status import Status
 
@@ -61,4 +64,6 @@ class MasterController:
                     statusRb.status=status
                     statusRb.raspberry=rB
                     listStatusRaspberies.append(statusRb)
-        print(listStatusRaspberies)
+        print(StatusRaspberiesMapper().toJsonList(listStatusRaspberies))
+        #StatusRaspberiesController().update(listStatusRaspberies)
+        StatusRaspberiesController().get()

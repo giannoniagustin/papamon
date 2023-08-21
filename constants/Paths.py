@@ -20,3 +20,7 @@ IMAGES='images'+os.sep
 BUILD_IMAGE_FOLDER=IMAGES+"{}" # 1 id_rquest
    #Builded Image 
 BUILD_IMAGE_FILE=IMAGES+"{}"+os.sep+"{}"+"-"+"{}"+"{}" # 1 id_rquest,2 id_rquest, 3 id_rb, 4 Extension file 
+
+#MASTER PATHS
+#RASPBERIES  STATUS
+STATUS_RASPBERIES=os.path.join('data','master', 'rb','statusRaspberies.json')

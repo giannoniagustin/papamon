@@ -1,0 +1,26 @@
+[
+    {
+        "raspberry": {
+            "id": "0",
+            "name": "RaspBerry-0",
+            "ip": "192.168.1.105",
+            "port": "5000"
+        },
+        "status": {
+            "cameraRunning": true,
+            "lastImage": "2023-12-9999"
+        }
+    },
+    {
+        "raspberry": {
+            "id": "1",
+            "name": "RaspBerry-1",
+            "ip": "192.168.1.107",
+            "port": "5000"
+        },
+        "status": {
+            "cameraRunning": false,
+            "lastImage": "Not setted"
+        }
+    }
+]
