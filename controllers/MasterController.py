@@ -11,7 +11,7 @@ from controllers.statusRaspberies.StatusRaspberiesController import StatusRaspbe
 from controllers.image.ImageController import ImageController
 
 
-from model.StatusRaspberies import StatusRaspberies
+from model.StatusSlave import StatusSlave
 from model.Status import Status
 
 
@@ -40,13 +40,13 @@ class MasterController:
                     print("Error de conexión:", e)
             except requests.exceptions.RequestException as e:
                     print("Error en la solicitud:", e)
-    def getStatus()->list[StatusRaspberies]:
+    def getStatus()->list[StatusSlave]:
         statusMapper= StatusMapper()
         listStatusRaspberies: list=[]
         listRasperr = RaspberryController.getRaspberries()
         for rB in listRasperr:
             status= Status()
-            statusRb=StatusRaspberies(raspberry=rB,status=status)
+            statusRb=StatusSlave(raspberry=rB,status=status)
             url= EndPoint.url_template.format(rB.ip,rB.port,EndPoint.STATUS)
             print("Url RB ",url)
             try:

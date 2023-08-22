@@ -1,16 +1,15 @@
-from dataclasses import asdict
-from model.StatusRaspberies import StatusRaspberies
-import json
+from model.StatusSlave import StatusSlave
+from util.Parser import Parser
 
 class StatusRaspberiesMapper:
 
-    def toStatusRaspberies( self,dictFile: dict)-> StatusRaspberies :
-        instance = StatusRaspberies(**dictFile)
+    def toStatusRaspberies( self,dictFile: dict)-> StatusSlave :
+        instance = StatusSlave(**dictFile)
         return instance
     
-    def toStatusRaspberiesList( self,dictFile: dict)-> list[StatusRaspberies] :
+    def toStatusRaspberiesList( self,dictFile: dict)-> list[StatusSlave] :
         print("Parseando toStatusRaspberiesList")
-        # Crear lista de objetos Persona
+        # Crear lista de objetos StatusRaspberies
         listObjects = []
         for objectJson in dictFile:
             instance=self.toStatusRaspberies(objectJson)
@@ -18,16 +17,14 @@ class StatusRaspberiesMapper:
             listObjects.append(instance)
         return listObjects
     
-    def toJson( self,dictFile: StatusRaspberies) :
-        # Convert Persona instance to dictionary and then to JSON
-        dict = asdict(dictFile)
-        jsonObject = json.dumps(dict, indent=4)
+    def toJson( self,instanceObject: StatusSlave) :
+        # Convert StatusRaspberies instance to dictionary and then to JSON
+        jsonObject = Parser.toJson(instanceObject)
         print('StatusRaspberies to Json --'+jsonObject)
         return jsonObject
     
-    def toJsonList( self,dictFile: list[StatusRaspberies]) :
+    '''def toJsonList( self,instanceObject: list[StatusRaspberies]) :
         # Convert Persona instance to dictionary and then to JSON
-        dict = [asdict(obj) for obj in dictFile]
-        jsonObject = json.dumps(dict, indent=4)
+        jsonObject = Parser.toJson(instanceObject)
         print('List StatusRaspberies to Json --'+jsonObject)
-        return jsonObject
+        return jsonObject'''

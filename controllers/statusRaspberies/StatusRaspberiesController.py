@@ -1,14 +1,14 @@
 
 from mappers.statusRaspberies.StatusRaspberiesMapper import StatusRaspberiesMapper
 import constants.Paths as Paths
-from model.StatusRaspberies import StatusRaspberies
+from model.StatusSlave import StatusSlave
 from util import File
 class StatusRaspberiesController:
     @staticmethod
-    def update(newStatus:list[StatusRaspberies]):
+    def update(newStatus:list[StatusSlave]):
         try:
             mapper = StatusRaspberiesMapper()
-            content = mapper.toJsonList(newStatus)
+            content = mapper.toJson(newStatus)
             File.FileUtil.writeFile(Paths.STATUS_RASPBERIES,content=content)
         except FileNotFoundError as e:
                 print("An error occurred when StatusRaspberies updating:", e)
@@ -21,7 +21,7 @@ class StatusRaspberiesController:
         else:
                 print("Update status successfully. ")
     @staticmethod
-    def get()->list[StatusRaspberies]:
+    def get()->list[StatusSlave]:
             fileData={}
             try:
                 fileData =File.FileUtil.readFile(Paths.STATUS_RASPBERIES) 

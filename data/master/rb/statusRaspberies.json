@@ -7,8 +7,8 @@
             "port": "5000"
         },
         "status": {
-            "cameraRunning": true,
-            "lastImage": "2023-12-9999"
+            "cameraRunning": false,
+            "lastImage": "Not setted"
         }
     },
     {

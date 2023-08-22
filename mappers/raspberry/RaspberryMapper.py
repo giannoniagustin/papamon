@@ -8,10 +8,10 @@ class RaspberryMapper:
         listRaspberry = []
         for objectJson in dictFile:
             instance=self.toRaspberry(objectJson)
-            print(f"ID: {instance.id}, Name: {instance.name}, IP: {instance.ip}, PORT: {instance.port}")
+            print(f"Instancia raspberry {instance}")
             listRaspberry.append(instance)
         return listRaspberry
     
-    def toRaspberry( self,dictFile: dict) :
+    def toRaspberry( self,dictFile: dict)->Raspberry :
         instance = Raspberry(**dictFile)
         return instance
