@@ -1,10 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass,field
 from model.Raspberry import Raspberry
 from model.Status import Status
 @dataclass
 class StatusSlave:
-    
-    raspberry :Raspberry 
-    status : Status
+    state:bool = field(default=False)
+    message: str  = field(default="Not connection")
+    raspberry :Raspberry  = field(default=None)
+    status : Status= field(default=None)
     
     

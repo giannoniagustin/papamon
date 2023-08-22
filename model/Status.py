@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 @dataclass
 class Status:
-    cameraRunning :bool =False
-    lastImage : str = "Not setted"
+    cameraRunning :bool =None
+    lastImage : str = None
     
 
     

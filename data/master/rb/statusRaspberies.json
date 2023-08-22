@@ -1,5 +1,7 @@
 [
     {
+        "state": false,
+        "message": "Error de Conexion",
         "raspberry": {
             "id": "0",
             "name": "RaspBerry-0",
@@ -7,11 +9,13 @@
             "port": "5000"
         },
         "status": {
-            "cameraRunning": false,
-            "lastImage": "Not setted"
+            "cameraRunning": null,
+            "lastImage": null
         }
     },
     {
+        "state": false,
+        "message": "Error de Conexion",
         "raspberry": {
             "id": "1",
             "name": "RaspBerry-1",
@@ -19,8 +23,8 @@
             "port": "5000"
         },
         "status": {
-            "cameraRunning": false,
-            "lastImage": "Not setted"
+            "cameraRunning": null,
+            "lastImage": null
         }
     }
 ]

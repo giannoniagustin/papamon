@@ -13,6 +13,7 @@ from controllers.image.ImageController import ImageController
 
 from model.StatusSlave import StatusSlave
 from model.Status import Status
+from model.StatusSystem import StatusSystem
 
 
 
@@ -46,6 +47,8 @@ class MasterController:
         listRasperr = RaspberryController.getRaspberries()
         for rB in listRasperr:
             status= Status()
+            message ="Error de Conexion"
+            state = False
             statusRb=StatusSlave(raspberry=rB,status=status)
             url= EndPoint.url_template.format(rB.ip,rB.port,EndPoint.STATUS)
             print("Url RB ",url)
@@ -53,10 +56,11 @@ class MasterController:
                 response = requests.get(url)
                 if response.status_code == 200:
                     responseJson= response.json()
-                    status= statusMapper.toStatus(responseJson["data"])                   
+                    status= statusMapper.toStatus(responseJson["data"])   
+                    message= "Se logro conexion"
+                    state= True                
                     print(f"Estado  de RB {rB.name} {status} ")
                 else:
-                
                     print(f"Error al pedir estado RB {rB.name}")
             except requests.exceptions.ConnectionError as e:
                     print("Error de conexión:", e)
@@ -65,6 +69,13 @@ class MasterController:
             finally:
                     statusRb.status=status
                     statusRb.raspberry=rB
+                    statusRb.state = state
+                    statusRb.message=message
                     listStatusRaspberies.append(statusRb)
         StatusRaspberiesController().update(listStatusRaspberies)
+        
+        # Buscar si al menos una persona es un empleado
+        has_error = all(statusSlave.state for statusSlave in listStatusRaspberies)
+        systemStatus =  StatusSystem(slaves=listRasperr,slaveStatus=listStatusRaspberies,status=has_error,message="Error")
+        print(f"System status {systemStatus}")
         return listStatusRaspberies
