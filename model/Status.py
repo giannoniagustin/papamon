@@ -1,8 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import dataclass,field
 @dataclass
 class Status:
-    cameraRunning :bool =None
-    lastImage : str = None
+    cameraRunning :bool =field(default=None)
+    lastImage : str = field(default=None) 
     
 
     
