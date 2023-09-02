@@ -3,7 +3,7 @@ from flask import request,jsonify,send_file
 import os
 import constants.Paths as Paths
 from util import File
-from util.Time import TimeUtil
+from util.TimeUtil import TimeUtil
 
 import subprocess
 from model.Response import SuccessResponse,ErrorResponse

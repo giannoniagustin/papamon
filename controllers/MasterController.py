@@ -1,7 +1,7 @@
 
 from controllers.raspberry.RaspberryController import RaspberryController
 import constants.Paths as Paths
-from util import File,Time
+from util import File,TimeUtil
 import constants.EndPoints as EndPoint
 import requests
 from datetime import datetime
@@ -20,7 +20,7 @@ from model.StatusSystem import StatusSystem
 class MasterController:
     @staticmethod
     def getImages():
-        request_id = Time.TimeUtil.timeToString(datetime.now(),Time.TimeUtil.formato)
+        request_id = TimeUtil.TimeUtil.timeToString(datetime.now(),TimeUtil.TimeUtil.formato)
         # Crear la carpeta con el ID de solicitud actual
         localPathImage =Paths.BUILD_IMAGE_FOLDER.format(request_id)
         File.FileUtil.createFolder(localPathImage)

@@ -1,18 +1,25 @@
 #DAR PERMISOS EN LINUX PARA LOS ARCHIVOS Y CARPETAS PORQUE SINO DICE ARCHVIO NOT FOUND
 import os
 
-
+DATA_FOLDER = 'data'
+RB_FOLDER = 'rb'
 #CONFIG
 CONFIG_FOLDER='config'
+MASTER_FOLDER='master'
+
 ME_FILE='me.json'
-ME =os.path.join(CONFIG_FOLDER,ME_FILE)
+SCHEDULER_FILE='scheduler.json'
 RASPBERRY_FILE = 'raspberry.json'
-RASPBERRY = os.path.join(CONFIG_FOLDER,RASPBERRY_FILE)
+
+ME =os.path.join(CONFIG_FOLDER,ME_FILE)
+RASPBERRY = os.path.join(CONFIG_FOLDER,MASTER_FOLDER,RASPBERRY_FILE)
+SCHEDULER=os.path.join(CONFIG_FOLDER,MASTER_FOLDER,SCHEDULER_FILE)
+
 
 
 #RB STATUS
-RB=os.path.join('data', 'rb','status.json')
-STATUS_RB=os.path.join('data', 'rb','status.json')
+STATUS_FILE = 'status.json'
+STATUS_RB=os.path.join(DATA_FOLDER, RB_FOLDER,STATUS_FILE)
 
 #IMAGES
     #Folder
@@ -23,4 +30,6 @@ BUILD_IMAGE_FILE=IMAGES+"{}"+os.sep+"{}"+"-"+"{}"+"{}" # 1 id_rquest,2 id_rquest
 
 #MASTER PATHS
 #RASPBERIES  STATUS
-STATUS_RASPBERIES=os.path.join('data','master', 'rb','statusRaspberies.json')
+STATUS_RASPBERIES_FILE = 'statusRaspberies.json'
+
+STATUS_RASPBERIES=os.path.join(DATA_FOLDER,MASTER_FOLDER, RB_FOLDER,STATUS_RASPBERIES_FILE)
