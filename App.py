@@ -10,6 +10,8 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 ruta_archivo = os.path.join('data', 'rb', 'status.json')'''
 
 import Api
+from util.Sentry import Sentry
 
 if __name__ == '__main__':
+    Sentry.init()
     Api.app.run(host='0.0.0.0', port=5000)

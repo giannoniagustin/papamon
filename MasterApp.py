@@ -12,12 +12,29 @@ from mappers.scheduler.SchedulerMapper import SchedulerMapper
 
 from datetime import time
 from model.Time import Time
-
-
-
+import constants.Paths as Paths
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 def main():
-    # Crear objetos time
+   sentry_sdk.init(
+    dsn="https://907fed6f0f57920999ad05c29b8f74fa@o4505815265902592.ingest.sentry.io/4505815269113856",
+    integrations=[FlaskIntegration()],
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+    debug=False,  # Habilita el modo de depuración (opcional)
+    ) 
+   sentry_sdk.capture_message("Inicio de App")
+   #division_by_zero = 1 / 0
+
+   
+   '''  # Crear objetos time
     hora1 = time(10, 30, 0)
     hora2 = time(15, 45, 0)
     hora3 = time(20, 15, 0)
@@ -28,7 +45,7 @@ def main():
     SchedulerMapper().toJson(scheduler)
     schedulerController = SchedulerController()
     #schedulerController.update(scheduler)
-    #print(schedulerController.get())
+    #print(schedulerController.get())'''
     
  #MasterController.getStatus()
  # MasterController.getImages()
