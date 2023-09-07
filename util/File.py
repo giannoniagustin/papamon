@@ -11,13 +11,13 @@ class FileUtil:
                 return content
          except FileNotFoundError as e:
                 print("An error File Not Found", e)
-                return content
+                raise
          except IOError as e:
                 print("An error IOError", e)
-                return content
+                raise
          except Exception as e:
                 print("An error occurred :", e)
-                return content
+                raise
     
     
     @staticmethod

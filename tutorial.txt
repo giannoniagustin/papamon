@@ -1,4 +1,16 @@
 Instalar dependencias
-pip install requests
-Flask 
+pip install requests //Ver si es pip o pip3
+python3 -m pip install sentry-sdk
 
+
+instalar Flask 
+version de python 3.11.4 // Ver en rb los paso, en teoria no es necesario.
+========
+Si tira error con dependencias 
+"/usr/lib/python3/dist-packages/requests/__init__.py:87: RequestsDependencyWarning: urllib3 (2.0.4) or chardet (4.0.0) doesn't match a supported version!
+  warnings.warn("urllib3 ({}) or chardet ({}) doesn't match a supported ""
+  Ejecutar :
+
+sudo python3 -m pip install --upgrade requests
+
+======

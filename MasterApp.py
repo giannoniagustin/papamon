@@ -13,26 +13,23 @@ from mappers.scheduler.SchedulerMapper import SchedulerMapper
 from datetime import time
 from model.Time import Time
 import constants.Paths as Paths
-import sentry_sdk
+from util.Sentry import Sentry
+from sentry_sdk import configure_scope
 from sentry_sdk.integrations.flask import FlaskIntegration
+import sentry_sdk
+import Api
 
+def initApp():
+   Sentry.init()
+   Sentry.customMessage(Paths.ME_FILE,Paths.ME,"Inicio de App Master")   
+
+def checkStatus(): 
+      MasterController.getStatus()
+    
 def main():
-   sentry_sdk.init(
-    dsn="https://907fed6f0f57920999ad05c29b8f74fa@o4505815265902592.ingest.sentry.io/4505815269113856",
-    integrations=[FlaskIntegration()],
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    # We recommend adjusting this value in production.
-    traces_sample_rate=1.0,
-    # Set profiles_sample_rate to 1.0 to profile 100%
-    # of sampled transactions.
-    # We recommend adjusting this value in production.
-    profiles_sample_rate=1.0,
-    debug=False,  # Habilita el modo de depuración (opcional)
-    ) 
-   sentry_sdk.capture_message("Inicio de App")
-   #division_by_zero = 1 / 0
-
+   initApp()
+   checkStatus()
+   sentry_sdk.capture_message("Fin de App Master") 
    
    '''  # Crear objetos time
     hora1 = time(10, 30, 0)
@@ -53,5 +50,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-   # Api.app.run(host='0.0.0.0', port=5000)
+    Api.app.run(host='0.0.0.0', port=5000)
 

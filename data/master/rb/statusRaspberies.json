@@ -1,7 +1,7 @@
 [
     {
-        "state": true,
-        "message": "Se logro conexion",
+        "state": false,
+        "message": "Error de Conexion",
         "raspberry": {
             "id": "0",
             "name": "RaspBerry-0",
@@ -9,8 +9,8 @@
             "port": "5000"
         },
         "status": {
-            "cameraRunning": false,
-            "lastImage": "9999-99-9999"
+            "cameraRunning": null,
+            "lastImage": null
         }
     },
     {

@@ -14,6 +14,7 @@ from controllers.image.ImageController import ImageController
 from model.StatusSlave import StatusSlave
 from model.Status import Status
 from model.StatusSystem import StatusSystem
+from util.Sentry import Sentry
 
 
 
@@ -73,8 +74,10 @@ class MasterController:
                     statusRb.message=message
                     listStatusRaspberies.append(statusRb)
         StatusRaspberiesController().update(listStatusRaspberies)
+        Sentry.customMessage(Paths.STATUS_RASPBERIES_FILE,Paths.STATUS_RASPBERIES,"Estado del sistema")      
+
         
-        # Buscar si al menos una persona es un empleado
+        # Buscar si todas estan Ok
         has_error = all(statusSlave.state for statusSlave in listStatusRaspberies)
         systemStatus =  StatusSystem(slaves=listRasperr,slaveStatus=listStatusRaspberies,status=has_error,message="Error")
         print(f"System status {systemStatus}")
