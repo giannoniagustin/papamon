@@ -1,6 +1,7 @@
 
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
+
 import constants.Paths as Paths
 # Add an attachment
 from sentry_sdk import configure_scope
@@ -21,13 +22,18 @@ class Sentry:
                 profiles_sample_rate=1.0,
                 debug=True,  # Habilita el modo de depuración (opcional)
                 ) 
+            # Habilita la integración de Sentry para multiprocessing
             sentry_sdk.capture_message("Inicio de Sentry") 
 
         @staticmethod
         def customMessage(filename:str,path:str,eventName:str):
-                with sentry_sdk.configure_scope() as scope:
-                    scope.add_attachment(filename=filename,path=path)
-                    sentry_sdk.capture_message(eventName) 
-                    scope.clear()   
+                if (filename != None):
+                    with sentry_sdk.configure_scope() as scope:
+                        scope.add_attachment(filename=filename,path=path)
+                        sentry_sdk.capture_message(eventName) 
+                        scope.clear()
+                else:
+                        sentry_sdk.capture_message(eventName) 
+        
 
      

@@ -40,13 +40,13 @@
             "second": 0
         },
         {
-            "hour": 15,
-            "minute": 45,
+            "hour": 11,
+            "minute": "08",
             "second": 0
         },
         {
-            "hour": 23,
-            "minute": 15,
+            "hour": 15,
+            "minute": 42,
             "second": 0
         }
     ],
@@ -57,8 +57,8 @@
             "second": 0
         },
         {
-            "hour": 15,
-            "minute": 45,
+            "hour": 10,
+            "minute": 57,
             "second": 0
         },
         {

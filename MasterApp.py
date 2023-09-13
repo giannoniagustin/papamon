@@ -20,11 +20,11 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 import sentry_sdk
 import Api
 import schedule
-import multiprocessing
+from controllers.process.ProcessController import ProcessController
 
 def initApp():
    Sentry.init()
-   Sentry.customMessage(Paths.ME_FILE,Paths.ME,"Inicio de App Master")   
+   Sentry.customMessage(Paths.ME_FILE,Paths.ME,f"Inicio de App Master {datetime.datetime.now()}")   
 
 def checkStatus(): 
       MasterController.getStatus()
@@ -32,7 +32,7 @@ def checkStatus():
 def main():
    initApp()
    checkStatus()
-   sentry_sdk.capture_message("Fin de App Master") 
+   sentry_sdk.capture_message(f"Fin de App Master {datetime.datetime.now()}") 
        
  #MasterController.getStatus()
  # MasterController.getImages()
@@ -52,20 +52,24 @@ def scheduler():
 def job():
     print(f"I'm working... {datetime.datetime.now()}")
 
-def scheduler1():
-   SchedulerMapper().toJson(SchedulerController.get())
-   SchedulerController.build(job=job)
-   while True:
+      
+def processCheckStatus():
+     Sentry.init()
+     Sentry.customMessage(filename=None,path=None,eventName="Inicio de Sentry en proceso ")  
+     SchedulerController.build(job=checkStatus)
+     while True:
       schedule.run_pending()
       time1.sleep(1)
+          
 if __name__ == "__main__":
     #main()
-     # Crea un proceso secundario para ejecutar el planificador en segundo plano
-    proceso_secundario = multiprocessing.Process(target=scheduler1)
-    # Inicia el proceso secundario
-    proceso_secundario.start()
+   
     # El proceso principal puede seguir ejecutando otras tareas aquí
     # Espera a que el proceso secundario termine (esto podría no ser necesario dependiendo de tus requerimientos)
+    initApp()
+    ProcessController.run(proccesRun=processCheckStatus)
+    #checkStatus()
+    
     Api.app.run(host='0.0.0.0', port=6000)
     
     #proceso_secundario.join()
