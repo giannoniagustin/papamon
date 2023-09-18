@@ -16,6 +16,7 @@ from model.Status import Status
 from model.StatusSystem import StatusSystem
 from util.Sentry import Sentry
 import datetime
+from typing import List
 
 
 
@@ -44,7 +45,7 @@ class MasterController:
                     print("Error de conexión:", e)
             except requests.exceptions.RequestException as e:
                     print("Error en la solicitud:", e)
-    def getStatus()->list[StatusSlave]:
+    def getStatus()->List[StatusSlave]:
         statusMapper= StatusMapper()
         listStatusRaspberies: list=[]
         listRasperr = RaspberryController.getRaspberries()

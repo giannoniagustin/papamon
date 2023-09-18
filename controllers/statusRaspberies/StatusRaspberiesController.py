@@ -3,9 +3,10 @@ from mappers.statusRaspberies.StatusRaspberiesMapper import StatusRaspberiesMapp
 import constants.Paths as Paths
 from model.StatusSlave import StatusSlave
 from util import File
+from typing import List
 class StatusRaspberiesController:
     @staticmethod
-    def update(newStatus:list[StatusSlave]):
+    def update(newStatus:List[StatusSlave]):
         try:
             mapper = StatusRaspberiesMapper()
             content = mapper.toJson(newStatus)
@@ -21,7 +22,7 @@ class StatusRaspberiesController:
         else:
                 print("Update status successfully. ")
     @staticmethod
-    def get()->list[StatusSlave]:
+    def get()->List[StatusSlave]:
             fileData={}
             try:
                 fileData =File.FileUtil.readFile(Paths.STATUS_RASPBERIES) 

@@ -1,15 +1,16 @@
 from dataclasses import dataclass,field
 from model.Time import Time
+from typing import List
 
 @dataclass
 class Scheduler:
-    monday :list[Time] = field(default_factory=list)
-    tuesday :list[Time] = field(default_factory=list)
-    wednesday :list[Time] = field(default_factory=list)
-    thursday :list[Time] = field(default_factory=list)
-    friday :list[Time] = field(default_factory=list)
-    saturday :list[Time] = field(default_factory=list)
-    sunday :list[Time] = field(default_factory=list)
+    monday :List[Time] = field(default_factory=list)
+    tuesday :List[Time] = field(default_factory=list)
+    wednesday :List[Time] = field(default_factory=list)
+    thursday :List[Time] = field(default_factory=list)
+    friday :List[Time] = field(default_factory=list)
+    saturday :List[Time] = field(default_factory=list)
+    sunday :List[Time] = field(default_factory=list)
 
    
 
