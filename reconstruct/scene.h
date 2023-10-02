@@ -9,14 +9,6 @@
 #include "glm/glm.hpp"
 
 
-class Size2f
-{
-public:
-	float width, height;
-
-	Size2f(float w, float h) { this->width = w; this->height = h; }
-};
-
 
 class Camera
 {
@@ -31,17 +23,21 @@ public:
 	bool is_enabled = true;
 	float camRange = 5.0;
 
-	std::vector<glm::vec3> points;
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec3> tex_coords;
+	std::vector<glm::vec3> colors;
 
-	Camera(std::string src, std::string serial);
+	Camera(std::string name, std::string serial);
 
 };
 
 class Scene
 {
 public:
-	Size2f roomSize = Size2f(7.4, 6.42);
+	glm::vec3 roomSize = glm::vec3(7.4, 6.42, 3.0);
 	std::vector<Camera*> cameras;
+	int camerasID = 0;
+	int selectedCamera = 0;
 
 };
 

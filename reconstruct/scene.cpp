@@ -41,9 +41,10 @@ Scene* getScene()
 }
 
 ///CLASS CAMERA
-Camera::Camera(std::string src, std::string serial)
+Camera::Camera(std::string name, std::string serial)
 {
-
+	this->name = name;
+	this->camera_serial = serial;
 }
 
 
@@ -109,7 +110,7 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 				if (camera.HasMember("type"))
 				{
 					auto fid = camera.FindMember("type");
-					auto fid2 = camera.FindMember("source");
+					auto fid2 = camera.FindMember("name");
 
 					std::string types = fid->value.GetString();
 					auto fSerial = camera.HasMember("serial");
@@ -180,14 +181,21 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 		{
 			auto fid = scene.FindMember("scene_width");
 			if (verboseOut) std::cout << "width type:" << kTypeNames[fid->value.GetType()] << "\n";
-			getScene()->roomSize.width = fid->value.GetFloat();
+			getScene()->roomSize.x = fid->value.GetFloat();
 		}
 
 		if (scene.HasMember("scene_height"))
 		{
 			auto fid = scene.FindMember("scene_height");
 			if (verboseOut) std::cout << "height type:" << kTypeNames[fid->value.GetType()] << "\n";
-			getScene()->roomSize.height = fid->value.GetFloat();
+			getScene()->roomSize.y = fid->value.GetFloat();
+		}
+
+		if (scene.HasMember("scene_depth"))
+		{
+			auto fid = scene.FindMember("scene_depth");
+			if (verboseOut) std::cout << "depth type:" << kTypeNames[fid->value.GetType()] << "\n";
+			getScene()->roomSize.z = fid->value.GetFloat();
 		}
 
 
