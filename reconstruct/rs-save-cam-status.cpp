@@ -87,8 +87,11 @@ int main(int argc, char* argv[]) try
     register_glfw_callbacks(app, app_state);
 #endif
 
+    std::cout << "waiting for frames .." << "\n";
     // Capture 30 frames to give autoexposure, etc. a chance to settle
     for (auto i = 0; i < 30; ++i) pipe.wait_for_frames();
+
+    std::cout << "Ready for capturing frames" << "\n";
 
     std::string outputDir = "";
     rs2::depth_frame* filtered_depth = NULL;
@@ -166,6 +169,8 @@ int main(int argc, char* argv[]) try
 
             if (frameIndex > 100) break;
         }
+
+        std::cout << "Preparing to save files " << "\n";
 
         // Write images to disk
         std::string png_file_rgb = outputDir +"rs-save-to-disk-output-rgb.png";
