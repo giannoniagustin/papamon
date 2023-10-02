@@ -7,6 +7,8 @@
 #include <iostream>             // Terminal IO
 #include <sstream>              // Stringstreams
 
+#include <map>
+
 #include <filesystem>
 
 // 3rd party header for writing png files

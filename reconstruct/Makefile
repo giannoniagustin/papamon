@@ -14,10 +14,10 @@
 #CXX = g++
 #CXX = clang++
 
-EXE = respimon
-SOURCES = main.cpp
-SOURCES += imgui_impl_glfw.cpp imgui_impl_opengl2.cpp hwConnector.cpp uiMethods.cpp uiHelper.cpp
-SOURCES += imgui.cpp imgui_demo.cpp imgui_draw.cpp imgui_widgets.cpp lodepng.cpp imguidatechooser.cpp
+EXE = rs-save-cam-status
+SOURCES = rs-save-cam-status.cpp
+SOURCES += utils.cpp
+
 OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
 UNAME_S := $(shell uname -s)
 CXXFLAGS = -I../ -I../../
@@ -29,7 +29,7 @@ LIBS = -lpthread
 
 ifeq ($(UNAME_S), Linux) #LINUX
 	ECHO_MESSAGE = "Linux"
-	LIBS += -lGL `pkg-config --static --libs glfw3` -l wiringPi
+	LIBS += -lGL `pkg-config --static --libs glfw3` -l realsense2
 
 	CXXFLAGS += `pkg-config --cflags glfw3`
 	CFLAGS = $(CXXFLAGS)
@@ -50,7 +50,7 @@ ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
 	ECHO_MESSAGE = "MinGW"
 	LIBS += -lglfw3 -lgdi32 -lopengl32 -limm32
 
-	CXXFLAGS += `pkg-config --cflags glfw3`  -l wiringPi
+	CXXFLAGS += `pkg-config --cflags glfw3`  -l realsense2
 	CFLAGS = $(CXXFLAGS)
 endif
 

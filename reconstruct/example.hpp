@@ -18,7 +18,7 @@
 #include <map>
 #include <functional>
 
-#include "../third-party/stb_easy_font.h"
+#include "stb_easy_font.h"
 #include "example-utils.hpp"
 
 #ifndef PI
