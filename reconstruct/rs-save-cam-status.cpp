@@ -114,9 +114,20 @@ int main(int argc, char* argv[]) try
             std::cout << "Read color image. W" << w << " height " << h << "\n";
 
             auto depth = frames.get_depth_frame();
+            
+            int wd = depth.get_width();
+            int hd = depth.get_height();
+
+            std::cout << "Read depth image. W" << wd << " height " << hd << "\n";
+
+
             auto depth_color = color_map.process(depth);
 
+            std::cout << "Convert to Color OK" << "\n";
+
             rs2::frame filtered = depth; // Does not copy the frame, only adds a reference
+
+            std::cout << "Try to apply filters " << "\n";
 
             for (auto filter : filters)
             {
@@ -182,46 +193,48 @@ int main(int argc, char* argv[]) try
             if (frameIndex > 100) break;
         }
 
-        std::cout << "Preparing to save files " << "\n";
-
-        // Write images to disk
-        std::string png_file_rgb = outputDir +"rs-save-to-disk-output-rgb.png";
-        std::string png_file_depth_color = outputDir + "rs-save-to-disk-output-depth_color.png";
-        std::string png_file_depth = outputDir +  "rs-save-to-disk-output-depth.png";
-
-        if (color_frame != NULL)
-        {
-            // SAVING RGB FILE
-            stbi_write_png(png_file_rgb.c_str(), color_frame->get_width(), color_frame->get_height(),
-                color_frame->get_bytes_per_pixel(), color_frame->get_data(), color_frame->get_stride_in_bytes());
-            std::cout << "Saved " << png_file_rgb.c_str() << std::endl;
-        }
-        else
-        {
-            std::cout << "Color frame could not be saved" << std::endl;
-        }
-        // SAVING DEPTH FILE
-        if (color_frame != NULL)
-        {
-            stbi_write_png(png_file_depth.c_str(), filtered_depth->get_width(), filtered_depth->get_height(),
-                filtered_depth->get_bytes_per_pixel(), filtered_depth->get_data(), filtered_depth->get_stride_in_bytes());
-            std::cout << "Saved " << png_file_depth_color.c_str() << std::endl;
-        }
-
-        if (points.get_data_size() > 0)
-        {
-            savePointsToCSV(points, outputDir + "/points.csv");
-            std::cout << "Saved points.csv " << std::endl;
-        }
-        else
-        {
-            std::cout << "Points file could not be saved" << std::endl;
-        }
-        
+     
 #else
         std::cout << "3d rendering not supported" << "\n";
 #endif 
     }
+
+    std::cout << "Preparing to save files " << "\n";
+
+    // Write images to disk
+    std::string png_file_rgb = outputDir + "rs-save-to-disk-output-rgb.png";
+    std::string png_file_depth_color = outputDir + "rs-save-to-disk-output-depth_color.png";
+    std::string png_file_depth = outputDir + "rs-save-to-disk-output-depth.png";
+
+    if (color_frame != NULL)
+    {
+        // SAVING RGB FILE
+        stbi_write_png(png_file_rgb.c_str(), color_frame->get_width(), color_frame->get_height(),
+            color_frame->get_bytes_per_pixel(), color_frame->get_data(), color_frame->get_stride_in_bytes());
+        std::cout << "Saved " << png_file_rgb.c_str() << std::endl;
+    }
+    else
+    {
+        std::cout << "Color frame could not be saved" << std::endl;
+    }
+    // SAVING DEPTH FILE
+    if (color_frame != NULL)
+    {
+        stbi_write_png(png_file_depth.c_str(), filtered_depth->get_width(), filtered_depth->get_height(),
+            filtered_depth->get_bytes_per_pixel(), filtered_depth->get_data(), filtered_depth->get_stride_in_bytes());
+        std::cout << "Saved " << png_file_depth_color.c_str() << std::endl;
+    }
+
+    if (points.get_data_size() > 0)
+    {
+        savePointsToCSV(points, outputDir + "/points.csv");
+        std::cout << "Saved points.csv " << std::endl;
+    }
+    else
+    {
+        std::cout << "Points file could not be saved" << std::endl;
+    }
+
 
     return EXIT_SUCCESS;
 }
