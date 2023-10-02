@@ -99,28 +99,40 @@ int main(int argc, char* argv[]) try
 
     if (!showOutput)
     {
-        // Wait for the next set of frames from the camera. Now that autoexposure, etc.
-        // has settled, we will write these to disk
-        auto frames = pipe.wait_for_frames();
-
-        auto color = frames.get_color_frame();
-
-        auto depth = frames.get_depth_frame();
-        auto depth_color = color_map.process(depth);
-
-        rs2::frame filtered = depth; // Does not copy the frame, only adds a reference
-
-        for (auto filter : filters)
+        try
         {
-            filtered = filter.second->process(filtered);
-            
+            // Wait for the next set of frames from the camera. Now that autoexposure, etc.
+            // has settled, we will write these to disk
+            auto frames = pipe.wait_for_frames();
+
+            auto color = frames.get_color_frame();
+
+
+            int w = color.get_width();
+            int h = color.get_height();
+
+            std::cout << "Read color image. W" << w << " height " << h << "\n";
+
+            auto depth = frames.get_depth_frame();
+            auto depth_color = color_map.process(depth);
+
+            rs2::frame filtered = depth; // Does not copy the frame, only adds a reference
+
+            for (auto filter : filters)
+            {
+                filtered = filter.second->process(filtered);
+
+            }
+
+            // Generate the pointcloud and texture mappings
+            filtered_depth = static_cast<rs2::depth_frame*>(&filtered);
+            color_frame = static_cast<rs2::video_frame*>(&color);
+            points = pc.calculate(filtered);
         }
-
-        // Generate the pointcloud and texture mappings
-        filtered_depth = static_cast<rs2::depth_frame*>(&filtered);
-        color_frame = static_cast<rs2::video_frame*>(&color);
-        points = pc.calculate(filtered);
-
+        catch (std::exception e)
+        {
+            std::cout << e.what() << "\n";
+        }
 
     }
     else
