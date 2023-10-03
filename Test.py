@@ -34,7 +34,7 @@ def to_dict(obj):
 statusRb1 =StatusSlave(raspberry=Raspberry("a","b","c","s"),status=Status(True,"ssss"))
 statusRb2 =StatusSlave(raspberry=Raspberry("a","b","c","s"),status=Status(True,"ssss"))
 statusRb3 =StatusSlave(raspberry=Raspberry("a","b","c","s"),status=Status(True,"ssss"))
-lista: list[StatusSlave]=[]
+lista: List[StatusSlave]=[]
 lista.append(statusRb1)
 lista.append(statusRb2)
 lista.append(statusRb3)

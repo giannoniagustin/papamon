@@ -3,9 +3,11 @@ from mappers.raspberry.RaspberryMapper import RaspberryMapper
 import constants.Paths as Paths
 from model.Raspberry import Raspberry
 from util import File
+from typing import List
+
 class RaspberryController:
     @staticmethod
-    def getRaspberries()-> list[Raspberry]:
+    def getRaspberries()-> List[Raspberry]:
             #Lista de raspberry a pedir las imagenes
             file={}
             try:    

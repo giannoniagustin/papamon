@@ -15,6 +15,9 @@ from model.StatusSlave import StatusSlave
 from model.Status import Status
 from model.StatusSystem import StatusSystem
 from util.Sentry import Sentry
+import datetime
+from typing import List
+
 
 
 
@@ -42,7 +45,7 @@ class MasterController:
                     print("Error de conexión:", e)
             except requests.exceptions.RequestException as e:
                     print("Error en la solicitud:", e)
-    def getStatus()->list[StatusSlave]:
+    def getStatus()->List[StatusSlave]:
         statusMapper= StatusMapper()
         listStatusRaspberies: list=[]
         listRasperr = RaspberryController.getRaspberries()
@@ -74,7 +77,7 @@ class MasterController:
                     statusRb.message=message
                     listStatusRaspberies.append(statusRb)
         StatusRaspberiesController().update(listStatusRaspberies)
-        Sentry.customMessage(Paths.STATUS_RASPBERIES_FILE,Paths.STATUS_RASPBERIES,"Estado del sistema")      
+        Sentry.customMessage(Paths.STATUS_RASPBERIES_FILE,Paths.STATUS_RASPBERIES,f"Estado del sistema {datetime.datetime.now()}")      
 
         
         # Buscar si todas estan Ok

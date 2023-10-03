@@ -5,19 +5,14 @@ from model.Time import Time
 import json
 
 class SchedulerMapper:
-
-    def toScheduler( self,dictFile: dict) :
-        instance = Scheduler(**dictFile)
-        return instance
     
+    def toScheduler( self,dictFile: dict) :
+        scheduler = Scheduler()
+        for day in scheduler.__annotations__.keys():
+            if day in dictFile:
+                scheduler.__setattr__(day, [Time(**time_data) for time_data in dictFile[day]])
+        return scheduler    
     def toJson( self,instanceObject: Scheduler) :
-        # Convert  instance to dictionary and then to JSON
-        monday =json.loads('{"monday": "[]"}')
-        listMonday:list[Time] = []
-        for hour in instanceObject.monday:
-            listMonday.append(Time(hour=hour.hour,minute=hour.minute,second=hour.second))
+        jsonObject =json.dumps(instanceObject, default=lambda o: o.__dict__, indent=4)
+        return  jsonObject
 
-        monday["monday"] = Parser.toJson( listMonday)
-        jsonObject =Parser.toJson(instanceObject)
-        print('Status to Json --'+jsonObject)
-        return jsonObject
