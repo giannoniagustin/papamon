@@ -16,12 +16,45 @@ void splits(const std::string& s, char delim, Out result) {
 
 
 
+void saveAsObj(object3D& o, std::string outputFile)
+{
+    std::vector<glm::vec3> vs = o.vertexes;
+//    # wavefront obj fit3d
+//        v 53.5864 114.006 453.241
+//       v 53.4813 113.924 453.239
+//        v 53.7436 116.868 449.656
+//        v 50.1834 114.041 449.612
+     // open a file in write mode.
+    std::ofstream outfile;
+    outfile.open(outputFile);
+
+    // write inputted data into the file.
+    outfile << "# wavefront obj" << std::endl;
+
+
+    // again write inputted data into the file.
+    for (int i = 0; i < vs.size(); i++)
+    {
+        outfile << "v " << vs[i].x<<" "<< vs[i].y << " "<< vs[i].z << std::endl;
+    }
+    // close the opened file.
+    outfile.close();
+}
+
+
 std::vector<std::string> splitString(const std::string& s, char delim) {
     std::vector<std::string> elems;
     splits(s, delim, std::back_inserter(elems));
     return elems;
 }
 
+
+// -1.14069; -0.670039; 1.734; 0.0361091; -0.0373214
+object3D readOBJFromFile(std::string filename)
+{
+    object3D o;
+    return o;
+}
 
 std::vector<glm::vec3> readPointsFromFile(std::string filename)
 {

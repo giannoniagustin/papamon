@@ -29,7 +29,12 @@ void register_glfw_callbacks(window& app, glfw_state& app_state);
 // It can be useful for debugging an embedded system with no display.
 int main(int argc, char* argv[]) try
 {
-    std::cout << "Project PapaMon 27Sep2023" << "\n";
+    std::cout << "Project PapaMon 5Oct2023" << "\n";
+
+    bool demoMode = false;
+
+   
+    std::string outputDir = "";
 
     bool showOutput = false;
     if (argc > 1)
@@ -40,7 +45,58 @@ int main(int argc, char* argv[]) try
             {
                 showOutput = true;
             }
+
+            if (std::string(argv[i]) == "-demo")
+            {
+                demoMode = true;
+            }
+
+            if (std::string(argv[i]) == "-dir")
+            {
+                outputDir = argv[i+1];
+                std::cout << "Using path " << outputDir << "\n";
+            }
         }
+    }
+
+    if (demoMode)
+    {
+        std::cout << "Executing in demo mode" << "\n";
+
+        
+        std::string destination = outputDir;
+        std::filesystem::path sourceFileRGB = "rgb.png";
+        std::filesystem::path sourceFileDEPTH = "depth.png";
+        std::filesystem::path sourceFilePOINTS = "points.csv";
+        std::filesystem::path targetParent = destination;
+        auto targetRGB = targetParent / sourceFileRGB.filename();
+        auto targetDEPTH = targetParent / sourceFilePOINTS.filename();
+        auto targetPOINTS = targetParent / sourceFilePOINTS.filename();
+
+        try
+        {
+            std::filesystem::create_directories(targetParent); // Recursively create the target directory path if it does not exist.
+            std::filesystem::copy_file(sourceFileRGB, targetRGB, std::filesystem::copy_options::overwrite_existing);
+            std::filesystem::copy_file(sourceFileDEPTH, targetDEPTH, std::filesystem::copy_options::overwrite_existing);
+            std::filesystem::copy_file(sourceFilePOINTS, targetPOINTS, std::filesystem::copy_options::overwrite_existing);
+
+        }
+        catch (std::exception& e) //If any filesystem error
+        {
+            std::cout << e.what();
+        }
+
+    }
+
+
+    try
+    {
+        std::filesystem::create_directories(outputDir); // Recursively create the target directory path if it does not exist.
+     
+    }
+    catch (std::exception& e) //If any filesystem error
+    {
+        std::cout << e.what();
     }
 
     // Declare depth colorizer for pretty visualization of depth data
@@ -61,7 +117,7 @@ int main(int argc, char* argv[]) try
     rs2::threshold_filter thr_filter;   // Threshold  - removes values outside recommended range
     rs2::spatial_filter spat_filter;    // Spatial    - edge-preserving spatial smoothing
     rs2::temporal_filter temp_filter;   // Temporal   - reduces temporal noise
-
+    rs2::align align_to_depth(RS2_STREAM_DEPTH);
   
     
     // Declaring two concurrent queues that will be used to enqueue and dequeue frames from different threads
@@ -93,7 +149,7 @@ int main(int argc, char* argv[]) try
 
     std::cout << "Ready for capturing frames" << "\n";
 
-    std::string outputDir = "";
+   
     rs2::depth_frame* filtered_depth = NULL;
     rs2::video_frame* color_frame = NULL;
 
@@ -104,6 +160,9 @@ int main(int argc, char* argv[]) try
             // Wait for the next set of frames from the camera. Now that autoexposure, etc.
             // has settled, we will write these to disk
             auto frames = pipe.wait_for_frames();
+
+            // Align all frames to depth viewport
+            frames = align_to_depth.process(frames);
 
             auto color = frames.get_color_frame();
 
@@ -156,6 +215,9 @@ int main(int argc, char* argv[]) try
             // Wait for the next set of frames from the camera
             auto frames = pipe.wait_for_frames();
 
+            // Align all frames to depth viewport
+            frames = align_to_depth.process(frames);
+
             auto color = frames.get_color_frame();
 
             // For cameras that don't have RGB sensor, we'll map the pointcloud to infrared instead of color
@@ -202,9 +264,9 @@ int main(int argc, char* argv[]) try
     std::cout << "Preparing to save files " << "\n";
 
     // Write images to disk
-    std::string png_file_rgb = outputDir + "rs-save-to-disk-output-rgb.png";
-    std::string png_file_depth_color = outputDir + "rs-save-to-disk-output-depth_color.png";
-    std::string png_file_depth = outputDir + "rs-save-to-disk-output-depth.png";
+    std::string png_file_rgb = outputDir + "/rgb.png";
+  
+    std::string png_file_depth = outputDir + "/depth.png";
 
     if (color_frame != NULL)
     {
@@ -218,11 +280,11 @@ int main(int argc, char* argv[]) try
         std::cout << "Color frame could not be saved" << std::endl;
     }
     // SAVING DEPTH FILE
-    if (color_frame != NULL)
+    if (filtered_depth != NULL)
     {
         stbi_write_png(png_file_depth.c_str(), filtered_depth->get_width(), filtered_depth->get_height(),
             filtered_depth->get_bytes_per_pixel(), filtered_depth->get_data(), filtered_depth->get_stride_in_bytes());
-        std::cout << "Saved " << png_file_depth_color.c_str() << std::endl;
+        std::cout << "Saved " << png_file_depth.c_str() << std::endl;
     }
 
     if (points.get_data_size() > 0)

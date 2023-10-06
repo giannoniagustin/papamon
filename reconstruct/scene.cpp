@@ -3,8 +3,16 @@
 #define GLFW_INCLUDE_GLU
 #include <GLFW/glfw3.h>
 
+#include <algorithm>            // std::min, std::max
+#include <array>
 
 #include "scene.h"
+#include "glm/glm.hpp"
+
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtx/euler_angles.hpp"
+
+
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -31,6 +39,7 @@ rapidjson::Document readGeoJSON(const std::string& path, bool use_convert)
 
 }
 
+#define M_PI 3.14156
 Scene* _sceneInstance = NULL;
 
 Scene* getScene()
@@ -44,7 +53,7 @@ Scene* getScene()
 Camera::Camera(std::string name, std::string serial)
 {
 	this->name = name;
-	this->camera_serial = serial;
+	this->serial = serial;
 }
 
 
@@ -122,9 +131,9 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 						}
 					
 					// save this data
-					if (camera.HasMember("type")) cam->camera_type = camera.FindMember("type")->value.GetString();
-					if (camera.HasMember("serial")) cam->camera_serial = camera.FindMember("serial")->value.GetString();
-					if (camera.HasMember("source")) cam->camera_source = camera.FindMember("source")->value.GetString();
+					if (camera.HasMember("type")) cam->type = camera.FindMember("type")->value.GetString();
+					if (camera.HasMember("serial")) cam->serial = camera.FindMember("serial")->value.GetString();
+					if (camera.HasMember("source")) cam->source = camera.FindMember("source")->value.GetString();
 
 					
 					
@@ -147,6 +156,14 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 					cam->camPos.y = coordsM[1].GetFloat();
 					cam->camPos.z = coordsM[2].GetFloat();
 				}
+
+				if (camera.HasMember("range"))
+				{
+					auto fid = camera.FindMember("range");
+					if (verboseOut) std::cout << "width type:" << kTypeNames[fid->value.GetType()] << "\n";
+					cam->camRange = fid->value.GetFloat();
+				}
+
 
 
 				if (camera.HasMember("orientation"))
@@ -184,6 +201,8 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 			getScene()->roomSize.x = fid->value.GetFloat();
 		}
 
+
+
 		if (scene.HasMember("scene_height"))
 		{
 			auto fid = scene.FindMember("scene_height");
@@ -199,14 +218,31 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 		}
 
 
-		if (scene.HasMember("exclusion_zone"))
+		if (scene.HasMember("view_offset"))
 		{
-			auto fid = scene.FindMember("exclusion_zone");
-			if (verboseOut) std::cout << "exclusion_zone:" << kTypeNames[fid->value.GetType()] << "\n";
-
+			auto fid = scene.FindMember("view_offset");
+			if (verboseOut)  std::cout << "id type:" << kTypeNames[fid->value.GetType()] << "\n";
 			auto coordsM = fid->value.GetArray();
 
+			getScene()->viewPos.x = coordsM[0].GetFloat();
+			getScene()->viewPos.y = coordsM[1].GetFloat();
+			getScene()->viewPos.z = coordsM[2].GetFloat();
 		}
+
+
+		if (scene.HasMember("view_rotation"))
+		{
+			auto fid = scene.FindMember("view_rotation");
+			if (verboseOut)  std::cout << "id type:" << kTypeNames[fid->value.GetType()] << "\n";
+			auto coordsM = fid->value.GetArray();
+
+			getScene()->viewRot.x = coordsM[0].GetFloat();
+			getScene()->viewRot.y = coordsM[1].GetFloat();
+			getScene()->viewRot.z = coordsM[2].GetFloat();
+		}
+
+
+	
 	}
 
 
@@ -244,4 +280,307 @@ bool initScene(std::string inputJSONFile,  bool verbose)
 	}
 
 	return false;
+}
+
+////////////
+rapidjson::Value vecToArray(glm::vec3 v, rapidjson::Document::AllocatorType& allocator)
+{
+	rapidjson::Value v_array(rapidjson::kArrayType);
+	v_array.PushBack(rapidjson::Value(v.x), allocator);
+	v_array.PushBack(rapidjson::Value(v.y), allocator);
+	v_array.PushBack(rapidjson::Value(v.z), allocator);
+
+	return v_array;
+}
+
+void buildSceneJSON(std::string outputFile)
+{
+
+	rapidjson::Document document;
+
+	// define the document as an object rather than an array
+	document.SetObject();
+
+
+	// must pass an allocator when the object may need to allocate memory
+	rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
+
+	// create a rapidjson object type
+	rapidjson::Value info(rapidjson::kObjectType);
+	info.AddMember("version", "50", allocator);
+	document.AddMember("info", info, allocator);
+	//  fromScratch["object"]["hello"] = "Yourname";
+
+
+	// create a rapidjson object type
+	rapidjson::Value scene(rapidjson::kObjectType);
+	scene.AddMember("scene_width", getScene()->roomSize.x, allocator);
+	scene.AddMember("scene_height", getScene()->roomSize.y, allocator);
+	scene.AddMember("scene_depth", getScene()->roomSize.z, allocator);
+	scene.AddMember("view_offset", vecToArray(getScene()->viewPos, allocator), allocator);
+	scene.AddMember("view_rotation", vecToArray(getScene()->viewRot, allocator), allocator);
+	document.AddMember("scene", scene, allocator);
+
+	
+
+	// chain methods as rapidjson provides a fluent interface when modifying its objects
+
+	// create a rapidjson array type with similar syntax to std::vector
+	rapidjson::Value cameras_array(rapidjson::kArrayType);
+	
+	for (auto cam : getScene()->cameras)
+	{
+		if (cam->name != "live")
+		{
+			rapidjson::Value camO(rapidjson::kObjectType);
+			camO.AddMember("id", cam->id, allocator);
+			camO.AddMember("range", cam->camRange, allocator);
+			camO.AddMember("name",rapidjson::Value().SetString((char*)cam->name.c_str(), cam->name.length()), allocator);
+			camO.AddMember("serial", rapidjson::Value().SetString((char*)cam->serial.c_str(), cam->serial.length()), allocator);
+			camO.AddMember("location", vecToArray(cam->camPos, allocator), allocator);
+			camO.AddMember("orientation", vecToArray(cam->camRot, allocator), allocator);
+
+			cameras_array.PushBack(camO, allocator);
+		}
+	}
+		
+	document.AddMember("cameras", cameras_array, allocator);
+
+	
+	rapidjson::StringBuffer strbuf;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+	document.Accept(writer);
+
+	std::ofstream file(outputFile);
+	file << strbuf.GetString() << std::endl;
+
+	file.close();
+
+}
+
+void drawCube(glm::vec3 roomSize)
+{
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	glPushMatrix();
+	glTranslatef(0.0, 0.0, 0.0);
+
+	glScalef(roomSize.x, roomSize.y, roomSize.z);
+
+	glBegin(GL_QUADS);        // Draw The Cube Using quads
+
+	glColor3f(1.0f, 1.0f, 1.0f);    // Color Blue
+	glVertex3f(1.0f, 1.0f, -1.0f);    // Top Right Of The Quad (Top)
+	glVertex3f(-1.0f, 1.0f, -1.0f);    // Top Left Of The Quad (Top)
+	glVertex3f(-1.0f, 1.0f, 1.0f);    // Bottom Left Of The Quad (Top)
+	glVertex3f(1.0f, 1.0f, 1.0f);    // Bottom Right Of The Quad (Top)
+	glColor3f(1.0f, 0.5f, 0.0f);    // Color Orange
+	glVertex3f(1.0f, -1.0f, 1.0f);    // Top Right Of The Quad (Bottom)
+	glVertex3f(-1.0f, -1.0f, 1.0f);    // Top Left Of The Quad (Bottom)
+	glVertex3f(-1.0f, -1.0f, -1.0f);    // Bottom Left Of The Quad (Bottom)
+	glVertex3f(1.0f, -1.0f, -1.0f);    // Bottom Right Of The Quad (Bottom)
+	glColor3f(1.0f, 0.0f, 0.0f);    // Color Red    
+	glVertex3f(1.0f, 1.0f, 1.0f);    // Top Right Of The Quad (Front)
+	glVertex3f(-1.0f, 1.0f, 1.0f);    // Top Left Of The Quad (Front)
+	glVertex3f(-1.0f, -1.0f, 1.0f);    // Bottom Left Of The Quad (Front)
+	glVertex3f(1.0f, -1.0f, 1.0f);    // Bottom Right Of The Quad (Front)
+	glColor3f(1.0f, 1.0f, 0.0f);    // Color Yellow
+	glVertex3f(1.0f, -1.0f, -1.0f);    // Top Right Of The Quad (Back)
+	glVertex3f(-1.0f, -1.0f, -1.0f);    // Top Left Of The Quad (Back)
+	glVertex3f(-1.0f, 1.0f, -1.0f);    // Bottom Left Of The Quad (Back)
+	glVertex3f(1.0f, 1.0f, -1.0f);    // Bottom Right Of The Quad (Back)
+	glColor3f(0.0f, 0.0f, 1.0f);    // Color Blue
+	glVertex3f(-1.0f, 1.0f, 1.0f);    // Top Right Of The Quad (Left)
+	glVertex3f(-1.0f, 1.0f, -1.0f);    // Top Left Of The Quad (Left)
+	glVertex3f(-1.0f, -1.0f, -1.0f);    // Bottom Left Of The Quad (Left)
+	glVertex3f(-1.0f, -1.0f, 1.0f);    // Bottom Right Of The Quad (Left)
+	glColor3f(1.0f, 0.0f, 1.0f);    // Color Violet
+	glVertex3f(1.0f, 1.0f, -1.0f);    // Top Right Of The Quad (Right)
+	glVertex3f(1.0f, 1.0f, 1.0f);    // Top Left Of The Quad (Right)
+	glVertex3f(1.0f, -1.0f, 1.0f);    // Bottom Left Of The Quad (Right)
+	glVertex3f(1.0f, -1.0f, -1.0f);    // Bottom Right Of The Quad (Right)
+	glEnd();            // End Drawing The Cube
+
+
+	glPopMatrix();
+
+
+	glColor3f(1.0f, 1.0f, 1.0f);    // Color Blue
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+}
+
+
+void drawCamera(glm::vec3 camPos, glm::vec3 camRot) 
+{
+	int i, j;
+
+	double r = 0.05;
+	int lats = 10, longs = 10;
+
+
+	const float fov = 45.0f;
+
+	glm::vec3 cameraPos = camPos;
+	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
+	glm::vec3 cameraForward = glm::normalize(glm::cross(cameraUp, cameraRight));
+
+	glm::mat4 initialCameraProjection = glm::perspective(glm::radians(fov), (float)1.33f, 0.1f, 8.0f);
+
+	glm::mat4 initialCameraView = glm::lookAt(
+		cameraPos,
+		cameraPos + cameraForward,
+		cameraUp);
+
+	std::array<glm::vec3, 8> _cameraFrustumCornerVertices{
+	{
+		{ -1.0f, -1.0f, 1.0f }, { 1.0f, -1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, { -1.0f, 1.0f, 1.0f },
+		{ -1.0f, -1.0f, -1.0f }, { 1.0f, -1.0f, -1.0f }, { 1.0f, 1.0f, -1.0f }, { -1.0f, 1.0f, -1.0f },
+	}
+	};
+
+	const auto proj = glm::inverse(initialCameraProjection * initialCameraView);
+
+	std::array<glm::vec3, 8> _frustumVertices;
+
+	std::transform(
+		_cameraFrustumCornerVertices.begin(),
+		_cameraFrustumCornerVertices.end(),
+		_frustumVertices.begin(),
+		[&](glm::vec3 p) {
+			auto v = proj * glm::vec4(p, 1.0f);
+			return glm::vec3(v) / v.w;
+		}
+	);
+
+	std::vector<int> lines = { 0,1,0,2,3,1,3,2,4,5,4,6,7,5,7,6,0,4,1,5,3,7,2,6 };
+
+	glBegin(GL_LINES);
+
+	for (int i = 0; i < lines.size(); i = i + 2)
+	{
+		glVertex3f(_frustumVertices[lines[i]].x, _frustumVertices[lines[i]].y, _frustumVertices[lines[i]].z);
+		glVertex3f(_frustumVertices[lines[i + 1]].x, _frustumVertices[lines[i + 1]].y, _frustumVertices[lines[i + 1]].z);
+	}
+	glEnd();
+
+	glPushMatrix();
+
+	glTranslatef(camPos.x, camPos.y, camPos.z);
+
+	for (i = 0; i <= lats; i++) {
+		double lat0 = M_PI * (-0.5 + (double)(i - 1) / lats);
+		double z0 = sin(lat0);
+		double zr0 = cos(lat0);
+
+		double lat1 = M_PI * (-0.5 + (double)i / lats);
+		double z1 = sin(lat1);
+		double zr1 = cos(lat1);
+
+		glBegin(GL_QUAD_STRIP);
+		for (j = 0; j <= longs; j++) {
+			double lng = 2 * M_PI * (double)(j - 1) / longs;
+			double x = cos(lng);
+			double y = sin(lng);
+
+			glNormal3d(x * zr0, y * zr0, z0);
+			glVertex3d(r * x * zr0, r * y * zr0, r * z0);
+			glNormal3d(x * zr1, y * zr1, z1);
+			glVertex3d(r * x * zr1, r * y * zr1, r * z1);
+		}
+		glEnd();
+	}
+
+	glPopMatrix();
+}
+// Handles all the OpenGL calls needed to display the point cloud
+void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderSceneBox,unsigned int tex,int width, int height)
+{
+
+
+	// OpenGL commands that prep screen for the pointcloud
+	glLoadIdentity();
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	gluPerspective(60, width / height, 0.01f, 50.0f);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	gluLookAt(0, 0, 0, 0, 0, 1, 0, -1, 0);
+
+	glTranslatef(viewPos.x, viewPos.y, viewPos.z);
+	glRotated(viewRot.x, 1, 0, 0);
+	glRotated(viewRot.y, 0, 1, 0);
+	glRotated(viewRot.z, 0, 0, 1);
+	glTranslatef(0, 0, -0.5f);
+
+	glColor3f(1.0, 1.0, 1.0);
+	glEnable(GL_DEPTH_TEST);
+	if (renderSceneBox)
+	{
+		glLineWidth(2.0f);
+		drawCube(getScene()->roomSize);
+	}
+
+	for (auto cam : getScene()->cameras)
+	{
+		glLineWidth(1.0f);
+		drawCamera(cam->camPos, cam->camRot);
+	}
+
+	glPointSize(width / 640);
+
+	if (tex > 0)
+	{
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		float tex_border_color[] = { 0.8f, 0.8f, 0.8f, 0.8f };
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, tex_border_color);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F); // GL_CLAMP_TO_EDGE
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F); // GL_CLAMP_TO_EDGE
+	}
+	glBegin(GL_POINTS);
+
+	glm::mat4 m = glm::mat4(1);
+	
+
+	if (getScene()->cameras.size() > 0)
+	{
+
+		
+		/* this segment actually prints the pointcloud */
+		for (int i = 0; i < o.vertexes.size(); i++)
+		{
+			if (o.colors.size() > 0)
+			{
+				glColor3f(o.colors[i].x / 255.0, o.colors[i].y / 255.0, o.colors[i].z / 255.0);
+			}
+			else
+				glTexCoord2f(o.tex_coords[i].x, o.tex_coords[i].y);
+
+			glVertex3f(o.vertexes[i].x, o.vertexes[i].y, o.vertexes[i].z);
+
+		}
+
+
+		o.vertexes.clear();
+		o.tex_coords.clear();
+		o.colors.clear();
+	}
+
+
+	// OpenGL cleanup
+	glEnd();
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glPopAttrib();
+
 }

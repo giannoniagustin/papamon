@@ -10,7 +10,13 @@
 #include <filesystem>
 #include "glm/glm.hpp"
 
+#include "scene.h"
 
 void savePointsToCSV(rs2::points& points, std::string filename);
 
 std::vector<glm::vec3> readPointsFromFile(std::string filename);
+
+
+object3D readOBJFromFile(std::string filename);
+
+void saveAsObj(object3D& o, std::string outputFile);
