@@ -2,14 +2,15 @@
 // Copyright(c) 2015-2017 Intel Corporation. All Rights Reserved.
 
 #include <librealsense2/rs.hpp> // Include RealSense Cross Platform API
-#include "example.hpp"          // Include short list of convenience functions for rendering
 
 #include <algorithm>            // std::min, std::max
 
+#ifdef RENDER3D
+#include "example.hpp"          // Include short list of convenience functions for rendering
 
 #include <imgui.h>
 #include "imgui_impl_glfw.h"
-
+#endif
 
 #include "scene.h"
 #include "utils.h"
@@ -33,9 +34,11 @@ bool renderSceneBox = true;
 
 
 // Construct an object to manage view state
+#ifdef RENDER3D
 glfw_state app_state;
 
 texture tex;
+#endif
 
 // Declare RealSense pipeline, encapsulating the actual device and sensors
 rs2::pipeline pipe;
@@ -82,6 +85,7 @@ object3D mergeAll3DData()
     return obj;
 }
 
+#ifdef RENDER3D
 // Helper functions
 void register_glfw_callbacks(window& app, glfw_state& app_state);
 
@@ -192,6 +196,7 @@ void render_ui(float w, float h, object3D& o)
     getScene()->cameras[getScene()->selectedCamera]->is_enabled = true;
 }
 
+#endif
 
 void updateCamera(Camera* cam)
 {
@@ -212,8 +217,10 @@ void updateCamera(Camera* cam)
         // Align all frames to depth viewport
         frames = align_to_depth.process(frames);
 
+#ifdef RENDER3D
         // Upload the color frame to OpenGL
         app_state.tex.upload(color);
+#endif
 
         int w = color.get_width();
         int h = color.get_height();
@@ -266,8 +273,9 @@ void updateCamera(Camera* cam)
 
         }
 
-
+#ifdef RENDER3D
         tex = app_state.tex;
+#endif
 
     }
 }
@@ -366,6 +374,8 @@ int main(int argc, char* argv[]) try
             o.colors.clear();
 
         }
+#elseif
+    std::cout << "Visualization not supported" << "\n";
 #endif
         return EXIT_SUCCESS;
     }
@@ -374,17 +384,22 @@ int main(int argc, char* argv[]) try
         initScene("case_Sample0.json", true);
 
         // read data from camera
+        std::cout << "Getting 3D points from files \n";
         for (auto cam : getScene()->cameras)
         {
             readDataFromFile(cam, inputDir);
         }
-
+        
+        std::cout << "Merge points  \n";
         object3D o = mergeAll3DData();
 
+
+        std::cout << "Save as OBJ  \n";
         saveAsObj(o, inputDir + "/merged.obj");
 
     }
 
+return EXIT_SUCCESS;
 }
 catch (const rs2::error& e) 
 {

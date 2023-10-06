@@ -358,6 +358,7 @@ void buildSceneJSON(std::string outputFile)
 
 }
 
+#ifdef RENDER3D
 void drawCube(glm::vec3 roomSize)
 {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -594,3 +595,4 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 	glPopAttrib();
 
 }
+#endif
