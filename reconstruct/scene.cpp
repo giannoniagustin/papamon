@@ -411,13 +411,15 @@ void drawCube(glm::vec3 roomSize)
 }
 
 
-void drawCamera(glm::vec3 camPos, glm::vec3 camRot) 
+void drawCamera(Camera *cam) 
 {
 	int i, j;
 
 	double r = 0.05;
 	int lats = 10, longs = 10;
-
+	glm::vec3 camPos = cam->camPos;
+		
+	glm::vec3 camRot = cam->camRot;
 
 	const float fov = 45.0f;
 
@@ -456,17 +458,25 @@ void drawCamera(glm::vec3 camPos, glm::vec3 camRot)
 
 	std::vector<int> lines = { 0,1,0,2,3,1,3,2,4,5,4,6,7,5,7,6,0,4,1,5,3,7,2,6 };
 
-	glBegin(GL_LINES);
-
-	for (int i = 0; i < lines.size(); i = i + 2)
+	if (cam->is_enabled)
 	{
-		glVertex3f(_frustumVertices[lines[i]].x, _frustumVertices[lines[i]].y, _frustumVertices[lines[i]].z);
-		glVertex3f(_frustumVertices[lines[i + 1]].x, _frustumVertices[lines[i + 1]].y, _frustumVertices[lines[i + 1]].z);
-	}
-	glEnd();
+		glColor3f(1.0f, 1.0f, 0.0f);
+		glBegin(GL_LINES);
 
+		for (int i = 0; i < lines.size(); i = i + 2)
+		{
+			glVertex3f(_frustumVertices[lines[i]].x, _frustumVertices[lines[i]].y, _frustumVertices[lines[i]].z);
+			glVertex3f(_frustumVertices[lines[i + 1]].x, _frustumVertices[lines[i + 1]].y, _frustumVertices[lines[i + 1]].z);
+		}
+		glEnd();
+	}
+	else
+	{
+		glColor3f(1.0f, 1.0f, 1.0f);
+	}
 	glPushMatrix();
 
+	// render circle
 	glTranslatef(camPos.x, camPos.y, camPos.z);
 
 	for (i = 0; i <= lats; i++) {
@@ -532,7 +542,7 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 	for (auto cam : getScene()->cameras)
 	{
 		glLineWidth(1.0f);
-		drawCamera(cam->camPos, cam->camRot);
+		drawCamera(cam);
 	}
 
 	glPointSize(width / 640);

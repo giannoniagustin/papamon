@@ -31,7 +31,7 @@ public:
 	glm::vec3 camPos = { 0.0f  , 0.0f, 0.0f };
 	glm::vec3 camRot = { 0.0f, 0.0f, 0.0f };
 
-	bool is_enabled = true;
+	bool is_enabled = false;
 	float camRange = 5.0;
 
 	std::vector<glm::vec3> vertices;
@@ -62,6 +62,6 @@ bool initScene(std::string inputJSONFile, bool verbose);
 void buildSceneJSON(std::string outputFile);
 
 void drawScene(object3D& o, glm::vec3 viewPos, glm::vec3 viewRot, bool renderSceneBox, unsigned int tex, int width, int height);
-void drawCamera(glm::vec3 camPos, glm::vec3 camRot);
+void drawCamera(Camera* cam);
 void drawCube(glm::vec3 roomSize);
 

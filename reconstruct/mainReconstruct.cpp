@@ -143,6 +143,7 @@ void render_ui(float w, float h, object3D& o)
             if (ImGui::Button(cam->name.c_str()))
             {
                 getScene()->selectedCamera = index;
+               
             }
 
             index++;
@@ -186,6 +187,9 @@ void render_ui(float w, float h, object3D& o)
 
     ImGui::End();
     ImGui::Render();
+
+    for (auto cam : getScene()->cameras) cam->is_enabled = false;
+    getScene()->cameras[getScene()->selectedCamera]->is_enabled = true;
 }
 
 
