@@ -505,6 +505,65 @@ void drawCamera(Camera *cam)
 
 	glPopMatrix();
 }
+
+void drawCloudPoint(object3D& o, int width, int height)
+{
+	// OpenGL commands that prep screen for the pointcloud
+	glLoadIdentity();
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	gluPerspective(60.0, (1.0*width) / height, 0.01f, 50.0f);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	gluLookAt(0, 0, 0, 0, 0, 1, 0, -1, 0);
+
+	glTranslatef(0, 0, +0.5f + 2 * 0.05f);
+	glRotated(15, 1, 0, 0);
+	glRotated(15, 0, 1, 0);
+
+	glTranslatef(0, 0, -0.5f);
+
+	glColor3f(1.0, 1.0, 1.0);
+	glEnable(GL_DEPTH_TEST);
+		glPointSize(width / 640);
+
+	
+	glBegin(GL_POINTS);
+
+	glm::mat4 m = glm::mat4(1);
+
+
+	/* this segment actually prints the pointcloud */
+	for (int i = 0; i < o.vertexes.size(); i++)
+		{
+			if (o.colors.size() > 0)
+			{
+				glColor3f(o.colors[i].x / 255.0, o.colors[i].y / 255.0, o.colors[i].z / 255.0);
+			}
+			else
+				glTexCoord2f(o.tex_coords[i].x, o.tex_coords[i].y);
+
+			glVertex3f(o.vertexes[i].x, o.vertexes[i].y, o.vertexes[i].z);
+
+		}
+
+
+
+	// OpenGL cleanup
+	glEnd();
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glPopAttrib();
+}
+
 // Handles all the OpenGL calls needed to display the point cloud
 void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderSceneBox,unsigned int tex,int width, int height)
 {
@@ -520,7 +579,7 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
-	gluPerspective(60, width / height, 0.01f, 50.0f);
+	gluPerspective(60, (1.0*width) / height, 0.01f, 50.0f);
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();

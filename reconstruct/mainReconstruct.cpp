@@ -67,17 +67,17 @@ object3D mergeAll3DData()
         auto m = UpdateModelMatrix(cam->camPos, cam->camRot);
 
         /* this segment actually prints the pointcloud */
-        for (int i = 0; i < cam->vertices.size(); i++)
+        for (int i = 0; i < cam->o.vertexes.size(); i++)
         {
-            if (cam->vertices[i].z>=0 && cam->vertices[i].z< cam->camRange)
+            if (cam->o.vertexes[i].z>=0 && cam->o.vertexes[i].z< cam->camRange)
             {
-                glm::vec4 v(cam->vertices[i].x, cam->vertices[i].y, cam->vertices[i].z, 1.0);
+                glm::vec4 v(cam->o.vertexes[i].x, cam->o.vertexes[i].y, cam->o.vertexes[i].z, 1.0);
                 // apply matrix multiplication
                 v = m * v;
                
                 obj.vertexes.push_back(glm::vec3(v.x, v.y, -v.z));
-                obj.tex_coords.push_back(glm::vec3(cam->tex_coords[i].x, cam->tex_coords[i].y,0.0));
-                obj.colors.push_back(cam->colors[i]);
+                obj.tex_coords.push_back(glm::vec3(cam->o.tex_coords[i].x, cam->o.tex_coords[i].y,0.0));
+                obj.colors.push_back(cam->o.colors[i]);
             }
         }
     }
@@ -237,41 +237,7 @@ void updateCamera(Camera* cam)
         // Generate the pointcloud and texture mappings
         points = pc.calculate(depth);
 
-        auto vertices = points.get_vertices();              // get vertices
-        auto tex_coords = points.get_texture_coordinates(); // and texture coordinates
-
-        // init first time
-        if (cam->vertices.size() == 0)
-        {
-          
-            for (int i = 0; i < points.size(); i++)
-            {
-                cam->vertices.push_back(glm::vec3(0, 0, 0));
-                cam->tex_coords.push_back(glm::vec3(0, 0, 0));
-                cam->colors.push_back(glm::vec3(0, 0, 0));
-            }
-           
-        }
-
-        unsigned char* data = (unsigned char*)color.get_data();
-
-        for (int i = 0; i < points.size(); i++)
-        {
-            int xi = tex_coords[i].u * w;
-            int yi = tex_coords[i].v * h;
-
-            if (tex_coords[i].u >= 0 && tex_coords[i].v >= 0 && tex_coords[i].u <= 1.0 && tex_coords[i].v <= 1.0)
-            {
-                int pi = yi * w * 3 + xi * 3;
-                unsigned char r = data[pi + 0];
-                unsigned char g = data[pi + 1];
-                unsigned char b = data[pi + 2];
-                cam->colors[i] = glm::vec3(r, g, b);
-            }
-            cam->vertices[i] = glm::vec3(vertices[i].x, vertices[i].y, vertices[i].z);
-            cam->tex_coords[i] = glm::vec3(tex_coords[i].u, tex_coords[i].v, 0.0);
-
-        }
+        getOBJFromFrameSet(cam->o, color, points);
 
 #ifdef RENDER3D
         tex = app_state.tex;
@@ -282,7 +248,16 @@ void updateCamera(Camera* cam)
 
 void readDataFromFile(Camera* cam, std::string srcDir)
 {
-    cam->vertices = readPointsFromFile(srcDir + "points.csv");
+    std::cout << "Trying to read Vertexes info " << "\n";
+
+    if (std::filesystem::exists(srcDir + "points.csv"))
+    {
+        cam->o = readFromCSV(srcDir + "points.csv");
+    }
+    else
+    {
+        std::cout << "File not found " << srcDir + "points.csv" << "\n";
+    }
 }
 
 /// //////////////////////////////////////
@@ -324,78 +299,96 @@ int main(int argc, char* argv[]) try
     {
 
 #ifdef RENDER3D
-        // Create a simple OpenGL window for rendering:
-        window app(1280, 720, "Papamon - 3D Viewer");
-        ImGui_ImplGlfw_Init(app, false);
-        // Setup Platform/Renderer bindings
-
-
-        // register callbacks to allow manipulation of the pointcloud
-        register_glfw_callbacks(app, app_state);
-
-        // Declare pointcloud object, for calculating pointclouds and texture mappings
-        rs2::pointcloud pc;
-        // We want the points object to be persistent so we can display the last cloud when a frame drops
-        rs2::points points;
-
-
-        // Start streaming with default recommended configuration
-        pipe.start();
-
-        initScene("cameras.json", true);
-
-        Camera* live_cam = NULL;
-        if (useLiveCamera)
+        try
         {
-            live_cam = new Camera("live", "1");
-            getScene()->cameras.push_back(live_cam);
-     
-        }
+            // Create a simple OpenGL window for rendering:
+            window app(1280, 720, "Papamon - 3D Viewer");
+            ImGui_ImplGlfw_Init(app, false);
+            // Setup Platform/Renderer bindings
 
-        while (app) // Application still alive?
-        {
-            float w = static_cast<float>(app.width());
-            float h = static_cast<float>(app.height());
 
-            if (live_cam)
+            // register callbacks to allow manipulation of the pointcloud
+            register_glfw_callbacks(app, app_state);
+
+            // Declare pointcloud object, for calculating pointclouds and texture mappings
+            rs2::pointcloud pc;
+            // We want the points object to be persistent so we can display the last cloud when a frame drops
+            rs2::points points;
+
+
+            // Start streaming with default recommended configuration
+            pipe.start();
+
+            initScene("cameras.json", true);
+
+            Camera* live_cam = NULL;
+            if (useLiveCamera)
             {
-                updateCamera(live_cam);
+                live_cam = new Camera("live", "1");
+                getScene()->cameras.push_back(live_cam);
+     
             }
-            object3D o = mergeAll3DData();
 
-            // render scene
-            drawScene(o, getScene()->viewPos, getScene()->viewRot, true, tex.get_gl_handle(), w, h);
+            while (app) // Application still alive?
+            {
+                float w = static_cast<float>(app.width());
+                float h = static_cast<float>(app.height());
+
+                if (live_cam)
+                {
+                    updateCamera(live_cam);
+                }
+                object3D o = mergeAll3DData();
+
+                // render scene
+                drawScene(o, getScene()->viewPos, getScene()->viewRot, true, tex.get_gl_handle(), w, h);
             
-            // render ui
-            render_ui(200, 200,o);
+                // render ui
+                render_ui(200, 200,o);
 
-            o.vertexes.clear();
-            o.tex_coords.clear();
-            o.colors.clear();
+                o.vertexes.clear();
+                o.tex_coords.clear();
+                o.colors.clear();
 
+            }
         }
-#elseif
+        catch (const std::exception& e)
+        {
+
+            std::cout << "Failed to reconstruct scene" << e.what() << "\n";
+            return false;
+        }
+#elif
     std::cout << "Visualization not supported" << "\n";
 #endif
         return EXIT_SUCCESS;
     }
     else
     {
-        initScene("case_Sample0.json", true);
-
-        // read data from camera
-        std::cout << "Getting 3D points from files \n";
-        for (auto cam : getScene()->cameras)
+        try
         {
-            readDataFromFile(cam, inputDir);
+            initScene("case_Sample0.json", true);
+
+            // read data from camera
+            std::cout << "Getting 3D points from files \n";
+            for (auto cam : getScene()->cameras)
+            {
+                readDataFromFile(cam, inputDir);
+            }
+
+            std::cout << "Merge points  \n";
+            object3D o = mergeAll3DData();
+
+
+            std::cout << "Save as OBJ  \n";
+            saveAsObj(o, inputDir + "/merged.obj");
         }
-        
-        std::cout << "Merge points  \n";
-        object3D o = mergeAll3DData();
+        catch (const std::exception& e)
+        {
 
-
-        std::cout << "Save as OBJ  \n";
-        saveAsObj(o, inputDir + "/merged.obj");
+            std::cout << "Failed to reconstruct scene" << e.what() << "\n";
+            return false;
+        }
 
     }
 

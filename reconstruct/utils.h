@@ -12,11 +12,16 @@
 
 #include "scene.h"
 
-void savePointsToCSV(rs2::points& points, std::string filename);
+void savePointsToCSV(object3D& o, std::string filename);
 
 std::vector<glm::vec3> readPointsFromFile(std::string filename);
 
 
-object3D readOBJFromFile(std::string filename);
+object3D readFromCSV(std::string filename);
+
+object3D readFromOBJ(std::string filename);
+
 
 void saveAsObj(object3D& o, std::string outputFile);
+
+void getOBJFromFrameSet(object3D& o, rs2::video_frame& color,  rs2::points& points);

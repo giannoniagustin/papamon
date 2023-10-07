@@ -34,9 +34,7 @@ public:
 	bool is_enabled = false;
 	float camRange = 5.0;
 
-	std::vector<glm::vec3> vertices;
-	std::vector<glm::vec3> tex_coords;
-	std::vector<glm::vec3> colors;
+	object3D o;
 
 	Camera(std::string name, std::string serial);
 
@@ -60,7 +58,7 @@ Scene* getScene();
 
 bool initScene(std::string inputJSONFile, bool verbose);
 void buildSceneJSON(std::string outputFile);
-
+void drawCloudPoint(object3D& o, int width, int height);
 void drawScene(object3D& o, glm::vec3 viewPos, glm::vec3 viewRot, bool renderSceneBox, unsigned int tex, int width, int height);
 void drawCamera(Camera* cam);
 void drawCube(glm::vec3 roomSize);

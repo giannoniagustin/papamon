@@ -23,6 +23,54 @@
 void register_glfw_callbacks(window& app, glfw_state& app_state);
 #endif
 
+class imageData
+{
+public:
+    int w, h;
+    unsigned char* data = NULL;
+    int bytes_per_pixel;
+    int stride_data;
+
+};
+
+///
+void setImageDataDepth(imageData* iD, rs2::depth_frame f)
+{
+    iD->w = f.get_width();
+    iD->h = f.get_height();
+    iD->bytes_per_pixel = f.get_bits_per_pixel();
+    iD->stride_data = f.get_stride_in_bytes();
+
+    unsigned char* data = (unsigned char*)f.get_data();
+    int dataSize = f.get_data_size();
+
+    if (iD->data == NULL)
+    {
+       iD->data = new unsigned char[dataSize];     
+    }
+
+    for (int i = 0; i < dataSize; i++)
+        iD->data[i] = data[i];
+}
+
+void setImageDataColor(imageData* iD, rs2::video_frame f)
+{
+    iD->w = f.get_width();
+    iD->h = f.get_height();
+    iD->bytes_per_pixel = f.get_bits_per_pixel();
+    iD->stride_data = f.get_stride_in_bytes();
+
+    unsigned char* data = (unsigned char*)f.get_data();
+    int dataSize = f.get_data_size();
+
+    if (iD->data == NULL)
+    {
+        iD->data = new unsigned char[dataSize];
+    }
+
+    for (int i = 0; i < dataSize; i++)
+        iD->data[i] = data[i];
+}
 
 
 // This sample captures 30 frames and writes the last frame to disk.
@@ -134,15 +182,6 @@ int main(int argc, char* argv[]) try
     filters["Temporal"] = &temp_filter;
 
 
-#ifdef RENDER3D
-    // Create a simple OpenGL window for rendering:
-    window app(1280, 720, "Papamon Viewer - 2023");
-    // Construct an object to manage view state
-    glfw_state app_state;
-    // register callbacks to allow manipulation of the pointcloud
-    register_glfw_callbacks(app, app_state);
-#endif
-
     std::cout << "waiting for frames .." << "\n";
     // Capture 30 frames to give autoexposure, etc. a chance to settle
     for (auto i = 0; i < 30; ++i) pipe.wait_for_frames();
@@ -150,67 +189,16 @@ int main(int argc, char* argv[]) try
     std::cout << "Ready for capturing frames" << "\n";
 
    
-    rs2::depth_frame* filtered_depth = NULL;
-    rs2::video_frame* color_frame = NULL;
+    imageData* filtered_depth = NULL;
+    imageData* color_frame = NULL;
+
+    object3D o;
+
+    int maxFrames = 2;
 
     if (!showOutput)
     {
         try
-        {
-            // Wait for the next set of frames from the camera. Now that autoexposure, etc.
-            // has settled, we will write these to disk
-            auto frames = pipe.wait_for_frames();
-
-            // Align all frames to depth viewport
-            frames = align_to_depth.process(frames);
-
-            auto color = frames.get_color_frame();
-
-
-            int w = color.get_width();
-            int h = color.get_height();
-
-            std::cout << "Read color image. W" << w << " height " << h << "\n";
-
-            auto depth = frames.get_depth_frame();
-            
-            int wd = depth.get_width();
-            int hd = depth.get_height();
-
-            std::cout << "Read depth image. W" << wd << " height " << hd << "\n";
-
-
-            auto depth_color = color_map.process(depth);
-
-            std::cout << "Convert to Color OK" << "\n";
-
-            rs2::frame filtered = depth; // Does not copy the frame, only adds a reference
-
-            std::cout << "Try to apply filters " << "\n";
-
-            for (auto filter : filters)
-            {
-                filtered = filter.second->process(filtered);
-
-            }
-
-            // Generate the pointcloud and texture mappings
-            filtered_depth = static_cast<rs2::depth_frame*>(&filtered);
-            color_frame = static_cast<rs2::video_frame*>(&color);
-            points = pc.calculate(filtered);
-        }
-        catch (std::exception e)
-        {
-            std::cout << e.what() << "\n";
-        }
-
-    }
-    else
-    {
-#ifdef RENDER3D
-        int frameIndex = 0;
-
-        while (app) // Application still alive?
         {
             // Wait for the next set of frames from the camera
             auto frames = pipe.wait_for_frames();
@@ -224,12 +212,25 @@ int main(int argc, char* argv[]) try
             if (!color)
                 color = frames.get_infrared_frame();
 
+            int w = color.get_width();
+            int h = color.get_height();
+
+            std::cout << "Read color image. W" << w << " height " << h << "\n";
+
             // Tell pointcloud object to map to this color frame
             pc.map_to(color);
 
             auto depth = frames.get_depth_frame();
 
-            rs2::frame filtered = depth; // Does not copy the frame, only adds a reference
+            int wd = depth.get_width();
+            int hd = depth.get_height();
+
+            std::cout << "Read depth image. W" << wd << " height " << hd << "\n";
+
+
+            rs2::depth_frame filtered = depth; // Does not copy the frame, only adds a reference
+
+            std::cout << "Try to apply filters " << "\n";
 
             for (auto filter : filters)
             {
@@ -237,23 +238,127 @@ int main(int argc, char* argv[]) try
 
             }
 
+            std::cout << "Aplyed filters OK " << "\n";
 
-            // Generate the pointcloud and texture mappings
-            filtered_depth = static_cast<rs2::depth_frame*>(&filtered);
-            color_frame = static_cast<rs2::video_frame*>(&color);
+
             points = pc.calculate(filtered);
 
+            if (!filtered_depth) filtered_depth = new imageData();
+            if (!color_frame) color_frame = new imageData();
 
-            // Upload the color frame to OpenGL
-            app_state.tex.upload(color);
 
-            // Draw the pointcloud
-            draw_pointcloud(app.width(), app.height(), app_state, points);
+            std::cout << "Try to fill structures " << "\n";
 
-            frameIndex++;
+            // Convert data
+            setImageDataDepth(filtered_depth, depth);
 
-            if (frameIndex > 100) break;
+            setImageDataColor(color_frame, color);
+
+            getOBJFromFrameSet(o, color, points);
+
+            std::cout << "Structures ok " << "\n";
+
+
         }
+        catch (std::exception e)
+        {
+            std::cout << e.what() << "\n";
+        }
+
+    }
+    else
+    {
+#ifdef RENDER3D
+
+        try
+        { 
+            // Create a simple OpenGL window for rendering:
+            window app(1280, 720, "Papamon Viewer - 2023");
+            // Construct an object to manage view state
+            glfw_state app_state;
+            // register callbacks to allow manipulation of the pointcloud
+            register_glfw_callbacks(app, app_state);
+
+            int frameIndex = 0;
+
+            while (app) // Application still alive?
+            {
+                // Wait for the next set of frames from the camera
+                auto frames = pipe.wait_for_frames();
+
+                // Align all frames to depth viewport
+                frames = align_to_depth.process(frames);
+
+                auto color = frames.get_color_frame();
+
+                // For cameras that don't have RGB sensor, we'll map the pointcloud to infrared instead of color
+                if (!color)
+                    color = frames.get_infrared_frame();
+
+                int w = color.get_width();
+                int h = color.get_height();
+
+                std::cout << "Read color image. W" << w << " height " << h << "\n";
+
+                // Tell pointcloud object to map to this color frame
+                pc.map_to(color);
+
+                auto depth = frames.get_depth_frame();
+
+                int wd = depth.get_width();
+                int hd = depth.get_height();
+
+                std::cout << "Read depth image. W" << wd << " height " << hd << "\n";
+
+
+                rs2::depth_frame filtered = depth; // Does not copy the frame, only adds a reference
+
+                std::cout << "Try to apply filters " << "\n";
+
+                for (auto filter : filters)
+                {
+                    filtered = filter.second->process(filtered);
+
+                }
+
+                std::cout << "Aplyed filters OK " << "\n";
+
+             
+                points = pc.calculate(filtered);
+                
+                if (!filtered_depth) filtered_depth = new imageData();
+                if (!color_frame) color_frame = new imageData();
+
+
+                std::cout << "Try to fill structures " << "\n";
+
+                // Convert data
+                setImageDataDepth(filtered_depth, depth);
+
+                setImageDataColor(color_frame, color);
+
+                getOBJFromFrameSet(o, color, points);
+
+                std::cout << "Structures ok " << "\n";
+
+                // Upload the color frame to OpenGL
+                app_state.tex.upload(color);
+
+
+                // Draw the pointcloud
+                //draw_pointcloud(app.width(), app.height(), app_state, points);
+                drawCloudPoint(o, app.width(), app.height());
+
+                frameIndex++;
+
+                if (frameIndex > maxFrames) break;
+            }
+            }
+        catch (std::exception e)
+        {
+            std::cout << "Exception at render loop :" << e.what() << "\n";
+        }
+
 
      
 #else
@@ -270,9 +375,13 @@ int main(int argc, char* argv[]) try
 
     if (color_frame != NULL)
     {
+        int wd = color_frame->w;
+        int hd = color_frame->h;
+
+
         // SAVING RGB FILE
-        stbi_write_png(png_file_rgb.c_str(), color_frame->get_width(), color_frame->get_height(),
-            color_frame->get_bytes_per_pixel(), color_frame->get_data(), color_frame->get_stride_in_bytes());
+        stbi_write_png(png_file_rgb.c_str(), wd, hd,
+            color_frame->bytes_per_pixel/8, color_frame->data, color_frame->stride_data);
         std::cout << "Saved " << png_file_rgb.c_str() << std::endl;
     }
     else
@@ -282,14 +391,14 @@ int main(int argc, char* argv[]) try
     // SAVING DEPTH FILE
     if (filtered_depth != NULL)
     {
-        stbi_write_png(png_file_depth.c_str(), filtered_depth->get_width(), filtered_depth->get_height(),
-            filtered_depth->get_bytes_per_pixel(), filtered_depth->get_data(), filtered_depth->get_stride_in_bytes());
+        stbi_write_png(png_file_depth.c_str(), filtered_depth->w, filtered_depth->h,
+            filtered_depth->bytes_per_pixel/8, filtered_depth->data, filtered_depth->stride_data);
         std::cout << "Saved " << png_file_depth.c_str() << std::endl;
     }
 
     if (points.get_data_size() > 0)
     {
-        savePointsToCSV(points, outputDir + "/points.csv");
+        savePointsToCSV(o, outputDir + "/points.csv");
         std::cout << "Saved points.csv " << std::endl;
     }
     else
