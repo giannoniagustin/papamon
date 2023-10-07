@@ -329,6 +329,10 @@ int main(int argc, char* argv[]) try
      
             }
 
+           
+            readDataFromFile(getScene()->cameras[0], "D:/Proyects/Lifia/Releases/1/");
+            readDataFromFile(getScene()->cameras[1], "D:/Proyects/Lifia/Releases/2/");
+
             while (app) // Application still alive?
             {
                 float w = static_cast<float>(app.width());

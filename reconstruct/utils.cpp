@@ -121,7 +121,7 @@ object3D readFromCSV(std::string filename)
         std::getline(inFile, line); // ommit first line
 
         // lat long
-        std::vector<std::string> ss = splitString(line, '"');
+        std::vector<std::string> ss = splitString(line, ';');
         if (ss.size() < 5)
         {
             continue;
