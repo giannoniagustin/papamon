@@ -306,7 +306,7 @@ void readDataFromFile(Camera* cam, std::string srcDir)
 int main(int argc, char* argv[]) try
 {
     /////////////////////////////////////////////////////
-    std::cout << "Project Reconstruct 5Oct2023" << "\n";
+    std::cout << "Project Reconstruct 10Oct2023" << "\n";
 
     bool showOutput = false;
     std::string inputDir = "";
