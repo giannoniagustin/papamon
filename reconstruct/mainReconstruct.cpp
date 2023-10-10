@@ -436,7 +436,7 @@ int main(int argc, char* argv[]) try
             std::cout << "Failed to reconstruct scene" << e.what() << "\n";
             return false;
         }
-#elif
+#else
     std::cout << "Visualization not supported" << "\n";
 #endif
         return EXIT_SUCCESS;
