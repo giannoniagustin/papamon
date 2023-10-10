@@ -64,7 +64,10 @@ object3D mergeAll3DData()
 
     for (auto cam : getScene()->cameras)
     {
-        auto m = UpdateModelMatrix(cam->camPos, cam->camRot);
+        glm::vec3 rotAdapt = cam->camRot;
+        rotAdapt.x = -rotAdapt.x;
+        rotAdapt.z = rotAdapt.z + 180.0f;
+        auto m = UpdateModelMatrix(cam->camPos, rotAdapt);
 
         /* this segment actually prints the pointcloud */
         for (int i = 0; i < cam->o.vertexes.size(); i++)
@@ -75,7 +78,7 @@ object3D mergeAll3DData()
                 // apply matrix multiplication
                 v = m * v;
                
-                obj.vertexes.push_back(glm::vec3(v.x, v.y, -v.z));
+                obj.vertexes.push_back(glm::vec3(v.x, v.y, v.z));
                 obj.tex_coords.push_back(glm::vec3(cam->o.tex_coords[i].x, cam->o.tex_coords[i].y,0.0));
                 obj.colors.push_back(cam->o.colors[i]);
             }
@@ -112,11 +115,13 @@ void render_ui(float w, float h, object3D& o)
         {
             buildSceneJSON("cameras.json");
         }
-
+        ImGui::SameLine();
         if (ImGui::Button("save to OBJ"))
         {
             saveAsObj(o, "/merged.obj");
         }
+
+        ImGui::Separator();        ImGui::Separator();
         float roomsizeX = getScene()->roomSize.x;
         float roomsizeY = getScene()->roomSize.y;
         float roomsizeZ = getScene()->roomSize.z;
@@ -128,6 +133,14 @@ void render_ui(float w, float h, object3D& o)
 
         if (changed) getScene()->roomSize = glm::vec3(roomsizeX, roomsizeY, roomsizeZ);
 
+        
+        ImGui::SliderInt("ResolutionX", &getScene()->hm, 2, 50);
+        ImGui::SliderInt("ResolutionZ", &getScene()->wm, 2, 50);
+
+        ImGui::Separator();
+        ImGui::Separator();
+
+
         ImGui::SliderFloat("ViewPosX", &getScene()->viewPos.x, -2.0f, 10.0f);
         ImGui::SliderFloat("ViewPosY", &getScene()->viewPos.y, -2.0f, 10.0f);
         ImGui::SliderFloat("ViewPosZ", &getScene()->viewPos.z, -2.0f, 10.0f);
@@ -135,6 +148,8 @@ void render_ui(float w, float h, object3D& o)
         ImGui::SliderFloat("ViewRotX", &getScene()->viewRot.x, -180.0f, 180.0f);
         ImGui::SliderFloat("ViewRotY", &getScene()->viewRot.y, -180.0f, 180.0f);
         ImGui::SliderFloat("ViewRotZ", &getScene()->viewRot.z, -180.0f, 180.0f);
+
+        ImGui::Separator();        ImGui::Separator();
         if (ImGui::Button("New camera"))
         {
             getScene()->cameras.push_back(new Camera(std::to_string(getScene()->camerasID), ""));
@@ -197,6 +212,31 @@ void render_ui(float w, float h, object3D& o)
 }
 
 #endif
+
+//////////////////////////////////////////////////////////////////////////
+std::vector<float> computeHeightMap(object3D& o,int wm, int hm)
+{
+
+    std::vector<float> values;
+
+    o.computeMinMax();
+
+    for (int i=0;i<wm*hm;i++)   values.push_back(0);
+
+    for (int i = 0; i < o.vertexes.size(); i++)
+    {
+        int ix = (int)(wm * (o.vertexes[i].x ) / getScene()->roomSize.x);
+        int iz = (int)(hm * (o.vertexes[i].z ) / getScene()->roomSize.z);
+
+        if (ix >= 0 && iz >= 0 && ix < wm && iz < hm)
+        {
+            values[iz * wm + ix] = std::max(0.0f, std::max(values[iz * wm + ix], o.vertexes[i].y));
+        }
+
+    }
+
+    return values;
+}
 
 void updateCamera(Camera* cam)
 {
@@ -295,6 +335,28 @@ int main(int argc, char* argv[]) try
         }
     }
 
+    try
+    {
+        std::cout << "Reading cameras info " << "\n";
+
+        initScene("cameras.json", true);
+
+        std::cout << "Getting 3D points from files \n";
+        for (int i = 0; i < getScene()->cameras.size(); i++)
+        {
+            readDataFromFile(getScene()->cameras[i], inputDir + "/"+ std::to_string(i+1) + "/");
+        }
+        getScene()->hm = 10;
+        getScene()->wm = 10;
+    }
+    catch (const std::exception& e)
+    {
+
+        std::cout << "Failed to reconstruct scene" << e.what() << "\n";
+        return false;
+    }
+
+
     if (showOutput)
     {
 
@@ -319,7 +381,6 @@ int main(int argc, char* argv[]) try
             // Start streaming with default recommended configuration
             pipe.start();
 
-            initScene("cameras.json", true);
 
             Camera* live_cam = NULL;
             if (useLiveCamera)
@@ -329,9 +390,8 @@ int main(int argc, char* argv[]) try
      
             }
 
-           
-            readDataFromFile(getScene()->cameras[0], "D:/Proyects/Lifia/Releases/1/");
-            readDataFromFile(getScene()->cameras[1], "D:/Proyects/Lifia/Releases/2/");
+
+            int frameIndex = 0;
 
             while (app) // Application still alive?
             {
@@ -344,15 +404,29 @@ int main(int argc, char* argv[]) try
                 }
                 object3D o = mergeAll3DData();
 
+                std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
+
+                getScene()->heightMap.swap( heights);
+               
+
+
                 // render scene
                 drawScene(o, getScene()->viewPos, getScene()->viewRot, true, tex.get_gl_handle(), w, h);
             
                 // render ui
                 render_ui(200, 200,o);
 
+                if (frameIndex % 100 == 0)
+                {
+                    saveAsObj(o, inputDir + "merged.obj");
+                    buildStateJSON(inputDir + "state.json");
+                }
+
                 o.vertexes.clear();
                 o.tex_coords.clear();
                 o.colors.clear();
+
+                frameIndex++;
 
             }
         }
@@ -371,21 +445,27 @@ int main(int argc, char* argv[]) try
     {
         try
         {
-            initScene("case_Sample0.json", true);
-
+            
             // read data from camera
-            std::cout << "Getting 3D points from files \n";
-            for (auto cam : getScene()->cameras)
-            {
-                readDataFromFile(cam, inputDir);
-            }
+            
 
             std::cout << "Merge points  \n";
             object3D o = mergeAll3DData();
 
+            std::cout << "Compute Heightmap  \n";
+            std::vector<float> heights = computeHeightMap(o, 10, 10);
+
+            getScene()->heightMap.swap(heights);
+            getScene()->hm = 10;
+            getScene()->wm = 10;
+
+
 
             std::cout << "Save as OBJ  \n";
-            saveAsObj(o, inputDir + "/merged.obj");
+            saveAsObj(o, inputDir + "merged.obj");
+
+            std::cout << "Save STATE  \n";
+            buildStateJSON(inputDir + "state.json");
         }
         catch (const std::exception& e)
         {

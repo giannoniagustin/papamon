@@ -248,6 +248,25 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 
 }
 
+void object3D::computeMinMax()
+{
+	this->min = glm::vec3(10000, 10000, 10000);
+	this->max = glm::vec3(-10000, -10000, -10000);
+
+	for (int i = 0; i < this->vertexes.size(); i++)
+	{
+		this->min.x = std::min(this->min.x, this->vertexes[i].x-0.01f);
+		this->min.y = std::min(this->min.y, this->vertexes[i].y - 0.01f);
+		this->min.z = std::min(this->min.z, this->vertexes[i].z - 0.01f);
+
+		this->max.x = std::max(this->max.x, this->vertexes[i].x+0.01f);
+		this->max.y = std::max(this->max.y, this->vertexes[i].y + 0.01f);
+		this->max.z = std::max(this->max.z, this->vertexes[i].z + 0.01f);
+
+	}
+
+
+}
 
 ////////////////////////////////////
 ////
@@ -293,6 +312,18 @@ rapidjson::Value vecToArray(glm::vec3 v, rapidjson::Document::AllocatorType& all
 	return v_array;
 }
 
+
+rapidjson::Value vecToArray(std::vector<float>& vs, rapidjson::Document::AllocatorType& allocator)
+{
+	rapidjson::Value v_array(rapidjson::kArrayType);
+	for (auto v : vs)
+		v_array.PushBack(rapidjson::Value(v), allocator);
+
+	return v_array;
+}
+
+
+/// 
 void buildSceneJSON(std::string outputFile)
 {
 
@@ -358,7 +389,114 @@ void buildSceneJSON(std::string outputFile)
 
 }
 
+/// Create JSON with state of
+void buildStateJSON(std::string outputFile)
+{
+	rapidjson::Document document;
+
+	// define the document as an object rather than an array
+	document.SetObject();
+
+
+	// must pass an allocator when the object may need to allocate memory
+	rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
+
+
+	int numActive_Cameras = getScene()->cameras.size();
+
+	// create a rapidjson object type
+	rapidjson::Value info(rapidjson::kObjectType);
+	info.AddMember("date", "50", allocator);
+	info.AddMember("active_cameras", numActive_Cameras, allocator);
+	document.AddMember("info", info, allocator);
+	//  fromScratch["object"]["hello"] = "Yourname";
+
+	// create a rapidjson object type
+	rapidjson::Value scene(rapidjson::kObjectType);
+	scene.AddMember("heightMap_width", getScene()->hm, allocator);
+	scene.AddMember("heightMap_depth", getScene()->wm, allocator);
+	scene.AddMember("heightMap", vecToArray(getScene()->heightMap, allocator), allocator);
+	document.AddMember("estimation", scene, allocator);
+
+
+
+	rapidjson::StringBuffer strbuf;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+	document.Accept(writer);
+
+	std::ofstream file(outputFile);
+	file << strbuf.GetString() << std::endl;
+
+	file.close();
+}
 #ifdef RENDER3D
+void renderHeightMap(std::vector<float>& hs, int h, int w)
+{
+	glColor3f(1.0f, 1.0f, 1.0f);    // Color Blue
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	glPushMatrix();
+
+	glScalef(getScene()->roomSize.x, 1.0, getScene()->roomSize.z);
+	// Draw reference grid
+	for (int i=0;i<h;i++)
+		for (int j = 0; j < w; j++)
+		{
+			float height = 0; // hs[i * w + j];
+			glBegin(GL_QUADS);
+		
+			glVertex3f((1.0*(j+1))/w,height, (1.0*i)/h);
+			glVertex3f((1.0*j)/w, height, (1.0 * i) / h);
+			glVertex3f((1.0 * j) / w, height, (1.0*(i+1))/h);
+			glVertex3f((1.0 * (j + 1)) / w, height, (1.0 * (i + 1)) / h);
+
+			glEnd();
+
+		}
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glColor3f(0.5, 0.5, 0.5);
+	for (int i = 0; i < h-1; i++)
+		for (int j = 0; j < w-1; j++)
+		{
+			
+			glBegin(GL_QUADS);
+
+			glVertex3f((1.0 * (j + 1)) / w, hs[i * w + (j+1)], (1.0 * i) / h);
+			glVertex3f((1.0 * j) / w, hs[i * w + (j )], (1.0 * i) / h);
+			glVertex3f((1.0 * j) / w, hs[(i+1) * w + (j + 1)], (1.0 * (i + 1)) / h);
+			glVertex3f((1.0 * (j + 1)) / w, hs[(i+1) * w + (j + 1)], (1.0 * (i + 1)) / h);
+
+			glEnd();
+
+		}
+
+	glPopMatrix();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+}
+
+void drawAxes()
+{
+
+	glLineWidth(5.0f);
+	glBegin(GL_LINES);
+	// X
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(50.0f, 0.0f, 0.0f);
+	// Y
+	glColor3f(0.0f, 1.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 50.0f, 0.0f);
+	// Z
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 0.0f, 50.0f);
+
+	glEnd();
+}
+
 void drawCube(glm::vec3 roomSize)
 {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -371,35 +509,40 @@ void drawCube(glm::vec3 roomSize)
 	glBegin(GL_QUADS);        // Draw The Cube Using quads
 
 	glColor3f(1.0f, 1.0f, 1.0f);    // Color Blue
-	glVertex3f(1.0f, 1.0f, -1.0f);    // Top Right Of The Quad (Top)
-	glVertex3f(-1.0f, 1.0f, -1.0f);    // Top Left Of The Quad (Top)
-	glVertex3f(-1.0f, 1.0f, 1.0f);    // Bottom Left Of The Quad (Top)
+	glVertex3f(0.0f, 1.0f, 0.0f);    // Top Right Of The Quad (Top)
+	glVertex3f(0.0f, 1.0f, -1.0f);    // Top Left Of The Quad (Top)
+	glVertex3f(0.0f, 1.0f, 1.0f);    // Bottom Left Of The Quad (Top)
 	glVertex3f(1.0f, 1.0f, 1.0f);    // Bottom Right Of The Quad (Top)
+	
 	glColor3f(1.0f, 0.5f, 0.0f);    // Color Orange
-	glVertex3f(1.0f, -1.0f, 1.0f);    // Top Right Of The Quad (Bottom)
-	glVertex3f(-1.0f, -1.0f, 1.0f);    // Top Left Of The Quad (Bottom)
-	glVertex3f(-1.0f, -1.0f, -1.0f);    // Bottom Left Of The Quad (Bottom)
-	glVertex3f(1.0f, -1.0f, -1.0f);    // Bottom Right Of The Quad (Bottom)
+	glVertex3f(1.0f, 0.0f, 1.0f);    // Top Right Of The Quad (Bottom)
+	glVertex3f(0.0f, 0.0f, 1.0f);    // Top Left Of The Quad (Bottom)
+	glVertex3f(0.0f, 0.0f, 0.0f);    // Bottom Left Of The Quad (Bottom)
+	glVertex3f(1.0f, 0.0f, 0.0f);    // Bottom Right Of The Quad (Bottom)
+	
 	glColor3f(1.0f, 0.0f, 0.0f);    // Color Red    
 	glVertex3f(1.0f, 1.0f, 1.0f);    // Top Right Of The Quad (Front)
-	glVertex3f(-1.0f, 1.0f, 1.0f);    // Top Left Of The Quad (Front)
-	glVertex3f(-1.0f, -1.0f, 1.0f);    // Bottom Left Of The Quad (Front)
-	glVertex3f(1.0f, -1.0f, 1.0f);    // Bottom Right Of The Quad (Front)
+	glVertex3f(0.0f, 1.0f, 1.0f);    // Top Left Of The Quad (Front)
+	glVertex3f(0.0f, 0.0f, 1.0f);    // Bottom Left Of The Quad (Front)
+	glVertex3f(1.0f, 0.0f, 1.0f);    // Bottom Right Of The Quad (Front)
+	
 	glColor3f(1.0f, 1.0f, 0.0f);    // Color Yellow
-	glVertex3f(1.0f, -1.0f, -1.0f);    // Top Right Of The Quad (Back)
-	glVertex3f(-1.0f, -1.0f, -1.0f);    // Top Left Of The Quad (Back)
-	glVertex3f(-1.0f, 1.0f, -1.0f);    // Bottom Left Of The Quad (Back)
-	glVertex3f(1.0f, 1.0f, -1.0f);    // Bottom Right Of The Quad (Back)
+	glVertex3f(1.0f, 0.0f, 0.0f);    // Top Right Of The Quad (Back)
+	glVertex3f(0.0f, 0.0f, 0.0f);    // Top Left Of The Quad (Back)
+	glVertex3f(0.0f, 1.0f, 0.0f);    // Bottom Left Of The Quad (Back)
+	glVertex3f(1.0f, 1.0f, 0.0f);    // Bottom Right Of The Quad (Back)
+	
 	glColor3f(0.0f, 0.0f, 1.0f);    // Color Blue
-	glVertex3f(-1.0f, 1.0f, 1.0f);    // Top Right Of The Quad (Left)
-	glVertex3f(-1.0f, 1.0f, -1.0f);    // Top Left Of The Quad (Left)
-	glVertex3f(-1.0f, -1.0f, -1.0f);    // Bottom Left Of The Quad (Left)
-	glVertex3f(-1.0f, -1.0f, 1.0f);    // Bottom Right Of The Quad (Left)
+	glVertex3f(0.0f, 1.0f, 1.0f);    // Top Right Of The Quad (Left)
+	glVertex3f(0.0f, 1.0f, 0.0f);    // Top Left Of The Quad (Left)
+	glVertex3f(0.0f, 0.0f, 0.0f);    // Bottom Left Of The Quad (Left)
+	glVertex3f(0.0f, 0.0f, 1.0f);    // Bottom Right Of The Quad (Left)
+	
 	glColor3f(1.0f, 0.0f, 1.0f);    // Color Violet
-	glVertex3f(1.0f, 1.0f, -1.0f);    // Top Right Of The Quad (Right)
+	glVertex3f(1.0f, 1.0f, 0.0f);    // Top Right Of The Quad (Right)
 	glVertex3f(1.0f, 1.0f, 1.0f);    // Top Left Of The Quad (Right)
-	glVertex3f(1.0f, -1.0f, 1.0f);    // Bottom Left Of The Quad (Right)
-	glVertex3f(1.0f, -1.0f, -1.0f);    // Bottom Right Of The Quad (Right)
+	glVertex3f(1.0f, 0.0f, 1.0f);    // Bottom Left Of The Quad (Right)
+	glVertex3f(1.0f, 0.0f, 0.0f);    // Bottom Right Of The Quad (Right)
 	glEnd();            // End Drawing The Cube
 
 
@@ -429,7 +572,13 @@ void drawCamera(Camera *cam)
 	glm::vec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
 	glm::vec3 cameraForward = glm::normalize(glm::cross(cameraUp, cameraRight));
 
-	glm::mat4 initialCameraProjection = glm::perspective(glm::radians(fov), (float)1.33f, 0.1f, 8.0f);
+	// camara view add 180
+	auto mY = glm::rotate(glm::mat4(1.0f), (cam->camRot.y+180.0f) * (float)(M_PI / 180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	auto mX = glm::rotate(glm::mat4(1.0f), cam->camRot.x * (float)(M_PI / 180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+	cameraForward =  mY * mX * glm::vec4(cameraForward.x, cameraForward.y, cameraForward.z, 1.0f);
+
+	glm::mat4 initialCameraProjection = glm::perspective(glm::radians(fov), (float)1.33f, 0.1f, cam->camRange);
 
 	glm::mat4 initialCameraView = glm::lookAt(
 		cameraPos,
@@ -532,7 +681,11 @@ void drawCloudPoint(object3D& o, int width, int height)
 
 	glColor3f(1.0, 1.0, 1.0);
 	glEnable(GL_DEPTH_TEST);
-		glPointSize(width / 640);
+	glPointSize(width / 640);
+
+	
+
+
 
 	
 	glBegin(GL_POINTS);
@@ -583,13 +736,15 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
-	gluLookAt(0, 0, 0, 0, 0, 1, 0, -1, 0);
+	gluLookAt(0, 0, 0, 0, 0, 1, 0, 1, 0);
 
 	glTranslatef(viewPos.x, viewPos.y, viewPos.z);
 	glRotated(viewRot.x, 1, 0, 0);
 	glRotated(viewRot.y, 0, 1, 0);
 	glRotated(viewRot.z, 0, 0, 1);
 	glTranslatef(0, 0, -0.5f);
+
+	drawAxes();
 
 	glColor3f(1.0, 1.0, 1.0);
 	glEnable(GL_DEPTH_TEST);
@@ -616,13 +771,13 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F); // GL_CLAMP_TO_EDGE
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F); // GL_CLAMP_TO_EDGE
 	}
-	glBegin(GL_POINTS);
 
 	glm::mat4 m = glm::mat4(1);
 	
 
 	if (getScene()->cameras.size() > 0)
 	{
+		glBegin(GL_POINTS);
 
 		
 		/* this segment actually prints the pointcloud */
@@ -639,15 +794,20 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 
 		}
 
+		glEnd();
 
 		o.vertexes.clear();
 		o.tex_coords.clear();
 		o.colors.clear();
 	}
 
+	if (getScene()->heightMap.size() > 0)
+	{
+		renderHeightMap(getScene()->heightMap, getScene()->wm, getScene()->hm);
+	}
 
 	// OpenGL cleanup
-	glEnd();
+	
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();

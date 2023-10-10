@@ -16,6 +16,9 @@ public:
 	std::vector<glm::vec3> tex_coords;
 	std::vector<glm::vec3> colors;
 
+	glm::vec3 min, max;
+	void computeMinMax();
+
 };
 
 
@@ -48,6 +51,8 @@ public:
 	glm::vec3 viewRot = glm::vec3(0,0,0);
 
 	std::vector<Camera*> cameras;
+	std::vector<float> heightMap;
+	int hm = 0, wm = 0;
 	int camerasID = 0;
 	int selectedCamera = 0;
 
@@ -58,6 +63,8 @@ Scene* getScene();
 
 bool initScene(std::string inputJSONFile, bool verbose);
 void buildSceneJSON(std::string outputFile);
+
+void buildStateJSON(std::string outputFile);
 void drawCloudPoint(object3D& o, int width, int height);
 void drawScene(object3D& o, glm::vec3 viewPos, glm::vec3 viewRot, bool renderSceneBox, unsigned int tex, int width, int height);
 void drawCamera(Camera* cam);
