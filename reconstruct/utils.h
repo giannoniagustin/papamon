@@ -21,6 +21,8 @@ object3D readFromCSV(std::string filename);
 
 object3D readFromOBJ(std::string filename);
 
+std::string str_toupper(std::string s);
+
 
 void saveAsObj(object3D& o, std::string outputFile);
 

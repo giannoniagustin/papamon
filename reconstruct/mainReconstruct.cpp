@@ -3,7 +3,11 @@
 
 #include <librealsense2/rs.hpp> // Include RealSense Cross Platform API
 
-#include <algorithm>            // std::min, std::max
+#include <iostream>     // std::cout
+#include <algorithm>    // std::transform
+#include <vector>       // std::vector
+#include <functional>   // std::plus
+#include <cctype>
 
 #ifdef RENDER3D
 #include "example.hpp"          // Include short list of convenience functions for rendering
@@ -30,8 +34,11 @@
 #define M_PI 3.14156
 int time_elaps = 0;
 
+/// Wizard parameters
 bool renderSceneBox = true;
-
+int wizardStage = 0;
+int nCameras = 0;
+bool finishRender = false;
 
 // Construct an object to manage view state
 #ifdef RENDER3D
@@ -43,6 +50,12 @@ texture tex;
 // Declare RealSense pipeline, encapsulating the actual device and sensors
 rs2::pipeline pipe;
 rs2::align align_to_depth(RS2_STREAM_DEPTH);
+
+// Declare pointcloud object, for calculating pointclouds and texture mappings
+rs2::pointcloud pc;
+// We want the points object to be persistent so we can display the last cloud when a frame drops
+rs2::points points;
+
 /// 
 glm::mat4 UpdateModelMatrix(glm::vec3 Translation, glm::vec3 euler)
 {
@@ -92,7 +105,92 @@ object3D mergeAll3DData()
 // Helper functions
 void register_glfw_callbacks(window& app, glfw_state& app_state);
 
+bool renderCameraParameters(Camera* cam, int wW, int wH)
+{
+    std::string s = cam->name;
+    bool changed = false;
 
+    ImGui::BeginChild(s.c_str(), ImVec2((float)wW, (float)wH), true, 0);
+    {
+
+        ImGui::Text(" CAMERA PARAMETERS ");
+
+        ImGui::Checkbox("Visible", &cam->is_visible);
+       
+        if (ImGui::SliderFloat("CamPosX", &cam->camPos.x, -2.0f, 10.0f)) { changed = true; }
+        if (ImGui::SliderFloat("CamPosY", &cam->camPos.y, -2.0f, 10.0f)) { changed = true; }
+        if (ImGui::SliderFloat("CamPosZ", &cam->camPos.z, -2.0f, 10.0f)) { changed = true; }
+        if (ImGui::SliderFloat("PITCH", &cam->camRot.x, -180.0f, 180.0f)) { changed = true; }
+        if (ImGui::SliderFloat("YAW", &cam->camRot.y, -180.0f, 180.0f)) { changed = true; }
+        if (ImGui::SliderFloat("ROLL", &cam->camRot.z, -180.0f, 180.0f)) { changed = true; }
+        if (ImGui::SliderFloat("CamRange", &cam->camRange, 0.10f, 10.0f)) { changed = true; }
+
+
+
+
+        ImGui::EndChild();
+    }
+
+    return changed;
+}
+
+bool renderSceneParameters()
+{
+    if (ImGui::Button("UpView"))
+    {
+        // initial position
+        getScene()->viewRot.x = -90;
+        getScene()->viewRot.y = -180;
+        getScene()->viewRot.z = 0;
+
+        getScene()->viewPos.x = getScene()->roomSize.x / 2;
+        getScene()->viewPos.z = std::max(getScene()->roomSize.x, getScene()->roomSize.z);
+        getScene()->viewPos.y = getScene()->roomSize.z / 2;
+    }
+    ImGui::SameLine();
+
+    if (ImGui::Button("CamView"))
+    {
+        if (getScene()->selectedCamera)
+        {
+            // initial position
+            getScene()->viewRot = getScene()->selectedCamera->camRot;         
+
+            getScene()->viewPos = -getScene()->selectedCamera->camPos;
+          
+        }
+    }
+
+    float roomsizeX = getScene()->roomSize.x;
+    float roomsizeY = getScene()->roomSize.y;
+    float roomsizeZ = getScene()->roomSize.z;
+
+    bool changed = false;
+    if (ImGui::SliderFloat("RoomSizeX", &roomsizeX, 0.50f, 30.0f)) { changed = true; }
+    if (ImGui::SliderFloat("RoomSizeY", &roomsizeY, 0.50f, 30.0f)) { changed = true; }
+    if (ImGui::SliderFloat("RoomSizeZ", &roomsizeZ, 0.50f, 30.0f)) { changed = true; }
+
+    if (changed) getScene()->roomSize = glm::vec3(roomsizeX, roomsizeY, roomsizeZ);
+
+
+    ImGui::SliderInt("ResolutionX", &getScene()->hm, 2, 50);
+    ImGui::SliderInt("ResolutionZ", &getScene()->wm, 2, 50);
+
+    ImGui::Separator();
+    ImGui::Separator();
+
+
+    ImGui::SliderFloat("ViewPosX", &getScene()->viewPos.x, -20.0f, 20.0f);
+    ImGui::SliderFloat("ViewPosY", &getScene()->viewPos.y, -20.0f, 20.0f);
+    ImGui::SliderFloat("ViewPosZ", &getScene()->viewPos.z, -20.0f, 20.0f);
+
+    ImGui::SliderFloat("ViewRotX", &getScene()->viewRot.x, -180.0f, 180.0f);
+    ImGui::SliderFloat("ViewRotY", &getScene()->viewRot.y, -180.0f, 180.0f);
+    ImGui::SliderFloat("ViewRotZ", &getScene()->viewRot.z, -180.0f, 180.0f);
+
+    return true;
+}
+/// Common UI for configurating View
 void render_ui(float w, float h, object3D& o)
 {
     // Flags for displaying ImGui window
@@ -105,12 +203,13 @@ void render_ui(float w, float h, object3D& o)
 
     ImGui_ImplGlfw_NewFrame(1);
     ImGui::SetNextWindowSize({ w, h });
-    ImGui::Begin("app", nullptr, flags);
+   
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     ImGui::Begin("Configuration", nullptr, 0);
     {
         ImGui::Checkbox("RenderSceneBox", &renderSceneBox);
+        ImGui::Checkbox("RenderHeightMap", &getScene()->renderHeightMap);
         if (ImGui::Button("save configuration"))
         {
             buildSceneJSON("cameras.json");
@@ -122,32 +221,8 @@ void render_ui(float w, float h, object3D& o)
         }
 
         ImGui::Separator();        ImGui::Separator();
-        float roomsizeX = getScene()->roomSize.x;
-        float roomsizeY = getScene()->roomSize.y;
-        float roomsizeZ = getScene()->roomSize.z;
-
-        bool changed = false;
-        if (ImGui::SliderFloat("RoomSizeX", &roomsizeX, 0.50f, 20.0f)) { changed = true; }
-        if (ImGui::SliderFloat("RoomSizeY", &roomsizeY, 0.50f, 20.0f)) { changed = true; }
-        if (ImGui::SliderFloat("RoomSizeZ", &roomsizeZ, 0.50f, 20.0f)) { changed = true; }
-
-        if (changed) getScene()->roomSize = glm::vec3(roomsizeX, roomsizeY, roomsizeZ);
-
         
-        ImGui::SliderInt("ResolutionX", &getScene()->hm, 2, 50);
-        ImGui::SliderInt("ResolutionZ", &getScene()->wm, 2, 50);
-
-        ImGui::Separator();
-        ImGui::Separator();
-
-
-        ImGui::SliderFloat("ViewPosX", &getScene()->viewPos.x, -2.0f, 10.0f);
-        ImGui::SliderFloat("ViewPosY", &getScene()->viewPos.y, -2.0f, 10.0f);
-        ImGui::SliderFloat("ViewPosZ", &getScene()->viewPos.z, -2.0f, 10.0f);
-
-        ImGui::SliderFloat("ViewRotX", &getScene()->viewRot.x, -180.0f, 180.0f);
-        ImGui::SliderFloat("ViewRotY", &getScene()->viewRot.y, -180.0f, 180.0f);
-        ImGui::SliderFloat("ViewRotZ", &getScene()->viewRot.z, -180.0f, 180.0f);
+        renderSceneParameters();
 
         ImGui::Separator();        ImGui::Separator();
         if (ImGui::Button("New camera"))
@@ -161,7 +236,8 @@ void render_ui(float w, float h, object3D& o)
             ImGui::SameLine();
             if (ImGui::Button(cam->name.c_str()))
             {
-                getScene()->selectedCamera = index;
+                getScene()->selectedCamera = cam; 
+                getScene()->selectedCameraIndex = index;
                
             }
 
@@ -170,33 +246,11 @@ void render_ui(float w, float h, object3D& o)
         }
 
         //for (auto cam :  getScene()->cameras)
-        auto cam = getScene()->cameras[getScene()->selectedCamera];
+        auto cam = getScene()->selectedCamera;
+        if (cam)
         {
-            
-            std::string s = cam->name;
-
-            ImGui::BeginChild(s.c_str(), ImVec2(400, 280), true,0);
-            {
-
-                        ImGui::Text(" CAMERA PARAMETERS ");
-                        changed = false;
-                        if (ImGui::SliderFloat("CamPosX", &cam->camPos.x, -2.0f, 10.0f)) { changed = true; }
-                        if (ImGui::SliderFloat("CamPosY", &cam->camPos.y, -2.0f, 10.0f)) { changed = true; }
-                        if (ImGui::SliderFloat("CamPosZ", &cam->camPos.z, -2.0f, 10.0f)) { changed = true; }
-                        if (ImGui::SliderFloat("PITCH", &cam->camRot.x, -180.0f, 180.0f)) { changed = true; }
-                        if (ImGui::SliderFloat("YAW", &cam->camRot.y, -180.0f, 180.0f)) { changed = true; }
-                        if (ImGui::SliderFloat("ROLL", &cam->camRot.z, -180.0f, 180.0f)) { changed = true; }
-                        if (ImGui::SliderFloat("CamRange", &cam->camRange, 0.10f, 10.0f)) { changed = true; }
-                       
-
-
-               
-            ImGui::EndChild();
-        }
+            renderCameraParameters(cam, 400, 280);
 		}
-
-	
-
 	
 		ImGui::End();
 
@@ -204,13 +258,118 @@ void render_ui(float w, float h, object3D& o)
 
 	}
 
-    ImGui::End();
     ImGui::Render();
 
     for (auto cam : getScene()->cameras) cam->is_enabled = false;
-    getScene()->cameras[getScene()->selectedCamera]->is_enabled = true;
+
+    if (getScene()->selectedCamera)   getScene()->selectedCamera->is_enabled = true;
 }
 
+/// Render UI for configurating View
+void render_wizard_ui(float w, float h, object3D& o)
+{
+    // Flags for displaying ImGui window
+    static const int flags = ImGuiWindowFlags_NoCollapse
+        | ImGuiWindowFlags_NoScrollbar
+        | ImGuiWindowFlags_NoSavedSettings
+        | ImGuiWindowFlags_NoTitleBar
+        | ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoMove;
+
+    ImGui_ImplGlfw_NewFrame(1);
+
+ 
+    ImGui::SetWindowFontScale(1.2f);
+
+    ImGui::Begin("SCENE", nullptr,  0);
+    renderSceneParameters();
+    ImGui::End();
+
+    ImGui::Begin("WIZARD", nullptr,  0);
+    {
+        ImGui::Checkbox("RenderSceneBox", &renderSceneBox);
+        ImGui::Checkbox("RenderHeightMap", &getScene()->renderHeightMap);
+        
+        ImGui::Separator();
+
+        for (int i=0;i<getScene()->cameras.size() + 2; i++)
+        {
+            ImGui::SameLine();
+            std::string mess;
+
+            if (i == 0) mess = "Start";
+            else if (i == getScene()->cameras.size() + 1) mess = "End";
+            else mess = "cam" + std::to_string(i - 1);
+
+            if (wizardStage == i)
+            {               
+                mess = str_toupper(mess);
+            }
+            
+            if (ImGui::Button(mess.c_str()))
+            {
+                wizardStage = i;
+            }
+        }
+
+        if (wizardStage == 0)
+        {
+            ImGui::BeginChild("end", ImVec2(350, 250), true, 0);
+
+            ImGui::InputInt("#cameras", &nCameras);
+
+           
+            ImGui::SameLine();
+            if (ImGui::Button("OK"))
+            {
+                getScene()->cameras.clear();
+                for (int i = 0; i < nCameras; i++)
+                {
+                    getScene()->cameras.push_back(new Camera("cam" + std::to_string(i), ""));
+                }
+            }
+
+            ImGui::EndChild();
+        }
+        else
+        if (wizardStage == nCameras+1)
+        {
+            ImGui::BeginChild("end", ImVec2(350, 250), true, 0);
+            {
+                if (ImGui::Button("Save Cfg"))
+                {
+                    buildSceneJSON("cameras.json");
+                }
+                
+                if (ImGui::Button("Finish"))
+                {
+                    finishRender = true;
+                }
+            }
+            ImGui::EndChild();
+        }
+        else
+        {
+            getScene()->selectedCamera = getScene()->cameras[wizardStage - 1];
+            renderCameraParameters(getScene()->selectedCamera,  350, 250);
+        }
+
+        ImGui::Separator();
+        if (ImGui::Button("<<")) { wizardStage = std::max(wizardStage - 1, 0); } ImGui::SameLine();
+        if (ImGui::Button(">>")) { wizardStage = std::min(wizardStage + 1, nCameras+2); } ImGui::SameLine();
+       
+     
+
+    }
+    ImGui::End();
+
+
+    ImGui::Render();
+
+    for (auto cam : getScene()->cameras) cam->is_enabled = false;
+
+    if (getScene()->selectedCamera)   getScene()->selectedCamera->is_enabled = true;
+}
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -240,14 +399,8 @@ std::vector<float> computeHeightMap(object3D& o,int wm, int hm)
 
 void updateCamera(Camera* cam)
 {
-    // Declare pointcloud object, for calculating pointclouds and texture mappings
-    rs2::pointcloud pc;
-    // We want the points object to be persistent so we can display the last cloud when a frame drops
-    rs2::points points;
-
     // get LIVE camera
-    
-
+ 
     {
         // Wait for the next set of frames from the camera
         auto frames = pipe.wait_for_frames();
@@ -301,16 +454,182 @@ void readDataFromFile(Camera* cam, std::string srcDir)
 }
 
 /// //////////////////////////////////////
+void Wizard(std::string inputDir)
+{
+    // Create a simple OpenGL window for rendering:
+    window app(1280, 720, "Papamon - 3D Viewer");
+    ImGui_ImplGlfw_Init(app, false);
+    // Setup Platform/Renderer bindings
+
+    // register callbacks to allow manipulation of the pointcloud
+    register_glfw_callbacks(app, app_state);
+
+    // Start streaming with default recommended configuration
+    pipe.start();
+
+    getScene()->cameras.clear();
+
+    getScene()->renderHeightMap = false;
+
+    
+    Camera* live_cam = NULL;
+    int frameIndex = 0;
+
+    // initial position
+    getScene()->viewRot.x = -90;
+    getScene()->viewRot.y = -180;
+    getScene()->viewRot.z = 0;
+
+    getScene()->viewPos.x = getScene()->roomSize.x/2;
+    getScene()->viewPos.z = 10;
+    getScene()->viewPos.y = getScene()->roomSize.z/2;
+    
+
+
+    while (app && !finishRender) // Application still alive?
+    {
+
+
+        float w = static_cast<float>(app.width());
+        float h = static_cast<float>(app.height());
+
+        if (getScene()->selectedCamera != NULL)
+        {
+            live_cam = getScene()->selectedCamera;
+            updateCamera(live_cam);
+        }
+        object3D o = mergeAll3DData();
+
+        std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
+
+        getScene()->heightMap.swap(heights);
+
+        // render scene
+        drawScene(o, getScene()->viewPos, getScene()->viewRot, true, 0, (int)w, (int)h);
+
+        // render ui
+        render_wizard_ui(200, 200, o);
+        
+        o.vertexes.clear();
+        o.tex_coords.clear();
+        o.colors.clear();
+
+        frameIndex++;
+
+    }
+}
+
+
+bool Configurator(bool useLiveCamera, std::string inputDir)
+{
+    try
+    {
+        // Create a simple OpenGL window for rendering:
+        window app(1280, 720, "Papamon - 3D Viewer");
+        ImGui_ImplGlfw_Init(app, false);
+        // Setup Platform/Renderer bindings
+
+        // register callbacks to allow manipulation of the pointcloud
+        register_glfw_callbacks(app, app_state);
+
+        // Start streaming with default recommended configuration
+        pipe.start();
+
+        Camera* live_cam = NULL;
+        if (useLiveCamera)
+        {
+            live_cam = new Camera("live", "1");
+            getScene()->cameras.push_back(live_cam);
+
+        }
+
+
+        int frameIndex = 0;
+
+        while (app && !finishRender) // Application still alive?
+        {
+            float w = static_cast<float>(app.width());
+            float h = static_cast<float>(app.height());
+
+            if (live_cam)
+            {
+                updateCamera(live_cam);
+            }
+            object3D o = mergeAll3DData();
+
+            std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
+
+            getScene()->heightMap.swap(heights);
+
+            // render scene
+            drawScene(o, getScene()->viewPos, getScene()->viewRot, true, 0, (int)w, (int)h);
+
+            // render ui
+            render_ui(200, 200, o);
+
+            if (frameIndex % 100 == 0)
+            {
+                saveAsObj(o, inputDir + "merged.obj");
+                buildStateJSON(inputDir + "state.json");
+            }
+
+            o.vertexes.clear();
+            o.tex_coords.clear();
+            o.colors.clear();
+
+            frameIndex++;
+
+        }
+    }
+    catch (const std::exception& e)
+    {
+
+        std::cout << "Failed to reconstruct scene" << e.what() << "\n";
+        return false;
+    }
+}
 /// //////////////////////////////////////
+/// 
+
+bool Reconstruct(std::string inputDir)
+{
+    try
+    {
+        // read data from camera
+        std::cout << "Merge points  \n";
+        object3D o = mergeAll3DData();
+
+        std::cout << "Compute Heightmap  \n";
+
+        std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
+
+        getScene()->heightMap.swap(heights);
+
+        std::cout << "Save as OBJ  \n";
+        saveAsObj(o, inputDir + "merged.obj");
+
+        std::cout << "Save STATE  \n";
+        buildStateJSON(inputDir + "state.json");
+    }
+    catch (const std::exception& e)
+    {
+
+        std::cout << "Failed to reconstruct scene" << e.what() << "\n";
+        return false;
+    }
+}
+
 
 int main(int argc, char* argv[]) try
 {
     /////////////////////////////////////////////////////
-    std::cout << "Project Reconstruct 10Oct2023" << "\n";
+    std::cout << "Project Reconstruct 14Oct2023" << "\n";
 
     bool showOutput = false;
     std::string inputDir = "";
     bool useLiveCamera = false;
+    bool runWizard = false;
+    bool verbose = false;
 
     if (argc > 1)
     {
@@ -332,20 +651,42 @@ int main(int argc, char* argv[]) try
             {
                 useLiveCamera = true;
             }
+
+
+            if (std::string(argv[i]) == "-wizard")
+            {
+                runWizard = true;
+            }
+
+            if (std::string(argv[i]) == "-verbose")
+            {
+                verbose = true;
+            }
         }
     }
 
+    // Load scene
     try
     {
         std::cout << "Reading cameras info " << "\n";
 
-        initScene("cameras.json", true);
+        if (!std::filesystem::exists("cameras.json"))
+        {
+            std::cout << "Cameras.json not found . Now eXIT " << "\n";
+            return -1;
+        }
+
+        initScene("cameras.json", verbose);
+        std::cout << "Camera info  read OK" << "\n";
 
         std::cout << "Getting 3D points from files \n";
         for (int i = 0; i < getScene()->cameras.size(); i++)
         {
             readDataFromFile(getScene()->cameras[i], inputDir + "/"+ std::to_string(i+1) + "/");
         }
+
+        std::cout << "3D points info  read OK" << "\n";
+
         getScene()->hm = 10;
         getScene()->wm = 10;
     }
@@ -356,124 +697,28 @@ int main(int argc, char* argv[]) try
         return false;
     }
 
-
+    /// Run different modes
+    if (runWizard)
+    {
+        std::cout << "RUNNING IN WIZARD MODE " << "\n";
+        Wizard(inputDir);
+    }
+    else
     if (showOutput)
     {
 
 #ifdef RENDER3D
-        try
-        {
-            // Create a simple OpenGL window for rendering:
-            window app(1280, 720, "Papamon - 3D Viewer");
-            ImGui_ImplGlfw_Init(app, false);
-            // Setup Platform/Renderer bindings
-
-
-            // register callbacks to allow manipulation of the pointcloud
-            register_glfw_callbacks(app, app_state);
-
-            // Declare pointcloud object, for calculating pointclouds and texture mappings
-            rs2::pointcloud pc;
-            // We want the points object to be persistent so we can display the last cloud when a frame drops
-            rs2::points points;
-
-
-            // Start streaming with default recommended configuration
-            pipe.start();
-
-
-            Camera* live_cam = NULL;
-            if (useLiveCamera)
-            {
-                live_cam = new Camera("live", "1");
-                getScene()->cameras.push_back(live_cam);
-     
-            }
-
-
-            int frameIndex = 0;
-
-            while (app) // Application still alive?
-            {
-                float w = static_cast<float>(app.width());
-                float h = static_cast<float>(app.height());
-
-                if (live_cam)
-                {
-                    updateCamera(live_cam);
-                }
-                object3D o = mergeAll3DData();
-
-                std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
-
-                getScene()->heightMap.swap( heights);
-               
-
-
-                // render scene
-                drawScene(o, getScene()->viewPos, getScene()->viewRot, true, tex.get_gl_handle(), w, h);
-            
-                // render ui
-                render_ui(200, 200,o);
-
-                if (frameIndex % 100 == 0)
-                {
-                    saveAsObj(o, inputDir + "merged.obj");
-                    buildStateJSON(inputDir + "state.json");
-                }
-
-                o.vertexes.clear();
-                o.tex_coords.clear();
-                o.colors.clear();
-
-                frameIndex++;
-
-            }
-        }
-        catch (const std::exception& e)
-        {
-
-            std::cout << "Failed to reconstruct scene" << e.what() << "\n";
-            return false;
-        }
+        std::cout << "RUNNING IN ONLINE CONFIGURATION MODE " << "\n";
+        Configurator(useLiveCamera, inputDir);
 #else
     std::cout << "Visualization not supported" << "\n";
 #endif
-        return EXIT_SUCCESS;
+        
     }
     else
     {
-        try
-        {
-            
-            // read data from camera
-            
-
-            std::cout << "Merge points  \n";
-            object3D o = mergeAll3DData();
-
-            std::cout << "Compute Heightmap  \n";
-            std::vector<float> heights = computeHeightMap(o, 10, 10);
-
-            getScene()->heightMap.swap(heights);
-            getScene()->hm = 10;
-            getScene()->wm = 10;
-
-
-
-            std::cout << "Save as OBJ  \n";
-            saveAsObj(o, inputDir + "merged.obj");
-
-            std::cout << "Save STATE  \n";
-            buildStateJSON(inputDir + "state.json");
-        }
-        catch (const std::exception& e)
-        {
-
-            std::cout << "Failed to reconstruct scene" << e.what() << "\n";
-            return false;
-        }
-
+        std::cout << "RUNNING RECONSTRUCTION WITHOUT UI " << "\n";
+        Reconstruct(inputDir);
     }
 
 return EXIT_SUCCESS;

@@ -35,6 +35,7 @@ public:
 	glm::vec3 camRot = { 0.0f, 0.0f, 0.0f };
 
 	bool is_enabled = false;
+	bool is_visible = true;
 	float camRange = 5.0;
 
 	object3D o;
@@ -52,9 +53,12 @@ public:
 
 	std::vector<Camera*> cameras;
 	std::vector<float> heightMap;
-	int hm = 0, wm = 0;
+	bool renderHeightMap = true;
+	// default resolution 10
+	int hm = 10, wm = 10;
 	int camerasID = 0;
-	int selectedCamera = 0;
+	int selectedCameraIndex = 0;
+	Camera* selectedCamera = NULL;
 
 };
 

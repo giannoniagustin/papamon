@@ -682,11 +682,6 @@ void drawCloudPoint(object3D& o, int width, int height)
 	glColor3f(1.0, 1.0, 1.0);
 	glEnable(GL_DEPTH_TEST);
 	glPointSize(width / 640);
-
-	
-
-
-
 	
 	glBegin(GL_POINTS);
 
@@ -715,6 +710,9 @@ void drawCloudPoint(object3D& o, int width, int height)
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glPopAttrib();
+
+	glColor3f(1.0, 1.0, 1.0);
+
 }
 
 // Handles all the OpenGL calls needed to display the point cloud
@@ -756,8 +754,13 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 
 	for (auto cam : getScene()->cameras)
 	{
+		
 		glLineWidth(1.0f);
-		drawCamera(cam);
+		
+		if (cam->is_visible)
+		{
+			drawCamera(cam);
+		}
 	}
 
 	glPointSize(width / 640);
@@ -774,6 +777,7 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 
 	glm::mat4 m = glm::mat4(1);
 	
+	glColor3f(1.0, 1.0, 1.0);
 
 	if (getScene()->cameras.size() > 0)
 	{
@@ -800,8 +804,9 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 		o.tex_coords.clear();
 		o.colors.clear();
 	}
+	glColor3f(1.0, 1.0, 1.0);
 
-	if (getScene()->heightMap.size() > 0)
+	if (getScene()->heightMap.size() > 0 && getScene()->renderHeightMap)
 	{
 		renderHeightMap(getScene()->heightMap, getScene()->wm, getScene()->hm);
 	}

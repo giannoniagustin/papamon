@@ -23,6 +23,7 @@
 void register_glfw_callbacks(window& app, glfw_state& app_state);
 #endif
 
+
 class imageData
 {
 public:
@@ -32,6 +33,41 @@ public:
     int stride_data;
 
 };
+
+////////////////////////////
+// GLOBAL VARS
+
+// Declare depth colorizer for pretty visualization of depth data
+rs2::colorizer color_map;
+
+// Declare pointcloud object, for calculating pointclouds and texture mappings
+rs2::pointcloud pc;
+// We want the points object to be persistent so we can display the last cloud when a frame drops
+rs2::points points;
+
+// Declare RealSense pipeline, encapsulating the actual device and sensors
+rs2::pipeline pipe;
+
+// Declare filters
+rs2::decimation_filter dec_filter;  // Decimation - reduces depth frame density
+rs2::threshold_filter thr_filter;   // Threshold  - removes values outside recommended range
+rs2::spatial_filter spat_filter;    // Spatial    - edge-preserving spatial smoothing
+rs2::temporal_filter temp_filter;   // Temporal   - reduces temporal noise
+rs2::align align_to_depth(RS2_STREAM_DEPTH);
+
+
+// Declaring two concurrent queues that will be used to enqueue and dequeue frames from different threads
+rs2::frame_queue original_data;
+rs2::frame_queue filtered_data;
+
+// Initialize a vector that holds filters and their options
+std::map<std::string, rs2::filter* > filters;
+imageData* filtered_depth = NULL;
+imageData* color_frame = NULL;
+
+object3D o;
+
+
 
 ///
 void setImageDataDepth(imageData* iD, rs2::depth_frame f)
@@ -52,7 +88,7 @@ void setImageDataDepth(imageData* iD, rs2::depth_frame f)
     for (int i = 0; i < dataSize; i++)
         iD->data[i] = data[i];
 }
-
+///////////////////////////////////////////////////////////////////
 void setImageDataColor(imageData* iD, rs2::video_frame f)
 {
     iD->w = f.get_width();
@@ -72,6 +108,8 @@ void setImageDataColor(imageData* iD, rs2::video_frame f)
         iD->data[i] = data[i];
 }
 
+/////////////////////////////////////////////////////////////////////////
+
 
 // This sample captures 30 frames and writes the last frame to disk.
 // It can be useful for debugging an embedded system with no display.
@@ -80,6 +118,8 @@ int main(int argc, char* argv[]) try
     std::cout << "Project PapaMon 10Oct2023" << "\n";
 
     bool demoMode = false;
+
+    std::string instanceID = "0";
 
    
     std::string outputDir = "";
@@ -104,6 +144,14 @@ int main(int argc, char* argv[]) try
                 outputDir = argv[i+1];
                 std::cout << "Using path " << outputDir << "\n";
             }
+
+            if (std::string(argv[i]) == "-id")
+            {
+                instanceID = argv[i + 1];
+                std::cout << "Setting ID " << instanceID << "\n";
+            }
+
+
         }
     }
 
@@ -113,12 +161,19 @@ int main(int argc, char* argv[]) try
 
         
         std::string destination = outputDir;
-        std::filesystem::path sourceFileRGB = "rgb.png";
-        std::filesystem::path sourceFileDEPTH = "depth.png";
-        std::filesystem::path sourceFilePOINTS = "points.csv";
-        std::filesystem::path targetParent = destination;
+        std::filesystem::path sourceFileRGB = "./demo/"+ instanceID +"/rgb.png";
+        std::filesystem::path sourceFileDEPTH = "./demo/" + instanceID + "/depth.png";
+        std::filesystem::path sourceFilePOINTS = "./demo/" + instanceID + "/points.csv";
+
+        if (!std::filesystem::exists(sourceFileRGB) || !std::filesystem::exists(sourceFileDEPTH) || !std::filesystem::exists(sourceFilePOINTS))
+        {
+            std::cout << "Source files for demo " << sourceFileRGB << " were not found. Now EXIT" << "\n";
+            return -1;
+        }
+
+        std::filesystem::path targetParent = destination + "/" + instanceID + "/";
         auto targetRGB = targetParent / sourceFileRGB.filename();
-        auto targetDEPTH = targetParent / sourceFilePOINTS.filename();
+        auto targetDEPTH = targetParent / sourceFileDEPTH.filename();
         auto targetPOINTS = targetParent / sourceFilePOINTS.filename();
 
         try
@@ -134,9 +189,22 @@ int main(int argc, char* argv[]) try
             std::cout << e.what();
         }
 
+
+        if (std::filesystem::exists(targetRGB) && std::filesystem::exists(targetDEPTH) && std::filesystem::exists(targetPOINTS))
+        {
+            std::cout <<  " Files were create OK. Now EXIT" << "\n";
+            return 1;
+        }
+        else
+        {
+            std::cout << " One of the files could not be created. Now EXIT" << "\n";
+            return -1;
+        }
+
+
     }
 
-
+     
     try
     {
         std::filesystem::create_directories(outputDir); // Recursively create the target directory path if it does not exist.
@@ -147,33 +215,10 @@ int main(int argc, char* argv[]) try
         std::cout << e.what();
     }
 
-    // Declare depth colorizer for pretty visualization of depth data
-    rs2::colorizer color_map;
-
-    // Declare pointcloud object, for calculating pointclouds and texture mappings
-    rs2::pointcloud pc;
-    // We want the points object to be persistent so we can display the last cloud when a frame drops
-    rs2::points points;
-
-    // Declare RealSense pipeline, encapsulating the actual device and sensors
-    rs2::pipeline pipe;
+   
     // Start streaming with default recommended configuration
     pipe.start();
 
-    // Declare filters
-    rs2::decimation_filter dec_filter;  // Decimation - reduces depth frame density
-    rs2::threshold_filter thr_filter;   // Threshold  - removes values outside recommended range
-    rs2::spatial_filter spat_filter;    // Spatial    - edge-preserving spatial smoothing
-    rs2::temporal_filter temp_filter;   // Temporal   - reduces temporal noise
-    rs2::align align_to_depth(RS2_STREAM_DEPTH);
-  
-    
-    // Declaring two concurrent queues that will be used to enqueue and dequeue frames from different threads
-    rs2::frame_queue original_data;
-    rs2::frame_queue filtered_data;
-
-    // Initialize a vector that holds filters and their options
-    std::map<std::string, rs2::filter* > filters;
 
     // The following order of emplacement will dictate the orders in which filters are applied
     filters["Decimate"] = &dec_filter;
@@ -189,13 +234,12 @@ int main(int argc, char* argv[]) try
     std::cout << "Ready for capturing frames" << "\n";
 
    
-    imageData* filtered_depth = NULL;
-    imageData* color_frame = NULL;
+  
 
-    object3D o;
+    int maxFrames = 2000;
 
-    int maxFrames = 2;
-
+   
+     // only process
     if (!showOutput)
     {
         try
@@ -347,7 +391,7 @@ int main(int argc, char* argv[]) try
 
                 // Draw the pointcloud
                 //draw_pointcloud(app.width(), app.height(), app_state, points);
-                drawCloudPoint(o, app.width(), app.height());
+                drawCloudPoint(o, (int)app.width(), (int)app.height());
 
                 frameIndex++;
 

@@ -13,6 +13,16 @@ void splits(const std::string& s, char delim, Out result) {
     }
 }
 
+std::string str_toupper(std::string s)
+{
+    std::transform(s.begin(), s.end(), s.begin(),
+        // static_cast<int(*)(int)>(std::toupper)         // wrong
+        // [](int c){ return std::toupper(c); }           // wrong
+        // [](char c){ return std::toupper(c); }          // wrong
+        [](unsigned char c) { return std::toupper(c); } // correct
+    );
+    return s;
+}
 
 void getOBJFromFrameSet(object3D& o, rs2::video_frame& color, rs2::points& points)
 {
