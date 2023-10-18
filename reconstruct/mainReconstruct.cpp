@@ -456,6 +456,7 @@ void readDataFromFile(Camera* cam, std::string srcDir)
 /// //////////////////////////////////////
 void Wizard(std::string inputDir)
 {
+#ifdef RENDER3D
     // Create a simple OpenGL window for rendering:
     window app(1280, 720, "Papamon - 3D Viewer");
     ImGui_ImplGlfw_Init(app, false);
@@ -517,6 +518,9 @@ void Wizard(std::string inputDir)
         frameIndex++;
 
     }
+#else
+    std::cout << "Not compiled with RENDER 3D mode" << "\n";
+#endif
 }
 
 
@@ -570,7 +574,7 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
             if (frameIndex % 100 == 0)
             {
                 saveAsObj(o, inputDir + "merged.obj");
-                buildStateJSON(inputDir + "state.json");
+                buildStateJSON(inputDir + "reconstruction.json");
             }
 
             o.vertexes.clear();
@@ -609,7 +613,7 @@ bool Reconstruct(std::string inputDir)
         saveAsObj(o, inputDir + "merged.obj");
 
         std::cout << "Save STATE  \n";
-        buildStateJSON(inputDir + "state.json");
+        buildStateJSON(inputDir + "reconstruction.json");
     }
     catch (const std::exception& e)
     {
