@@ -526,6 +526,7 @@ void Wizard(std::string inputDir)
 
 bool Configurator(bool useLiveCamera, std::string inputDir)
 {
+#ifdef RENDER3D
     try
     {
         // Create a simple OpenGL window for rendering:
@@ -591,6 +592,9 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
         std::cout << "Failed to reconstruct scene" << e.what() << "\n";
         return false;
     }
+#else
+    std::cout << "Configurator : Not compiled with RENDER 3D mode" << "\n";
+#endif
 }
 /// //////////////////////////////////////
 /// 
