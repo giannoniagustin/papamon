@@ -10,17 +10,24 @@ class StatusRaspberiesController:
         try:
             mapper = StatusRaspberiesMapper()
             content = mapper.toJson(newStatus)
-            File.FileUtil.writeFile(Paths.STATUS_RASPBERIES,content=content)
+            if ( File.FileUtil.writeFile(Paths.STATUS_RASPBERIES,content=content)):
+                print("Update status successfully. ")
+            else:
+                print("Update status error ")
         except FileNotFoundError as e:
                 print("An error occurred when StatusRaspberies updating:", e)
                 raise
         except IOError as e:
+        # Manejar otras excepciones de I/O aquí
+                print("An error occurred when StatusRaspberies updating:", e)
+                raise
+        ''' except IOError as e:
                 raise
         except Exception as e:
                 print("An error occurred when StatusRaspberies updating:", e)
                 raise
         else:
-                print("Update status successfully. ")
+                print("Update status successfully. ")'''
     @staticmethod
     def get()->List[StatusSlave]:
             fileData={}

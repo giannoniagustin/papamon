@@ -26,9 +26,8 @@ class FileUtil:
             print('File path write: '+file_path)
             with open(file_path, 'w') as file:
                 file.write(content)
-            return True
+                return True
          except FileNotFoundError as e:
-                
                 print("An error File Not Found", e)
                 return False
          except IOError as e:
