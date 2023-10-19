@@ -48,6 +48,7 @@ def scheduler():
     SchedulerMapper().toJson(scheduler)
     schedulerController = SchedulerController()
     schedulerController.update(scheduler)
+    
     #print(schedulerController.get())
 def job():
     print(f"I'm working... {datetime.datetime.now()}")
@@ -67,7 +68,7 @@ if __name__ == "__main__":
     # El proceso principal puede seguir ejecutando otras tareas aquí
     # Espera a que el proceso secundario termine (esto podría no ser necesario dependiendo de tus requerimientos)
     initApp()
-    ProcessController.run(proccesRun=processCheckStatus)
+   # ProcessController.run(proccesRun=processCheckStatus)
     #checkStatus()
     
     Api.app.run(host='0.0.0.0', port=6000)
