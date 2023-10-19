@@ -1,2 +1,7 @@
 __pycache__/
 .vscode/
+# Ignorar archivos y directorios específicos (reemplaza "nombre_archivo_o_directorio" con los nombres reales)
+statusRaspberies.json
+raspberry.json
+scheduler.json
+me.json
