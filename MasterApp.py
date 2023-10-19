@@ -1,6 +1,8 @@
 from controllers.MasterController import MasterController
 from controllers.status.StatusController import StatusController
 from controllers.scheduler.SchedulerController import SchedulerController
+from controllers.ApiController import ApiController
+
 
 from model.Status import Status
 from model.StatusSystem import StatusSystem
@@ -61,6 +63,8 @@ def processCheckStatus():
      while True:
       schedule.run_pending()
       time1.sleep(1)
+def checkCallTakeImage():
+    ApiController.callTakeImage("")
           
 if __name__ == "__main__":
     #main()
@@ -70,6 +74,7 @@ if __name__ == "__main__":
     initApp()
    # ProcessController.run(proccesRun=processCheckStatus)
     #checkStatus()
+    checkCallTakeImage()
     
     Api.app.run(host='0.0.0.0', port=6000)
     

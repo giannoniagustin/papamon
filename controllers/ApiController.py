@@ -76,15 +76,23 @@ class ApiController:
                 return jsonify( SuccessResponse(data=instance, message="Status Raspberry").serialize())
     @staticmethod
     def callTakeImage(pathImge:str):
-        # Comando y argumentos
-        comando = ["./programa",'{pathImge}']
+       
+        # Argumentos del programa
+        args = ["-dir", "25-10-2045", "-demo", "-id", "2"]
         try:
-            #resultado = subprocess.run("./programa", stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            directorio_reconstruct = "reconstruct"
+            os.chdir(directorio_reconstruct)
+            program_path="./rs-save-cam-status"
+            comando = [program_path]+ args
+            print(f"comando a ejecutar {comando} ")
+            resultado = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             # Capturar la salida estándar y de error
-            salida_estandar =True# resultado.stdout
-            salida_error = True #resultado.stderr
+            salida_estandar =resultado.stdout
+            salida_error = resultado.stderr
             print("Salida estándar:")
             print(salida_estandar)
+            print("Salida Error:")
+            print(salida_error)
             if salida_estandar:
                return salida_estandar
             if salida_error:
