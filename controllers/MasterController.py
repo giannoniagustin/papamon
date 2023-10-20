@@ -1,4 +1,6 @@
 
+import os
+import subprocess
 from controllers.raspberry.RaspberryController import RaspberryController
 import constants.Paths as Paths
 from util import File,TimeUtil
@@ -9,6 +11,11 @@ from mappers.status.StatusMapper import StatusMapper
 from mappers.statusRaspberies.StatusRaspberiesMapper import StatusRaspberiesMapper
 from controllers.statusRaspberies.StatusRaspberiesController import StatusRaspberiesController
 from controllers.image.ImageController import ImageController
+
+from config.master.config import meRaspb
+from config.master.config import programsaveCam
+from config.master.config import reconstructFolder
+from config.master.config import isDemo
 
 
 from model.StatusSlave import StatusSlave
@@ -41,7 +48,38 @@ class MasterController:
             except requests.exceptions.ConnectionError as e:
                     print("Error de conexión:", e)
             except requests.exceptions.RequestException as e:
-                    print("Error en la solicitud:", e)
+                    print("Error en la solicitud:", e) 
+        MasterController.callReconstructImage( localPathImage,isDemo,programsaveCam,reconstructFolder)           
+                    
+    @staticmethod
+    def callReconstructImage(pathDest:str,isDemo:str,programName:str,folderPath:str):
+        result=True
+        args = ["-dir", f"{pathDest}"]
+        try:
+            os.chdir(folderPath)
+            print(f"Current path {os.getcwd()}")
+            comando = [programName]+ args
+            print(f"comando a ejecutar {comando} ")
+            resultado = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            # Capturar la salida estándar y de error
+            salida_estandar =resultado.stdout
+            salida_error = resultado.stderr
+            print(f"Salida estándar:{salida_estandar}")
+            print(f"Salida Error:{salida_error}")
+            if salida_estandar:
+               result = True
+            if salida_error:
+                result = False
+        except subprocess.CalledProcessError as e:
+            print("Error al ejecutar el programa C++:", e)
+        except Exception as e:
+            print("Ocurrió un error:", e)
+            return result 
+        finally:
+            os.chdir("..")
+            print(f"Current path {os.getcwd()}")
+            return result
+                    
     def getStatus()->List[StatusSlave]:
         statusMapper= StatusMapper()
         listStatusRaspberies: list=[]
