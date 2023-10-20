@@ -15,26 +15,26 @@ from model.StatusSlave import StatusSlave
 from model.Status import Status
 from model.StatusSystem import StatusSystem
 from util.Sentry import Sentry
-import datetime
 from typing import List
 
 class MasterController:
     @staticmethod
     def getImages():
-        request_id = TimeUtil.TimeUtil.timeToString(datetime.now(),TimeUtil.TimeUtil.formato)
+        request_id = TimeUtil.TimeUtil.timeToString(datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY)
         # Crear la carpeta con el ID de solicitud actual
         localPathImage =Paths.BUILD_IMAGE_FOLDER.format(request_id)
         File.FileUtil.createFolder(localPathImage)
         listRasperr = RaspberryController.getRaspberries()
         for rB in listRasperr:
-            url= EndPoint.url_template.format(rB.ip,rB.port,EndPoint.IMAGE) #EndPoint.buildUrl(rB.ip,EndPoint.IMAGE,rB.port)
+            url= EndPoint.url_template.format(rB.ip,rB.port,EndPoint.IMAGE)
             print("Url RB ",url)
             params = {f"data": {request_id}}
             try:
                 response = requests.get(url,params=params)
                 if response.status_code == 200:
-                    imageFile=Paths.BUILD_IMAGE_FILE.format(request_id,request_id,rB.id,".jpg")
+                    imageFile=Paths.BUILD_IMAGE_FILE.format(request_id,rB.id,request_id,Paths.ZIP)
                     ImageController.save(imageFile,response.content)
+                    ImageController.extract(File.FileUtil.filePath(imageFile), response.content)
                     print(f"Imagen descargada y almacenada con éxito de RB {rB.name} ")
                 else:
                     print(f"Error al descargar la imagen de RB {rB.name}")

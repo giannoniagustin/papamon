@@ -1,6 +1,8 @@
 #DAR PERMISOS EN LINUX PARA LOS ARCHIVOS Y CARPETAS PORQUE SINO DICE ARCHVIO NOT FOUND
 import os
 
+# Obtiene la ruta de la carpeta 'Documents' del usuario
+documents_folder = os.path.expanduser("~/Documents")
 DATA_FOLDER = 'data'
 RB_FOLDER = 'rb'
 #CONFIG
@@ -17,18 +19,16 @@ RASPBERRY = os.path.join(CONFIG_FOLDER,MASTER_FOLDER,RASPBERRY_FILE)
 SCHEDULER=os.path.join(CONFIG_FOLDER,MASTER_FOLDER,SCHEDULER_FILE)
 FIREBASE = os.path.join(CONFIG_FOLDER,FIREBASE_FOLDER,FIREBASE_FILE)
 
-
-
 #RB STATUS
 STATUS_FILE = 'status.json'
 STATUS_RB=os.path.join(DATA_FOLDER, RB_FOLDER,STATUS_FILE)
 
 #IMAGES
 #Folder
-IMAGES='reconstruct'+os.sep
+IMAGES=os.path.join(documents_folder, 'reconstruct')+os.sep#documents_folder+'reconstruct'+os.sep
 BUILD_IMAGE_FOLDER=IMAGES+"{}" # 1 id_rquest
    #Builded Image 
-BUILD_IMAGE_FILE=IMAGES+"{}"+os.sep+"{}"+"-"+"{}"+"{}" # 1 id_rquest,2 id_rquest, 3 id_rb, 4 Extension file 
+BUILD_IMAGE_FILE=IMAGES+"{}"+os.sep+"{}"+os.sep+"{}"+"{}" # 1 id_request,2 id_rb, 3 id_request, 4 Extension file 
 
 
 #MASTER PATHS
@@ -40,7 +40,8 @@ STATUS_RASPBERIES=os.path.join(DATA_FOLDER,MASTER_FOLDER, RB_FOLDER,STATUS_RASPB
 #Extensions
 JPG = ".jpg"
 PNG = ".png"
+ZIP = ".zip"
 
-RGB_FILE = 'rgb.png'
+
 DEPTH_FILE = 'depth.png'
 POINT_FILE = 'points.csv'

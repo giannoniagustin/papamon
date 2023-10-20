@@ -4,11 +4,7 @@ from controllers.scheduler.SchedulerController import SchedulerController
 from controllers.ApiController import ApiController
 
 
-from model.Status import Status
-from model.StatusSystem import StatusSystem
-from model.StatusSlave import StatusSlave
-from model.Raspberry import Raspberry
-from util.Parser import Parser
+
 from model.Scheduler import Scheduler
 from mappers.scheduler.SchedulerMapper import SchedulerMapper
 
@@ -18,11 +14,10 @@ from model.Time import Time
 import constants.Paths as Paths
 from util.Sentry import Sentry
 from sentry_sdk import configure_scope
-from sentry_sdk.integrations.flask import FlaskIntegration
 import sentry_sdk
 import Api
 import schedule
-from controllers.process.ProcessController import ProcessController
+from config.master.config import meRaspb  # Importa meRaspb desde config.py
 
 def initApp():
    Sentry.init()
@@ -30,15 +25,13 @@ def initApp():
 
 def checkStatus(): 
       MasterController.getStatus()
+      
+
     
 def main():
    initApp()
    checkStatus()
    sentry_sdk.capture_message(f"Fin de App Master {datetime.datetime.now()}") 
-       
- #MasterController.getStatus()
- # MasterController.getImages()
- #StatusController.update(Status(True,'2023-12-2525'))
 def scheduler():
         # Crear objetos time
     hora1 = Time(10, 30, 00)
@@ -67,17 +60,10 @@ def checkCallTakeImage():
     ApiController.callTakeImage("")
           
 if __name__ == "__main__":
-    #main()
-   
-    # El proceso principal puede seguir ejecutando otras tareas aquí
-    # Espera a que el proceso secundario termine (esto podría no ser necesario dependiendo de tus requerimientos)
+    
     initApp()
-   # ProcessController.run(proccesRun=processCheckStatus)
-    #checkStatus()
-    checkCallTakeImage()
+    MasterController.getImages()    
+    #Api.app.run(host='0.0.0.0', port=meRaspb.port)
     
-    Api.app.run(host='0.0.0.0', port=6000)
-    
-    #proceso_secundario.join()
     
 

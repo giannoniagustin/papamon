@@ -3,7 +3,6 @@ from flask import request,jsonify,send_file
 import os
 import constants.Paths as Paths
 from util import File
-from util.TimeUtil import TimeUtil
 
 import subprocess
 from model.Response import SuccessResponse,ErrorResponse
@@ -119,7 +118,6 @@ class ApiController:
    
     @staticmethod
     def getImage(key, currentRequestId: str):
-        #nombre_carpeta=''
         try:
             date = request.args.get('data')
             print(f"Parametro {date} " )
@@ -127,9 +125,7 @@ class ApiController:
             localPathImage =Paths.BUILD_IMAGE_FOLDER.format(nombre_carpeta)
             File.FileUtil.createFolder(localPathImage)'''
             if ApiController.callTakeImage(pathDest=date, id=meRaspb.id,isDemo=isDemo,programName=programsaveCam,folderPath=reconstructFolder):
-                # filename = pathImage+currentRequestId+'.jpg' #'received_image.jpg'  # Ruta de la imagen que deseas enviar
-                '''filename = Paths.IMAGES+'83e56229-0dd4-4faf-9fe5-fdd510ca6af2'+os.sep+'83e56229-0dd4-4faf-9fe5-fdd510ca6af2'+'.jpg' 
-                return send_file(filename, mimetype='image/jpeg')'''
+
                 return ApiController.getResult(date,meRaspb.id)
             else:
                 print("Ocurrió un error al ejecutar la llamada al programa C++")
