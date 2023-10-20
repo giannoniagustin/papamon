@@ -11,10 +11,13 @@ ruta_archivo = os.path.join('data', 'rb', 'status.json')'''
 
 import Api
 from controllers.ApiController import ApiController
+from config import meRaspb
+from config import programsaveCam
+from config import reconstructFolder
 
 from util.Sentry import Sentry
 def checkCallTakeImage():
-    ApiController.callTakeImage("")
+    ApiController.callTakeImage("20-18-1825",meRaspb.id ,True,programsaveCam,reconstructFolder)
 
 if __name__ == '__main__':
     checkCallTakeImage()

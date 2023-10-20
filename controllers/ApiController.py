@@ -12,9 +12,11 @@ from mappers.raspberry.RaspberryMapper import RaspberryMapper
 from controllers.status.StatusController import StatusController
 from controllers.raspberry.RaspberryController import RaspberryController
 from datetime import datetime
+from model.Raspberry import Raspberry
+from config import meRaspb
 
 
-class ApiController:
+class ApiController:    
     @staticmethod
     def getStatus():
             try:
@@ -51,7 +53,7 @@ class ApiController:
     @staticmethod
     def getMe():
             try:
-                status_instance = RaspberryController.getMe()
+                me_instance = meRaspb
             except FileNotFoundError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
             except IOError as e:
@@ -59,7 +61,7 @@ class ApiController:
             except Exception as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())
             else:
-             return jsonify( SuccessResponse(data=status_instance, message="Status Raspberry").serialize())
+             return jsonify( SuccessResponse(data=me_instance, message="Status Raspberry").serialize())
     @staticmethod
     def getRaspberry():
             #Lista de raspberry a pedir las imagenes
@@ -75,15 +77,19 @@ class ApiController:
             else:
                 return jsonify( SuccessResponse(data=instance, message="Status Raspberry").serialize())
     @staticmethod
-    def callTakeImage(pathImge:str):
-       
+    def callTakeImage(pathDest:str,id:str ,isDemo:str,programName:str,folderPath:str):
         # Argumentos del programa
-        args = ["-dir", "25-10-2045", "-demo", "-id", "2"]
+        if (isDemo):
+            demo="-demo"
+        else:
+            demo=""    
+        args = ["-dir", f"{pathDest}", demo, "-id", id]
         try:
-            directorio_reconstruct = "reconstruct"
-            os.chdir(directorio_reconstruct)
-            program_path="./rs-save-cam-status"
-            comando = [program_path]+ args
+           # folderPath = "reconstruct"
+            os.chdir(folderPath)
+            print(f"Current path {os.getcwd()}")
+            #programName="./rs-save-cam-status"
+            comando = [programName]+ args
             print(f"comando a ejecutar {comando} ")
             resultado = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             # Capturar la salida estándar y de error
@@ -102,6 +108,10 @@ class ApiController:
             print("Error al ejecutar el programa C++:", e)
         except Exception as e:
             print("Ocurrió un error:", e) 
+        finally:
+            os.chdir("..")
+            print(f"Current path {os.getcwd()}")
+
    
     @staticmethod
     def getImage(key, currentRequestId: str):

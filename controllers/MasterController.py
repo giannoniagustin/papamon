@@ -18,9 +18,6 @@ from util.Sentry import Sentry
 import datetime
 from typing import List
 
-
-
-
 class MasterController:
     @staticmethod
     def getImages():

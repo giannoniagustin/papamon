@@ -10,8 +10,12 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 ruta_archivo = os.path.join('data', 'rb', 'status.json')'''
 
 import Api
+from controllers.raspberry.RaspberryController import RaspberryController
 from util.Sentry import Sentry
+import sys
+from model.Raspberry import Raspberry
+from config import meRaspb  # Importa meRaspb desde config.py
 
 if __name__ == '__main__':
     Sentry.init()
-    Api.app.run(host='0.0.0.0', port=5000)
+    Api.app.run(host='0.0.0.0', port=meRaspb.port)
