@@ -25,6 +25,8 @@ class ApiController:
     def getStatus():
             try:
                 status_instance= StatusController.get()
+                print("File read successfully.")        
+                return jsonify( SuccessResponse(data=status_instance, message="Status Raspberry").serialize())
             except FileNotFoundError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
             except IOError as e:
@@ -32,9 +34,8 @@ class ApiController:
             except Exception as e:
                 print("An error occurred:", e)
                 return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())
-            else:
-                print("File read successfully.")        
-                return jsonify( SuccessResponse(data=status_instance, message="Status Raspberry").serialize())
+
+
    
     @staticmethod
     def updateStatus():
@@ -44,6 +45,8 @@ class ApiController:
             mapper = StatusMapper()
             newInstance = mapper.toStatus(new_data)
             StatusController.update(newInstance)
+            return jsonify( SuccessResponse(data=newInstance, message="Update status success").serialize())
+
         except FileNotFoundError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
         except IOError as e:
@@ -51,35 +54,35 @@ class ApiController:
         except Exception as e:
                 print("An error occurred:", e)
                 return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())
-        else:
-                return jsonify( SuccessResponse(data=newInstance, message="Update status success").serialize())
+
 
     @staticmethod
     def getMe():
             try:
                 me_instance = meRaspb
+                return jsonify( SuccessResponse(data=me_instance, message="Status Raspberry").serialize())
             except FileNotFoundError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
             except IOError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())  
             except Exception as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())
-            else:
-             return jsonify( SuccessResponse(data=me_instance, message="Status Raspberry").serialize())
+
+             
     @staticmethod
     def getRaspberry():
             #Lista de raspberry a pedir las imagenes
             file={}
             try:
                 instance = RaspberryController.getRaspberries()
+                return jsonify( SuccessResponse(data=instance, message="Status Raspberry").serialize())
             except FileNotFoundError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
             except IOError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())  
             except Exception as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())
-            else:
-                return jsonify( SuccessResponse(data=instance, message="Status Raspberry").serialize())
+                
     @staticmethod
     def callTakeImage(pathDest:str,id:str ,isDemo:str,programName:str,folderPath:str):
         result=True
@@ -90,10 +93,8 @@ class ApiController:
             demo=""    
         args = ["-dir", f"{pathDest}", demo, "-id", id]
         try:
-           # folderPath = "reconstruct"
             os.chdir(folderPath)
             print(f"Current path {os.getcwd()}")
-            #programName="./rs-save-cam-status"
             comando = [programName]+ args
             print(f"comando a ejecutar {comando} ")
             resultado = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -122,11 +123,7 @@ class ApiController:
             date = request.args.get('data')
             print(f"Parametro {date} " )
             localPathImage =Paths.BUILD_IMAGE_FOLDER.format(date)
-            '''nombre_carpeta = TimeUtil.timeToString(datetime.now(),TimeUtil.formato)
-            localPathImage =Paths.BUILD_IMAGE_FOLDER.format(nombre_carpeta)
-            File.FileUtil.createFolder(localPathImage)'''
             if ApiController.callTakeImage(pathDest=localPathImage, id=meRaspb.id,isDemo=isDemo,programName=programsaveCam,folderPath=reconstructFolder):
-
                 return ApiController.getResult(date,meRaspb.id)
             else:
                 print("Ocurrió un error al ejecutar la llamada al programa C++")

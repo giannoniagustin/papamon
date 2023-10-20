@@ -11,6 +11,7 @@ class StatusController:
             mapper = StatusMapper()
             content = mapper.toJson(newStatus)
             File.FileUtil.writeFile(Paths.STATUS_RB,content=content)
+            print("Update status successfully. ")
         except FileNotFoundError as e:
                 print("An error occurred when status updating:", e)
                 raise
@@ -19,8 +20,7 @@ class StatusController:
         except Exception as e:
                 print("An error occurred when status updating:", e)
                 raise
-        else:
-                print("Update status successfully. ")
+
     @staticmethod
     def get():
             statusFile={}
@@ -46,7 +46,6 @@ class StatusController:
             try:
                 isCameraRunning:bool =random.choice([True, False]) # Ver como controlar si la camara esta encendida
                 print("isCameraRunning: ",isCameraRunning)
-
                 return isCameraRunning 
             except Exception as e:
                 print("An error occurred when get isCameraRunning: ",e)
