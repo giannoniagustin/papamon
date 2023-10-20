@@ -17,7 +17,9 @@ from config import meRaspb
 from config import programsaveCam
 from config import reconstructFolder
 from config import isDemo
-
+import io
+import zipfile
+from flask import  make_response
 
 class ApiController:    
     @staticmethod
@@ -81,7 +83,7 @@ class ApiController:
                 return jsonify( SuccessResponse(data=instance, message="Status Raspberry").serialize())
     @staticmethod
     def callTakeImage(pathDest:str,id:str ,isDemo:str,programName:str,folderPath:str):
-        result=False
+        result=True
         # Argumentos del programa
         if (isDemo):
             demo="-demo"
@@ -126,8 +128,9 @@ class ApiController:
             File.FileUtil.createFolder(localPathImage)'''
             if ApiController.callTakeImage(pathDest=date, id=meRaspb.id,isDemo=isDemo,programName=programsaveCam,folderPath=reconstructFolder):
                 # filename = pathImage+currentRequestId+'.jpg' #'received_image.jpg'  # Ruta de la imagen que deseas enviar
-                filename = Paths.IMAGES+'83e56229-0dd4-4faf-9fe5-fdd510ca6af2'+os.sep+'83e56229-0dd4-4faf-9fe5-fdd510ca6af2'+'.jpg' 
-                return send_file(filename, mimetype='image/jpeg')
+                '''filename = Paths.IMAGES+'83e56229-0dd4-4faf-9fe5-fdd510ca6af2'+os.sep+'83e56229-0dd4-4faf-9fe5-fdd510ca6af2'+'.jpg' 
+                return send_file(filename, mimetype='image/jpeg')'''
+                return ApiController.getResult(date,meRaspb.id)
             else:
                 print("Ocurrió un error al ejecutar la llamada al programa C++")
                 return jsonify(ErrorResponse(data='', message="An error occurred").serialize())
@@ -144,5 +147,28 @@ class ApiController:
              print("Ocurrió un error:", e)
              return jsonify(ErrorResponse(data='', message="An error occurred").serialize())  
 
-    
+    def getResult(date:str,id:str):
+        imageRgb =Paths.IMAGES+date+os.sep+id+os.sep+Paths.RGB_FILE
+        imageDepth =Paths.IMAGES+date+os.sep+id+os.sep+Paths.DEPTH_FILE
+        datosCSV=Paths.IMAGES+date+os.sep+id+os.sep+Paths.POINT_FILE
+        # Crear un archivo ZIP en memoria
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            # Agregar las imágenes PNG al archivo ZIP
+            with open(imageRgb, 'rb') as imagen1:
+                zipf.writestr(Paths.RGB_FILE, imagen1.read())
+            with open(imageDepth, 'rb') as imagen2:
+                zipf.writestr(Paths.DEPTH_FILE, imagen2.read())
+            
+            # Agregar el archivo CSV al archivo ZIP
+            with open(datosCSV, 'rb') as datos_csv:
+                zipf.writestr(Paths.POINT_FILE, datos_csv.read())
+
+        # Preparar la respuesta
+        buffer.seek(0)
+        response = make_response(buffer.read())
+        response.headers['Content-Type'] = 'application/zip'
+        response.headers['Content-Disposition'] = 'attachment; filename=archivos.zip'
+
+        return response
 
