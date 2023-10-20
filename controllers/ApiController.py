@@ -70,7 +70,7 @@ class ApiController:
 
              
     @staticmethod
-    def getRaspberry():
+    def getRaspberries():
             #Lista de raspberry a pedir las imagenes
             file={}
             try:
@@ -110,7 +110,8 @@ class ApiController:
         except subprocess.CalledProcessError as e:
             print("Error al ejecutar el programa C++:", e)
         except Exception as e:
-            print("Ocurrió un error:", e) 
+            print("Ocurrió un error:", e)
+            return result 
         finally:
             os.chdir("..")
             print(f"Current path {os.getcwd()}")
@@ -118,7 +119,7 @@ class ApiController:
 
    
     @staticmethod
-    def getImage(key, currentRequestId: str):
+    def getImage():
         try:
             date = request.args.get('data')
             print(f"Parametro {date} " )

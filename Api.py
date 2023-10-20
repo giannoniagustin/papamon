@@ -35,11 +35,11 @@ def uploadImage():
 @app.route('/image', methods=['GET'])
 def geImage(): 
     key, currentRequestId = request_ids.popitem()
-    return ApiController.getImage(key,currentRequestId)
+    return ApiController.getImage()
 
-@app.route('/raspberry', methods=['GET'])
-def raspberry():
-    return ApiController.getRaspberry()
+@app.route('/raspberries', methods=['GET'])
+def raspberries():
+    return ApiController.getRaspberries()
 
 
 if __name__ == '__main__':

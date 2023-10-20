@@ -14,9 +14,11 @@ from config.slave.config import meRaspb
 from config.slave.config import programsaveCam
 from config.slave.config import reconstructFolder
 from config.slave.config import isDemo
+import constants.Paths as Paths
 
 def checkCallTakeImage():
-    ApiController.callTakeImage("20-18-1825",meRaspb.id ,isDemo,programsaveCam,reconstructFolder)
+    localPathImage =Paths.BUILD_IMAGE_FOLDER.format("20-18-1825")
+    ApiController.callTakeImage(localPathImage,meRaspb.id ,isDemo,programsaveCam,reconstructFolder)
 
 if __name__ == '__main__':
     checkCallTakeImage()
