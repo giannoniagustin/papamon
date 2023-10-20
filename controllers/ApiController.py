@@ -121,10 +121,11 @@ class ApiController:
         try:
             date = request.args.get('data')
             print(f"Parametro {date} " )
+            localPathImage =Paths.BUILD_IMAGE_FOLDER.format(date)
             '''nombre_carpeta = TimeUtil.timeToString(datetime.now(),TimeUtil.formato)
             localPathImage =Paths.BUILD_IMAGE_FOLDER.format(nombre_carpeta)
             File.FileUtil.createFolder(localPathImage)'''
-            if ApiController.callTakeImage(pathDest=date, id=meRaspb.id,isDemo=isDemo,programName=programsaveCam,folderPath=reconstructFolder):
+            if ApiController.callTakeImage(pathDest=localPathImage, id=meRaspb.id,isDemo=isDemo,programName=programsaveCam,folderPath=reconstructFolder):
 
                 return ApiController.getResult(date,meRaspb.id)
             else:

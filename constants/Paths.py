@@ -34,7 +34,6 @@ BUILD_IMAGE_FILE=IMAGES+"{}"+os.sep+"{}"+os.sep+"{}"+"{}" # 1 id_request,2 id_rb
 #MASTER PATHS
 #RASPBERIES  STATUS
 STATUS_RASPBERIES_FILE = 'statusRaspberies.json'
-
 STATUS_RASPBERIES=os.path.join(DATA_FOLDER,MASTER_FOLDER, RB_FOLDER,STATUS_RASPBERIES_FILE)
 
 #Extensions
@@ -42,6 +41,6 @@ JPG = ".jpg"
 PNG = ".png"
 ZIP = ".zip"
 
-
 DEPTH_FILE = 'depth.png'
 POINT_FILE = 'points.csv'
+RGB_FILE = 'rgb.png'
