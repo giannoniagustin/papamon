@@ -13,10 +13,10 @@ from controllers.status.StatusController import StatusController
 from controllers.raspberry.RaspberryController import RaspberryController
 from datetime import datetime
 from model.Raspberry import Raspberry
-from config import meRaspb
-from config import programsaveCam
-from config import reconstructFolder
-from config import isDemo
+from config.slave.config import meRaspb
+from config.slave.config import programsaveCam
+from config.slave.config import reconstructFolder
+from config.slave.config import isDemo
 import io
 import zipfile
 from flask import  make_response

@@ -10,10 +10,10 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 ruta_archivo = os.path.join('data', 'rb', 'status.json')'''
 
 from controllers.ApiController import ApiController
-from config import meRaspb
-from config import programsaveCam
-from config import reconstructFolder
-from config import isDemo
+from config.slave.config import meRaspb
+from config.slave.config import programsaveCam
+from config.slave.config import reconstructFolder
+from config.slave.config import isDemo
 
 def checkCallTakeImage():
     ApiController.callTakeImage("20-18-1825",meRaspb.id ,isDemo,programsaveCam,reconstructFolder)
