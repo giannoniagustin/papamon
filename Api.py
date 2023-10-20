@@ -31,10 +31,10 @@ def uploadImage():
     image.save('received_image.jpg')  # Guardar la imagen en el servidor
     return jsonify({"message": "Image uploaded successfully"}), 200
 
+#Invoca al programa que toma la imagen y devuelve los archivos
 @app.route('/image', methods=['GET'])
 def geImage(): 
     key, currentRequestId = request_ids.popitem()
-    
     return ApiController.getImage(key,currentRequestId)
 
 @app.route('/raspberry', methods=['GET'])

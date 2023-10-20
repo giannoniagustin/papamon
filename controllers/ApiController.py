@@ -14,6 +14,9 @@ from controllers.raspberry.RaspberryController import RaspberryController
 from datetime import datetime
 from model.Raspberry import Raspberry
 from config import meRaspb
+from config import programsaveCam
+from config import reconstructFolder
+from config import isDemo
 
 
 class ApiController:    
@@ -78,6 +81,7 @@ class ApiController:
                 return jsonify( SuccessResponse(data=instance, message="Status Raspberry").serialize())
     @staticmethod
     def callTakeImage(pathDest:str,id:str ,isDemo:str,programName:str,folderPath:str):
+        result=False
         # Argumentos del programa
         if (isDemo):
             demo="-demo"
@@ -95,15 +99,12 @@ class ApiController:
             # Capturar la salida estándar y de error
             salida_estandar =resultado.stdout
             salida_error = resultado.stderr
-            print("Salida estándar:")
-            print(salida_estandar)
-            print("Salida Error:")
-            print(salida_error)
+            print(f"Salida estándar:{salida_estandar}")
+            print(f"Salida Error:{salida_error}")
             if salida_estandar:
-               return salida_estandar
+               result = True
             if salida_error:
-                print("Salida de error:")
-                print(salida_error)
+                result = False
         except subprocess.CalledProcessError as e:
             print("Error al ejecutar el programa C++:", e)
         except Exception as e:
@@ -111,20 +112,28 @@ class ApiController:
         finally:
             os.chdir("..")
             print(f"Current path {os.getcwd()}")
+            return result
 
    
     @staticmethod
     def getImage(key, currentRequestId: str):
-        nombre_carpeta=''
+        #nombre_carpeta=''
         try:
-            parametro1 = request.args.get('data')
-            print(f"Parametro {parametro1} " )
-            nombre_carpeta = TimeUtil.timeToString(datetime.now(),TimeUtil.formato)
+            date = request.args.get('data')
+            print(f"Parametro {date} " )
+            '''nombre_carpeta = TimeUtil.timeToString(datetime.now(),TimeUtil.formato)
             localPathImage =Paths.BUILD_IMAGE_FOLDER.format(nombre_carpeta)
-            File.FileUtil.createFolder(localPathImage)
+            File.FileUtil.createFolder(localPathImage)'''
+            if ApiController.callTakeImage(pathDest=date, id=meRaspb.id,isDemo=isDemo,programName=programsaveCam,folderPath=reconstructFolder):
+                # filename = pathImage+currentRequestId+'.jpg' #'received_image.jpg'  # Ruta de la imagen que deseas enviar
+                filename = Paths.IMAGES+'83e56229-0dd4-4faf-9fe5-fdd510ca6af2'+os.sep+'83e56229-0dd4-4faf-9fe5-fdd510ca6af2'+'.jpg' 
+                return send_file(filename, mimetype='image/jpeg')
+            else:
+                print("Ocurrió un error al ejecutar la llamada al programa C++")
+                return jsonify(ErrorResponse(data='', message="An error occurred").serialize())
 
         except FileExistsError as e:
-            print(f"La carpeta '{nombre_carpeta}' ya existe.")
+            print(f"La carpeta '{date}' ya existe.")
             return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())  
 
         except Exception as e:
@@ -132,12 +141,8 @@ class ApiController:
             return jsonify(ErrorResponse(data='', message="An error occurred").serialize())  
 
         else:
-           if ApiController.callTakeImage(pathImge=localPathImage):
-           # filename = pathImage+currentRequestId+'.jpg' #'received_image.jpg'  # Ruta de la imagen que deseas enviar
-            filename = Paths.IMAGES+'83e56229-0dd4-4faf-9fe5-fdd510ca6af2'+os.sep+'83e56229-0dd4-4faf-9fe5-fdd510ca6af2'+'.jpg' 
-            return send_file(filename, mimetype='image/jpeg')
-           else:
-                print("Ocurrió un error al ejecutar la llamada al programa C++")
-                return jsonify(ErrorResponse(data='', message="An error occurred").serialize())
+             print("Ocurrió un error:", e)
+             return jsonify(ErrorResponse(data='', message="An error occurred").serialize())  
+
     
 
