@@ -20,17 +20,35 @@ class StatusController:
         except Exception as e:
                 print("An error occurred when status updating:", e)
                 raise
-
     @staticmethod
-    def get():
+    def updateIfChange(newStatus:Status):
+        try:
+            
+            lastUpdate = StatusController.get()
+            if (newStatus.cameraRunning is not None):
+                lastUpdate.cameraRunning = newStatus.cameraRunning
+            if (newStatus.lastImage is not None):
+                lastUpdate.lastImage = newStatus.lastImage 
+            StatusController.update(lastUpdate)
+            print("updateIfChange status successfully. ")
+        except FileNotFoundError as e:
+                print("An error occurred when status updating:", e)
+                raise
+        except IOError as e:
+                raise
+        except Exception as e:
+                print("An error occurred when status updating:", e)
+                raise
+    @staticmethod
+    def get()-> Status:
             statusFile={}
             try:
-                statusFile =File.FileUtil.readFile(Paths.STATUS_RB) 
                 statusMapper = StatusMapper()
+                #chequeo si el archivo existe o es vacio y se crea
+                fileExample = statusMapper.toJson(File.FileUtil.readFile(Paths.STATUS_RB_EXAMPLE))
+                File.FileUtil.createIsFileEmptyOrNotExist(Paths.STATUS_RB,fileExample) 
+                statusFile =File.FileUtil.readFile(Paths.STATUS_RB) 
                 status_instance = statusMapper.toStatus(dictFile=statusFile) 
-                isCameraRunning=   StatusController.isCameraRunning()
-                status_instance.cameraRunning=isCameraRunning
-                StatusController.update(status_instance)
                 return status_instance
             except FileNotFoundError as e:
                 print("An error occurred when get Status: "+e.strerror)
@@ -41,6 +59,7 @@ class StatusController:
             except Exception as e:
                 print("An error occurred when get Status: ",e)
                 raise
+
     @staticmethod
     def isCameraRunning()-> bool:
             try:
@@ -50,5 +69,6 @@ class StatusController:
             except Exception as e:
                 print("An error occurred when get isCameraRunning: ",e)
                 raise
+            
            
                       

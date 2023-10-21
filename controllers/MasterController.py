@@ -8,11 +8,9 @@ import constants.EndPoints as EndPoint
 import requests
 from datetime import datetime
 from mappers.status.StatusMapper import StatusMapper
-from mappers.statusRaspberies.StatusRaspberiesMapper import StatusRaspberiesMapper
 from controllers.statusRaspberies.StatusRaspberiesController import StatusRaspberiesController
 from controllers.image.ImageController import ImageController
 
-from config.master.config import meRaspb
 from config.master.config import programsaveCam
 from config.master.config import reconstructFolder
 from config.master.config import isDemo

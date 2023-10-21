@@ -2,6 +2,7 @@
 from flask import request,jsonify,send_file
 import os
 import constants.Paths as Paths
+from model.Status import Status
 from util import File
 
 import subprocess
@@ -19,6 +20,8 @@ from config.slave.config import isDemo
 import io
 import zipfile
 from flask import  make_response
+
+from util import TimeUtil
 
 class ApiController:    
     @staticmethod
@@ -110,11 +113,16 @@ class ApiController:
         except subprocess.CalledProcessError as e:
             print("Error al ejecutar el programa C++:", e)
         except Exception as e:
-            print("Ocurrió un error:", e)
+            print("Ocurrió un error al ejecutar el programa C++::", e)
             return result 
         finally:
             os.chdir("..")
             print(f"Current path {os.getcwd()}")
+            if (result):
+               lastImageR =TimeUtil.TimeUtil.timeToString(datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY)
+            else:
+                lastImageR =None  
+            StatusController.updateIfChange(newStatus=Status(cameraRunning=result, lastImage=lastImageR))    
             return result
 
    

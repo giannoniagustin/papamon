@@ -66,7 +66,25 @@ class FileUtil:
     @staticmethod
     def fileExists(file_path):
         return os.path.exists(file_path)
-    
+    @staticmethod
+    def isFileEmpty(pathFile):
+       try:
+              with open(pathFile, 'r') as archivo:
+                     contenido = archivo.read()
+                     return len(contenido) == 0
+       except FileNotFoundError:
+              print(f"El archivo '{pathFile}' no existe.")
+              return False
+       
+    @staticmethod
+    def createIsFileEmptyOrNotExist(path,fileExample):
+      try:     
+              if (FileUtil.isFileEmpty(path) or  not FileUtil.fileExists(path)):
+               FileUtil.writeFile(path,fileExample)
+      except Exception as e:
+              print("An error occurred when isFileEmptyOrNotExist: ",e)
+              raise
+          
     @staticmethod
     def createFolder(folder):
        if not os.path.exists(folder):    
