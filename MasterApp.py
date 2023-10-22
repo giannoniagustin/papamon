@@ -58,11 +58,17 @@ def processCheckStatus():
       time1.sleep(1)
 def checkCallTakeImage():
     ApiController.callTakeImage("")
+def callReconstruct():
+    if (MasterController.getImages()):
+        print(f"Reconstruccion exitosa: {datetime.datetime.now()}")
+        
+    else:
+        print(f"Reconstruccion fallida,puede haber generado alguna imagen: {datetime.datetime.now()}")    
           
 if __name__ == "__main__":
     
     initApp()
-    MasterController.getImages()    
+    callReconstruct()
     #Api.app.run(host='0.0.0.0', port=meRaspb.port)
     
     
