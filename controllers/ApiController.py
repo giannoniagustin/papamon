@@ -88,7 +88,7 @@ class ApiController:
                 
     @staticmethod
     def callTakeImage(pathDest:str,id:str ,isDemo:str,programName:str,folderPath:str):
-        result=True
+        result=isDemo
         # Argumentos del programa
         if (isDemo):
             demo="-demo"
@@ -112,9 +112,10 @@ class ApiController:
                 result = False
         except subprocess.CalledProcessError as e:
             print("Error al ejecutar el programa C++:", e)
+            result = False
         except Exception as e:
             print("Ocurrió un error al ejecutar el programa C++::", e)
-            return result 
+            result = False
         finally:
             os.chdir("..")
             print(f"Current path {os.getcwd()}")
@@ -144,7 +145,7 @@ class ApiController:
 
         except Exception as e:
             print("Ocurrió un error:", e)
-            return jsonify(ErrorResponse(data='', message="An error occurred").serialize())  
+            return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  
 
         else:
              print("Ocurrió un error:", e)
