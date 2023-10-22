@@ -3,6 +3,7 @@ import os
 import subprocess
 from controllers.raspberry.RaspberryController import RaspberryController
 import constants.Paths as Paths
+from model.Raspberry import Raspberry
 from util import File,TimeUtil
 import constants.EndPoints as EndPoint
 import requests
@@ -25,35 +26,48 @@ from typing import List
 class MasterController:
     @staticmethod
     def getImages():
+        reconstructSuccess = False
+        rbFailList:List[Raspberry] = []
         request_id = TimeUtil.TimeUtil.timeToString(datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY)
         # Crear la carpeta con el ID de solicitud actual
         localPathImage =Paths.BUILD_IMAGE_FOLDER.format(request_id)
         File.FileUtil.createFolder(localPathImage)
         listRasperr = RaspberryController.getRaspberries()
         for rB in listRasperr:
-            url= EndPoint.url_template.format(rB.ip,rB.port,EndPoint.IMAGE)
-            print("Url RB ",url)
-            params = {f"data": {request_id}}
             try:
+                rbSucces = False
+                url= EndPoint.url_template.format(rB.ip,rB.port,EndPoint.IMAGE)
+                print("Url RB ",url)
+                params = {f"data": {request_id}}
                 response = requests.get(url,params=params)
                 if response.status_code == 200:
                     imageFile=Paths.BUILD_IMAGE_FILE.format(request_id,rB.id,request_id,Paths.ZIP)
                     ImageController.save(imageFile,response.content)
                     ImageController.extract(File.FileUtil.filePath(imageFile), response.content)
                     print(f"Imagen descargada y almacenada con éxito de RB {rB.name} ")
+                    rbSucces = True
                 else:
                     print(f"Error al descargar la imagen de RB {rB.name}")
             except requests.exceptions.ConnectionError as e:
                     print("Error de conexión:", e)
             except requests.exceptions.RequestException as e:
-                    print("Error en la solicitud:", e) 
-        MasterController.callReconstructImage( localPathImage,isDemo,programsaveCam,reconstructFolder)           
+                    print("Error en la solicitud:", e)
+
+            except Exception as e:
+                    print("Error en la solicitud:", e)
+
+            finally:
+                    if not rbSucces:
+                        rbFailList.append(rB)
+        print(f"Listado de Raspberry con error: {rbFailList}")                
+        result=MasterController.callReconstructImage(localPathImage,isDemo,programsaveCam,reconstructFolder)
+        return result   and rbFailList.__len__() == 0      
                     
     @staticmethod
     def callReconstructImage(pathDest:str,isDemo:str,programName:str,folderPath:str):
-        result=True
-        args = ["-dir", f"{pathDest}"]
         try:
+            resultSucces=True #cambiar por false esta para probar en windows
+            args = ["-dir", f"{pathDest}"]
             os.chdir(folderPath)
             print(f"Current path {os.getcwd()}")
             comando = [programName]+ args
@@ -65,18 +79,17 @@ class MasterController:
             print(f"Salida estándar:{salida_estandar}")
             print(f"Salida Error:{salida_error}")
             if salida_estandar:
-               result = True
+               resultSucces = True
             if salida_error:
-                result = False
+                resultSucces = False
         except subprocess.CalledProcessError as e:
             print("Error al ejecutar el programa C++:", e)
         except Exception as e:
             print("Ocurrió un error:", e)
-            return result 
         finally:
             os.chdir("..")
             print(f"Current path {os.getcwd()}")
-            return result
+            return resultSucces
                     
     def getStatus()->List[StatusSlave]:
         statusMapper= StatusMapper()

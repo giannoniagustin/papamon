@@ -145,10 +145,6 @@ class ApiController:
             print("Ocurrió un error:", e)
             return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  
 
-        else:
-             print("Ocurrió un error:", e)
-             return jsonify(ErrorResponse(data='', message="An error occurred").serialize())  
-
     def getResult(date:str,id:str):
         imageRgb =Paths.IMAGES+date+os.sep+id+os.sep+Paths.RGB_FILE
         imageDepth =Paths.IMAGES+date+os.sep+id+os.sep+Paths.DEPTH_FILE
