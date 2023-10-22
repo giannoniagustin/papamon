@@ -112,10 +112,8 @@ class ApiController:
                 result = False
         except subprocess.CalledProcessError as e:
             print("Error al ejecutar el programa C++:", e)
-            result = False
         except Exception as e:
             print("Ocurrió un error al ejecutar el programa C++::", e)
-            result = False
         finally:
             os.chdir("..")
             print(f"Current path {os.getcwd()}")
