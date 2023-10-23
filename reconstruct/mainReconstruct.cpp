@@ -397,10 +397,10 @@ std::vector<float> computeHeightMap(object3D& o,int wm, int hm)
     return values;
 }
 
-void updateCamera(Camera* cam)
+bool updateCamera(Camera* cam)
 {
     // get LIVE camera
- 
+    try
     {
         // Wait for the next set of frames from the camera
         auto frames = pipe.wait_for_frames();
@@ -435,88 +435,110 @@ void updateCamera(Camera* cam)
 #ifdef RENDER3D
         tex = app_state.tex;
 #endif
+        return true;
 
+    }
+    catch (const std::exception& e)
+    {
+
+        std::cout << list_of_messages.find(CAMERA_FAILED)->second << e.what() << "\n";
+
+        return false;
     }
 }
 
-void readDataFromFile(Camera* cam, std::string srcDir)
+bool readDataFromFile(Camera* cam, std::string srcDir)
 {
     std::cout << "Trying to read Vertexes info " << "\n";
 
     if (std::filesystem::exists(srcDir + "points.csv"))
     {
         cam->o = readFromCSV(srcDir + "points.csv");
+        return true;
     }
     else
     {
         std::cout << "File not found " << srcDir + "points.csv" << "\n";
+        return false;
     }
 }
 
 /// //////////////////////////////////////
-void Wizard(std::string inputDir)
+bool Wizard(std::string inputDir)
 {
 #ifdef RENDER3D
     // Create a simple OpenGL window for rendering:
-    window app(1280, 720, "Papamon - 3D Viewer");
-    ImGui_ImplGlfw_Init(app, false);
-    // Setup Platform/Renderer bindings
+    try
+    {
+        window app(1280, 720, "Papamon - 3D Viewer");
+        ImGui_ImplGlfw_Init(app, false);
+        // Setup Platform/Renderer bindings
 
-    // register callbacks to allow manipulation of the pointcloud
-    register_glfw_callbacks(app, app_state);
+        // register callbacks to allow manipulation of the pointcloud
+        register_glfw_callbacks(app, app_state);
 
-    // Start streaming with default recommended configuration
-    pipe.start();
+        // Start streaming with default recommended configuration
+        pipe.start();
 
-    getScene()->cameras.clear();
+        getScene()->cameras.clear();
 
-    getScene()->renderHeightMap = false;
+        getScene()->renderHeightMap = false;
 
     
-    Camera* live_cam = NULL;
-    int frameIndex = 0;
+        Camera* live_cam = NULL;
+        int frameIndex = 0;
 
-    // initial position
-    getScene()->viewRot.x = -90;
-    getScene()->viewRot.y = -180;
-    getScene()->viewRot.z = 0;
+        // initial position
+        getScene()->viewRot.x = -90;
+        getScene()->viewRot.y = -180;
+        getScene()->viewRot.z = 0;
 
-    getScene()->viewPos.x = getScene()->roomSize.x/2;
-    getScene()->viewPos.z = 10;
-    getScene()->viewPos.y = getScene()->roomSize.z/2;
+        getScene()->viewPos.x = getScene()->roomSize.x/2;
+        getScene()->viewPos.z = 10;
+        getScene()->viewPos.y = getScene()->roomSize.z/2;
     
+   
+
+        while (app && !finishRender) // Application still alive?
+        {
 
 
-    while (app && !finishRender) // Application still alive?
+            float w = static_cast<float>(app.width());
+            float h = static_cast<float>(app.height());
+
+            if (getScene()->selectedCamera != NULL)
+            {
+                live_cam = getScene()->selectedCamera;
+                updateCamera(live_cam);
+            }
+            object3D o = mergeAll3DData();
+
+            std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
+
+            getScene()->heightMap.swap(heights);
+
+            // render scene
+            drawScene(o, getScene()->viewPos, getScene()->viewRot, true, 0, (int)w, (int)h);
+
+            // render ui
+            render_wizard_ui(200, 200, o);
+
+            o.vertexes.clear();
+            o.tex_coords.clear();
+            o.colors.clear();
+
+            frameIndex++;
+
+        }
+
+        return true;
+    }
+    catch (const std::exception& e)
     {
 
+        std::cout << list_of_messages.find(RENDER_FAILED)->second << e.what() << "\n";
 
-        float w = static_cast<float>(app.width());
-        float h = static_cast<float>(app.height());
-
-        if (getScene()->selectedCamera != NULL)
-        {
-            live_cam = getScene()->selectedCamera;
-            updateCamera(live_cam);
-        }
-        object3D o = mergeAll3DData();
-
-        std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
-
-        getScene()->heightMap.swap(heights);
-
-        // render scene
-        drawScene(o, getScene()->viewPos, getScene()->viewRot, true, 0, (int)w, (int)h);
-
-        // render ui
-        render_wizard_ui(200, 200, o);
-        
-        o.vertexes.clear();
-        o.tex_coords.clear();
-        o.colors.clear();
-
-        frameIndex++;
-
+        return false;
     }
 #else
     std::cout << "Not compiled with RENDER 3D mode" << "\n";
@@ -551,45 +573,58 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
 
         int frameIndex = 0;
 
-        while (app && !finishRender) // Application still alive?
+        try
         {
-            float w = static_cast<float>(app.width());
-            float h = static_cast<float>(app.height());
-
-            if (live_cam)
+            while (app && !finishRender) // Application still alive?
             {
-                updateCamera(live_cam);
+                float w = static_cast<float>(app.width());
+                float h = static_cast<float>(app.height());
+
+                if (live_cam)
+                {
+                    updateCamera(live_cam);
+                }
+                object3D o = mergeAll3DData();
+
+                std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
+
+                getScene()->heightMap.swap(heights);
+
+                // render scene
+                drawScene(o, getScene()->viewPos, getScene()->viewRot, true, 0, (int)w, (int)h);
+
+                // render ui
+                render_ui(200, 200, o);
+
+                if (frameIndex % 100 == 0)
+                {
+                    saveAsObj(o, inputDir + "merged.obj");
+                    buildStateJSON(inputDir + "reconstruction.json");
+                }
+
+                o.vertexes.clear();
+                o.tex_coords.clear();
+                o.colors.clear();
+
+                frameIndex++;
+
             }
-            object3D o = mergeAll3DData();
-
-            std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
-
-            getScene()->heightMap.swap(heights);
-
-            // render scene
-            drawScene(o, getScene()->viewPos, getScene()->viewRot, true, 0, (int)w, (int)h);
-
-            // render ui
-            render_ui(200, 200, o);
-
-            if (frameIndex % 100 == 0)
-            {
-                saveAsObj(o, inputDir + "merged.obj");
-                buildStateJSON(inputDir + "reconstruction.json");
-            }
-
-            o.vertexes.clear();
-            o.tex_coords.clear();
-            o.colors.clear();
-
-            frameIndex++;
-
         }
+        catch (const std::exception& e)
+        {
+
+            std::cout << list_of_messages.find(RENDER_FAILED)->second << e.what() << "\n";
+
+            return false;
+        }
+
+        return true;
     }
     catch (const std::exception& e)
     {
 
-        std::cout << "Failed to reconstruct scene" << e.what() << "\n";
+        std::cout << list_of_messages.find(SCENE_FAILED_TO_RECONSTRUCT)->second << e.what() << "\n";
+
         return false;
     }
 #else
@@ -618,11 +653,16 @@ bool Reconstruct(std::string inputDir)
 
         std::cout << "Save STATE  \n";
         buildStateJSON(inputDir + "reconstruction.json");
+
+        std::cout << "Process finish ok \n";
+
+        return true;
+
     }
     catch (const std::exception& e)
     {
-
-        std::cout << "Failed to reconstruct scene" << e.what() << "\n";
+        std::cout << list_of_messages.find(SCENE_FAILED_TO_RECONSTRUCT)->second << e.what() << "\n";
+      
         return false;
     }
 }
@@ -680,8 +720,9 @@ int main(int argc, char* argv[]) try
 
         if (!std::filesystem::exists("cameras.json"))
         {
-            std::cout << "Cameras.json not found . Now eXIT " << "\n";
-            return -1;
+            std::cout << list_of_messages.find(FILE_NOT_FOUND)->second << ". Cameras.json not found . Now eXIT " "\n";
+          
+            return FILE_NOT_FOUND;
         }
 
         initScene("cameras.json", verbose);
@@ -690,7 +731,10 @@ int main(int argc, char* argv[]) try
         std::cout << "Getting 3D points from files \n";
         for (int i = 0; i < getScene()->cameras.size(); i++)
         {
-            readDataFromFile(getScene()->cameras[i], inputDir + "/"+ std::to_string(i+1) + "/");
+            if (!readDataFromFile(getScene()->cameras[i], inputDir + "/" + std::to_string(i + 1) + "/"))
+            {
+                std::cout << list_of_messages.find(WARNING_SOMEFILES_ARE_MISSING)->second  << "\n";
+           }
         }
 
         std::cout << "3D points info  read OK" << "\n";
@@ -701,7 +745,7 @@ int main(int argc, char* argv[]) try
     catch (const std::exception& e)
     {
 
-        std::cout << "Failed to reconstruct scene" << e.what() << "\n";
+        std::cout << list_of_messages.find(SCENE_FAILED_TO_RECONSTRUCT)->second << e.what() << "\n";
         return false;
     }
 
@@ -729,15 +773,15 @@ int main(int argc, char* argv[]) try
         Reconstruct(inputDir);
     }
 
-return EXIT_SUCCESS;
+return PROCESS_OK;
 }
 catch (const rs2::error& e) 
 {
     std::cerr << "RealSense error calling " << e.get_failed_function() << "(" << e.get_failed_args() << "):\n    " << e.what() << std::endl;
-    return EXIT_FAILURE;
+    return GENERAL_ERROR;
 }
 catch (const std::exception& e)
 {
     std::cerr << e.what() << std::endl;
-    return EXIT_FAILURE;
+    return GENERAL_ERROR;
 }
