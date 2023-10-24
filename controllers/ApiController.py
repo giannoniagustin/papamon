@@ -97,9 +97,9 @@ class ApiController:
         args = ["-dir", f"{pathDest}", demo, "-id", id]
         try:
             os.chdir(folderPath)
-            print(f"Current path {os.getcwd()}")
+            print(f"Cambio a path de ejecucion {os.getcwd()}")
             comando = [programName]+ args
-            print(f"comando a ejecutar {comando} ")
+            print(f"Comando a ejecutar {comando} ")
             resultado = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             # Capturar la salida estándar y de error
             salida_estandar =resultado.stdout
@@ -118,8 +118,10 @@ class ApiController:
             os.chdir("..")
             print(f"Current path {os.getcwd()}")
             if (result):
+               print(f"Imagen capturada exitosamente " )
                lastImageR =TimeUtil.TimeUtil.timeToString(datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY)
             else:
+                print(f"Imagen no capturada " )
                 lastImageR =None  
             StatusController.updateIfChange(newStatus=Status(cameraRunning=result, lastImage=lastImageR))    
             return result
@@ -129,7 +131,7 @@ class ApiController:
     def getImage():
         try:
             date = request.args.get('data')
-            print(f"Parametro {date} " )
+            print(f"Inicio toma imagen fecha {date} " )
             localPathImage =Paths.BUILD_IMAGE_FOLDER.format(date)
             if ApiController.callTakeImage(pathDest=localPathImage, id=meRaspb.id,isDemo=isDemo,programName=programsaveCam,folderPath=reconstructFolder):
                 return ApiController.getResult(date,meRaspb.id)

@@ -23,14 +23,12 @@ class StatusController:
     @staticmethod
     def updateIfChange(newStatus:Status):
         try:
-            
             lastUpdate = StatusController.get()
             if (newStatus.cameraRunning is not None):
                 lastUpdate.cameraRunning = newStatus.cameraRunning
             if (newStatus.lastImage is not None):
                 lastUpdate.lastImage = newStatus.lastImage 
             StatusController.update(lastUpdate)
-            print("updateIfChange status successfully. ")
         except FileNotFoundError as e:
                 print("An error occurred when status updating:", e)
                 raise
