@@ -5,3 +5,4 @@ meRaspb: Raspberry = RaspberryController.getMe()
 programsaveCam = "./rs-save-cam-status"
 reconstructFolder= "reconstruct"
 isDemo =True
+version = "Slave 1.0"

@@ -5,3 +5,4 @@ meRaspb: Raspberry = RaspberryController.getMe()
 programsaveCam = "./rs-reconstruct"
 reconstructFolder= "reconstruct"
 isDemo =True
+version = "Master 1.0"

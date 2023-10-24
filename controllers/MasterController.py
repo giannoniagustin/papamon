@@ -3,11 +3,12 @@ import os
 import subprocess
 from controllers.raspberry.RaspberryController import RaspberryController
 import constants.Paths as Paths
+from controllers.status.StatusController import StatusController
 from model.Raspberry import Raspberry
 from util import File,TimeUtil
 import constants.EndPoints as EndPoint
 import requests
-from datetime import datetime
+import datetime
 from mappers.status.StatusMapper import StatusMapper
 from controllers.statusRaspberies.StatusRaspberiesController import StatusRaspberiesController
 from controllers.image.ImageController import ImageController
@@ -15,6 +16,7 @@ from controllers.image.ImageController import ImageController
 from config.master.config import programsaveCam
 from config.master.config import reconstructFolder
 from config.master.config import isDemo
+from config.master.config import meRaspb
 
 
 from model.StatusSlave import StatusSlave
@@ -28,7 +30,7 @@ class MasterController:
     def getImages():
         reconstructSuccess = False
         rbFailList:List[Raspberry] = []
-        request_id = TimeUtil.TimeUtil.timeToString(datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY)
+        request_id = TimeUtil.TimeUtil.timeToString(datetime.datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY)
         # Crear la carpeta con el ID de solicitud actual
         localPathImage =Paths.BUILD_IMAGE_FOLDER.format(request_id)
         File.FileUtil.createFolder(localPathImage)
@@ -61,7 +63,13 @@ class MasterController:
                         rbFailList.append(rB)
         print(f"Listado de Raspberry con error: {rbFailList}")                
         result=MasterController.callReconstructImage(localPathImage,isDemo,programsaveCam,reconstructFolder)
-        return result   and rbFailList.__len__() == 0      
+        reconstructSuccess = result   and rbFailList.__len__() == 0
+        if (reconstructSuccess):
+            StatusController.updateIfChange(Status(cameraRunning=True,lastImage=request_id,))
+        else:
+            StatusController.updateIfChange(Status(cameraRunning=False,lastImage=None))
+            
+        return  reconstructSuccess
                     
     @staticmethod
     def callReconstructImage(pathDest:str,isDemo:str,programName:str,folderPath:str):
@@ -122,12 +130,18 @@ class MasterController:
                     statusRb.state = state
                     statusRb.message=message
                     listStatusRaspberies.append(statusRb)
+                    
+        # Buscar si todas estan Ok
+        has_error =  all(statusSlave.state for statusSlave in listStatusRaspberies)
+        statusMaster =StatusController.get()
+        if (not has_error):
+            statusMaster.cameraRunning=False
+            message= "Error de Conexion con algunas de las camaras"
+        else:
+            statusMaster.cameraRunning=True    
+            message= "Se conecto con todas las camaras"
+                             
+        listStatusRaspberies.append(StatusSlave(raspberry=meRaspb,status=statusMaster,message=message,state=has_error))            
         StatusRaspberiesController().update(listStatusRaspberies)
         Sentry.customMessage(Paths.STATUS_RASPBERIES_FILE,Paths.STATUS_RASPBERIES,f"Estado del sistema {datetime.datetime.now()}")      
-
-        
-        # Buscar si todas estan Ok
-        has_error = all(statusSlave.state for statusSlave in listStatusRaspberies)
-        systemStatus =  StatusSystem(slaves=listRasperr,slaveStatus=listStatusRaspberies,status=has_error,message="Error")
-        print(f"System status {systemStatus}")
         return listStatusRaspberies

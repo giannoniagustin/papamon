@@ -1,16 +1,18 @@
 
 from mappers.status.StatusMapper import StatusMapper
 import constants.Paths as Paths
-from model.Status import Status
+from mappers.statusSystem.SystemStatusMapper import SystemStatusMapper
+from model.CameraStatus import CameraStatus
+from model.SystemStatus import SystemStatus
 from util import File
 import random
-class StatusController:
+class SystemStatusController:
     @staticmethod
-    def update(newStatus:Status):
+    def update(newStatus:SystemStatus):
         try:
-            mapper = StatusMapper()
+            mapper = SystemStatusMapper()
             content = mapper.toJson(newStatus)
-            File.FileUtil.writeFile(Paths.STATUS_RB,content=content)
+            File.FileUtil.writeFile(Paths.SYSTEM_STATUS,content=content)
             print("Update status successfully. ")
         except FileNotFoundError as e:
                 print("An error occurred when status updating:", e)
@@ -21,14 +23,16 @@ class StatusController:
                 print("An error occurred when status updating:", e)
                 raise
     @staticmethod
-    def updateIfChange(newStatus:Status):
+    def updateIfChange(newStatus:CameraStatus):
         try:
-            lastUpdate = StatusController.get()
+            
+            lastUpdate = SystemStatusController.get()
             if (newStatus.cameraRunning is not None):
                 lastUpdate.cameraRunning = newStatus.cameraRunning
             if (newStatus.lastImage is not None):
                 lastUpdate.lastImage = newStatus.lastImage 
-            StatusController.update(lastUpdate)
+            SystemStatusController.update(lastUpdate)
+            print("updateIfChange status successfully. ")
         except FileNotFoundError as e:
                 print("An error occurred when status updating:", e)
                 raise
@@ -38,13 +42,13 @@ class StatusController:
                 print("An error occurred when status updating:", e)
                 raise
     @staticmethod
-    def get()-> Status:
+    def get()-> SystemStatus:
             statusFile={}
             try:
-                statusMapper = StatusMapper()
+                statusMapper = SystemStatusMapper()
                 #chequeo si el archivo existe o es vacio y se crea
-                fileExample = statusMapper.toJson(File.FileUtil.readFile(Paths.STATUS_RB_EXAMPLE))
-                File.FileUtil.createIsFileEmptyOrNotExist(Paths.STATUS_RB,fileExample) 
+                fileExample = statusMapper.toJson(File.FileUtil.readFile(Paths.SYSTEM_STATUS_FILE_EXAMPLE))
+                File.FileUtil.createIsFileEmptyOrNotExist(Paths.SYSTEM_STATUS,fileExample) 
                 statusFile =File.FileUtil.readFile(Paths.STATUS_RB) 
                 status_instance = statusMapper.toStatus(dictFile=statusFile) 
                 return status_instance
@@ -58,15 +62,7 @@ class StatusController:
                 print("An error occurred when get Status: ",e)
                 raise
 
-    @staticmethod
-    def isCameraRunning()-> bool:
-            try:
-                isCameraRunning:bool =random.choice([True, False]) # Ver como controlar si la camara esta encendida
-                print("isCameraRunning: ",isCameraRunning)
-                return isCameraRunning 
-            except Exception as e:
-                print("An error occurred when get isCameraRunning: ",e)
-                raise
+   
             
            
                       
