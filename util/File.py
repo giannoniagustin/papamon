@@ -1,3 +1,4 @@
+import io
 import os
 import json
 import zipfile
@@ -96,4 +97,26 @@ class FileUtil:
     def filePath(file:str):
     # Obtener el directorio del archivo
        return os.path.dirname(file)
+    @staticmethod
+    def zipFoler(folderPath):
+     try:        
+        print("zipFoler: "+folderPath)    
+    # Crear un archivo ZIP en memoria
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, _, files in os.walk(folderPath):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    # Agregar el archivo al archivo ZIP con una ruta relativa
+                    zipf.write(file_path, os.path.relpath(file_path, folderPath))
+
+        # Preparar la respuesta
+        buffer.seek(0)
+        return buffer
+     except Exception as e:
+              print("An error occurred when zipFoler: ",e)
+              raise
+
+
+
 

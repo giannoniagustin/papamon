@@ -148,27 +148,11 @@ class ApiController:
             return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  
 
     def getResult(date:str,id:str):
-        imageRgb =Paths.IMAGES+date+os.sep+id+os.sep+Paths.RGB_FILE
-        imageDepth =Paths.IMAGES+date+os.sep+id+os.sep+Paths.DEPTH_FILE
-        datosCSV=Paths.IMAGES+date+os.sep+id+os.sep+Paths.POINT_FILE
+        folderPath =Paths.IMAGES+date+os.sep
         # Crear un archivo ZIP en memoria
-        buffer = io.BytesIO()
-        with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            # Agregar las imágenes PNG al archivo ZIP
-            with open(imageRgb, 'rb') as imagen1:
-                zipf.writestr(Paths.RGB_FILE, imagen1.read())
-            with open(imageDepth, 'rb') as imagen2:
-                zipf.writestr(Paths.DEPTH_FILE, imagen2.read())
-            
-            # Agregar el archivo CSV al archivo ZIP
-            with open(datosCSV, 'rb') as datos_csv:
-                zipf.writestr(Paths.POINT_FILE, datos_csv.read())
-
-        # Preparar la respuesta
-        buffer.seek(0)
+        buffer = File.FileUtil.zipFoler(folderPath)
         response = make_response(buffer.read())
         response.headers['Content-Type'] = 'application/zip'
-        response.headers['Content-Disposition'] = 'attachment; filename=archivos.zip'
-
+        response.headers['Content-Disposition'] = f'attachment; filename={date}.zip'
         return response
 
