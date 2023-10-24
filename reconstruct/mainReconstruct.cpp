@@ -598,8 +598,8 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
 
                 if (frameIndex % 100 == 0)
                 {
-                    saveAsObj(o, inputDir + "merged.obj");
-                    buildStateJSON(inputDir + "reconstruction.json");
+                    saveAsObj(o, inputDir + "/merged.obj");
+                    buildStateJSON(inputDir + "/reconstruction.json");
                 }
 
                 o.vertexes.clear();
