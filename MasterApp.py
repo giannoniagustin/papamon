@@ -1,3 +1,4 @@
+import os
 from controllers.MasterController import MasterController
 from controllers.status.StatusController import StatusController
 from controllers.scheduler.SchedulerController import SchedulerController
@@ -17,7 +18,7 @@ from sentry_sdk import configure_scope
 import sentry_sdk
 import Api
 import schedule
-from config.master.config import meRaspb  # Importa meRaspb desde config.py
+from config.master.config import version, meRaspb  # Importa meRaspb desde config.py
 
 def initApp():
    Sentry.init()
@@ -66,6 +67,11 @@ def callReconstruct():
         print(f"Reconstruccion fallida,puede haber generado alguna imagen: {datetime.datetime.now()}")    
           
 if __name__ == "__main__":
+    
+    print(os.linesep+"#################################################################"+os.linesep)
+    print(f"Inicio de App Master {datetime.datetime.now()} Version {version} "+os.linesep)
+    print(f"Raspberry {meRaspb} "+os.linesep)
+    print("#################################################################")
     
     initApp()
     callReconstruct()
