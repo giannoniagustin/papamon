@@ -7,7 +7,7 @@ from model.Raspberry import Raspberry
 from util import File,TimeUtil
 import constants.EndPoints as EndPoint
 import requests
-from datetime import datetime
+import datetime
 from mappers.status.StatusMapper import StatusMapper
 from controllers.statusRaspberies.StatusRaspberiesController import StatusRaspberiesController
 from controllers.image.ImageController import ImageController
@@ -125,7 +125,6 @@ class MasterController:
         StatusRaspberiesController().update(listStatusRaspberies)
         Sentry.customMessage(Paths.STATUS_RASPBERIES_FILE,Paths.STATUS_RASPBERIES,f"Estado del sistema {datetime.datetime.now()}")      
 
-        
         # Buscar si todas estan Ok
         has_error = all(statusSlave.state for statusSlave in listStatusRaspberies)
         systemStatus =  StatusSystem(slaves=listRasperr,slaveStatus=listStatusRaspberies,status=has_error,message="Error")

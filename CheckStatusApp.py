@@ -13,7 +13,7 @@ def checkStatus():
       MasterController.getStatus()
 def processCheckStatus():
      Sentry.init()
-     Sentry.customMessage(filename=None,path=None,eventName="Inicio de Sentry en proceso ")  
+     Sentry.customMessage(filename=None,path=None,eventName="Inicio de Sentry ProcessCheckStatus ")  
      SchedulerController.build(job=checkStatus)
      while True:
       schedule.run_pending()
@@ -21,4 +21,5 @@ def processCheckStatus():
 
 if __name__ == '__main__':
     Sentry.init()
+    MasterController.getStatus()
     processCheckStatus()
