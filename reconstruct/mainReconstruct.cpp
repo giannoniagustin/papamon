@@ -649,10 +649,10 @@ bool Reconstruct(std::string inputDir)
         getScene()->heightMap.swap(heights);
 
         std::cout << "Save as OBJ  \n";
-        saveAsObj(o, inputDir + "merged.obj");
+        saveAsObj(o, inputDir + "/merged.obj");
 
         std::cout << "Save STATE  \n";
-        buildStateJSON(inputDir + "reconstruction.json");
+        buildStateJSON(inputDir + "/reconstruction.json");
 
         std::cout << "Process finish ok \n";
 
@@ -671,7 +671,7 @@ bool Reconstruct(std::string inputDir)
 int main(int argc, char* argv[]) try
 {
     /////////////////////////////////////////////////////
-    std::cout << "Project Reconstruct 24Oct2023" << "\n";
+    std::cout << "Project Reconstruct 25Oct2023" << "\n";
 
     bool showOutput = false;
     std::string inputDir = "";
