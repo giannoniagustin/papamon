@@ -46,6 +46,7 @@ def configParameter():
         config.programsaveCam = config.programsaveCam_Win
     else:
         config.programsaveCam = config.programsaveCam_Linux
+    print(f"Program to execute {config.programsaveCam} ")
           
 if __name__ == "__main__":
     print(os.linesep+"#################################################################"+os.linesep)
