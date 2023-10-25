@@ -14,7 +14,7 @@ from mappers.status.StatusMapper import StatusMapper
 from controllers.statusRaspberies.StatusRaspberiesController import StatusRaspberiesController
 from controllers.image.ImageController import ImageController
 
-import config.slave.config as config
+import config.master.config as config
 
 
 
