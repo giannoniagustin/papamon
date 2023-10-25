@@ -30,7 +30,7 @@ class MasterController:
     def getImages():
         reconstructSuccess = False
         rbFailList:List[Raspberry] = []
-        request_id = TimeUtil.TimeUtil.timeToString(datetime.datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY)
+        request_id = TimeUtil.TimeUtil.timeToString(datetime.datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY_HH_MM)
         # Crear la carpeta con el ID de solicitud actual
         localPathImage =Paths.BUILD_IMAGE_FOLDER.format(request_id)
         File.FileUtil.createFolder(localPathImage)
@@ -63,6 +63,13 @@ class MasterController:
                         rbFailList.append(rB)
         print(f"Listado de Raspberry con error: {rbFailList}")                
         result=MasterController.callReconstructImage(localPathImage,isDemo,programsaveCam,reconstructFolder)
+        '''      
+        bufferZip =File.FileUtil.zipFoler(localPathImage)
+        with open(localPathImage+os.sep+request_id+Paths.ZIP, 'wb') as zip_file:
+         zip_file.write(bufferZip.getvalue())
+        pathFileSen =localPathImage+os.sep+"0"+os.sep+"points.csv"
+        Sentry.customMessage(filename=request_id,path=pathFileSen,eventName="Termino reconstrucción de imagen") ''' 
+
         reconstructSuccess = result   and rbFailList.__len__() == 0
         if (reconstructSuccess):
             StatusController.updateIfChange(Status(cameraRunning=True,lastImage=request_id,))
