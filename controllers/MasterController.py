@@ -1,4 +1,5 @@
 
+import io
 import os
 import subprocess
 from controllers.raspberry.RaspberryController import RaspberryController
@@ -13,10 +14,8 @@ from mappers.status.StatusMapper import StatusMapper
 from controllers.statusRaspberies.StatusRaspberiesController import StatusRaspberiesController
 from controllers.image.ImageController import ImageController
 
-from config.master.config import programsaveCam
-from config.master.config import reconstructFolder
-from config.master.config import isDemo
-from config.master.config import meRaspb
+import config.slave.config as config
+
 
 
 from model.StatusSlave import StatusSlave
@@ -43,9 +42,11 @@ class MasterController:
                 params = {f"data": {request_id}}
                 response = requests.get(url,params=params)
                 if response.status_code == 200:
-                    imageFile=Paths.BUILD_IMAGE_FILE.format(request_id,rB.id,request_id,Paths.ZIP)
-                    ImageController.save(imageFile,response.content)
-                    ImageController.extract(File.FileUtil.filePath(imageFile), response.content)
+                    zip_data = io.BytesIO(response.content)
+                    #imageFile=Paths.BUILD_IMAGE_FILE.format(request_id,rB.id,request_id,Paths.ZIP)
+                    #ImageController.save(imageFile,response.content)
+                    #ImageController.extract(File.FileUtil.filePath(imageFile), response.content)
+                    ImageController.extractMemory(localPathImage,zip_data)
                     print(f"Imagen descargada y almacenada con éxito de RB {rB.name} ")
                     rbSucces = True
                 else:
@@ -62,7 +63,7 @@ class MasterController:
                     if not rbSucces:
                         rbFailList.append(rB)
         print(f"Listado de Raspberry con error: {rbFailList}")                
-        result=MasterController.callReconstructImage(localPathImage,isDemo,programsaveCam,reconstructFolder)
+        result=MasterController.callReconstructImage(localPathImage,config.isDemo,config.programsaveCam,config.reconstructFolder)
         '''      
         bufferZip =File.FileUtil.zipFoler(localPathImage)
         with open(localPathImage+os.sep+request_id+Paths.ZIP, 'wb') as zip_file:
@@ -148,7 +149,7 @@ class MasterController:
             statusMaster.cameraRunning=True    
             message= "Se conecto con todas las camaras"
                              
-        listStatusRaspberies.append(StatusSlave(raspberry=meRaspb,status=statusMaster,message=message,state=has_error))            
+        listStatusRaspberies.append(StatusSlave(raspberry=config.meRaspb,status=statusMaster,message=message,state=has_error))            
         StatusRaspberiesController().update(listStatusRaspberies)
         Sentry.customMessage(Paths.STATUS_RASPBERIES_FILE,Paths.STATUS_RASPBERIES,f"Estado del sistema {datetime.datetime.now()}")      
         return listStatusRaspberies
