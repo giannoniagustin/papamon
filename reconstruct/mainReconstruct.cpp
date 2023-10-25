@@ -598,8 +598,8 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
 
                 if (frameIndex % 100 == 0)
                 {
-                    saveAsObj(o, inputDir + "merged.obj");
-                    buildStateJSON(inputDir + "reconstruction.json");
+                    saveAsObj(o, inputDir + "/merged.obj");
+                    buildStateJSON(inputDir + "/reconstruction.json");
                 }
 
                 o.vertexes.clear();
@@ -671,7 +671,7 @@ bool Reconstruct(std::string inputDir)
 int main(int argc, char* argv[]) try
 {
     /////////////////////////////////////////////////////
-    std::cout << "Project Reconstruct 19Oct2023" << "\n";
+    std::cout << "Project Reconstruct 24Oct2023" << "\n";
 
     bool showOutput = false;
     std::string inputDir = "";

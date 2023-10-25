@@ -115,7 +115,7 @@ void setImageDataColor(imageData* iD, rs2::video_frame f)
 // It can be useful for debugging an embedded system with no display.
 int main(int argc, char* argv[]) try
 {
-    std::cout << "Project PapaMon 23Oct2023" << "\n";
+    std::cout << "Project PapaMon 24Oct2023" << "\n";
 
     bool demoMode = false;
 
