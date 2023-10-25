@@ -87,9 +87,12 @@ class ApiController:
     @staticmethod
     def callTakeImage(pathDest:str,id:str ,isDemo:str,programName:str,folderPath:str):
         result=isDemo
+        print(f"Ejecutando en modo demo {result}")
+
         # Argumentos del programa
         if (isDemo):
             demo="-demo"
+            print("Ejecutando en modo demo")
         else:
             demo=""    
         args = ["-dir", f"{pathDest}", demo, "-id", id]
