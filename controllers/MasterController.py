@@ -32,6 +32,8 @@ class MasterController:
         request_id = TimeUtil.TimeUtil.timeToString(datetime.datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY_HH_MM)
         # Crear la carpeta con el ID de solicitud actual
         localPathImage =Paths.BUILD_IMAGE_FOLDER.format(request_id)
+        outResult= Paths.IMAGES+request_id+"reconstruction.json"
+        print(f"Out Result {outResult}")
         File.FileUtil.createFolder(localPathImage)
         listRasperr = RaspberryController.getRaspberries()
         for rB in listRasperr:
@@ -69,7 +71,9 @@ class MasterController:
         Sentry.customMessage(filename=request_id,path=pathFileSen,eventName="Termino reconstrucción de imagen") ''' 
 
         reconstructSuccess = result   and rbFailList.__len__() == 0
+
         if (reconstructSuccess):
+            Sentry.customMessage(filename=request_id,path=outResult,eventName="Termino reconstrucción de imagen")  
             StatusController.updateIfChange(Status(cameraRunning=True,lastImage=request_id,))
         else:
             StatusController.updateIfChange(Status(cameraRunning=False,lastImage=None))
