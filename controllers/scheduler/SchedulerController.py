@@ -79,6 +79,12 @@ class SchedulerController:
             print(f"Sunday :{hour.hour}:{hour.minute}")
             schedule.every().sunday.at(f"{hour.hour}:{hour.minute}").do(job)
             
+    @staticmethod
+    def buildEverOur(job):
+     schedule.every(1).hour.do(job)
+
+     
+            
 
 
                

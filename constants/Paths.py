@@ -42,7 +42,7 @@ SYSTEM_STATUS_EXAMPLE=os.path.join(DATA_FOLDER, MASTER_FOLDER,SYSTEM_STATUS_FILE
 
 #IMAGES
 #Folder
-IMAGES=os.path.join(documents_folder, 'reconstruct')+os.sep#documents_folder+'reconstruct'+os.sep
+IMAGES=os.path.join(documents_folder, 'out_reconstruct')+os.sep#documents_folder+'reconstruct'+os.sep
 BUILD_IMAGE_FOLDER=IMAGES+"{}" # 1 id_rquest
    #Builded Image 
 BUILD_IMAGE_FILE=IMAGES+"{}"+os.sep+"{}"+os.sep+"{}"+"{}" # 1 id_request,2 id_rb, 3 id_request, 4 Extension file 

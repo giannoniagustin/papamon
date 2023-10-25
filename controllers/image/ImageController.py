@@ -1,5 +1,8 @@
 
+from io import BytesIO
 import os
+import zipfile
+
 from util import File
 class ImageController:
     @staticmethod
@@ -40,3 +43,27 @@ class ImageController:
                 print("An error occurred when image extract:", e)
                 raise
 
+    @staticmethod
+    def extractMemory(folderPath:str,content: BytesIO, createFolder=True):
+            
+        if (createFolder):
+                 folder = os.path.dirname(folderPath)
+                 File.FileUtil.createFolder(folder)  # Asegurarse de que la carpeta y las subcarpetas existan    
+
+        with zipfile.ZipFile(content, "r") as zip_ref:
+                for file_info in zip_ref.infolist():
+                # Extrae el archivo actual del ZIP
+                        extracted_data = zip_ref.read(file_info.filename)
+                        # Construye la ruta completa de destino para guardar el archivo
+                        destino = os.path.join(folderPath, file_info.filename)
+
+                        # Asegúrate de que la carpeta de destino exista
+                        os.makedirs(os.path.dirname(destino), exist_ok=True)
+
+                        # Guarda el archivo en la ubicación de destino
+                        with open(destino, "wb") as archivo_destino:
+                                archivo_destino.write(extracted_data)
+
+                        print(f"Archivo {file_info.filename} guardado en {destino}")
+
+        print("Descompresión exitosa del archivo ZIP y archivos guardados en la ubicación de destino")

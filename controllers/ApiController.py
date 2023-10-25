@@ -13,10 +13,8 @@ from controllers.status.StatusController import StatusController
 from controllers.raspberry.RaspberryController import RaspberryController
 from datetime import datetime
 from model.Raspberry import Raspberry
-from config.slave.config import meRaspb
-from config.slave.config import programsaveCam
-from config.slave.config import reconstructFolder
-from config.slave.config import isDemo
+import config.slave.config as config
+
 import io
 import zipfile
 from flask import  make_response
@@ -62,7 +60,7 @@ class ApiController:
     @staticmethod
     def getMe():
             try:
-                me_instance = meRaspb
+                me_instance =config. meRaspb
                 return jsonify( SuccessResponse(data=me_instance, message="Status Raspberry").serialize())
             except FileNotFoundError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
@@ -89,9 +87,12 @@ class ApiController:
     @staticmethod
     def callTakeImage(pathDest:str,id:str ,isDemo:str,programName:str,folderPath:str):
         result=isDemo
+        print(f"Ejecutando en modo demo {result}")
+
         # Argumentos del programa
         if (isDemo):
             demo="-demo"
+            print("Ejecutando en modo demo")
         else:
             demo=""    
         args = ["-dir", f"{pathDest}", demo, "-id", id]
@@ -133,8 +134,8 @@ class ApiController:
             date = request.args.get('data')
             print(f"Inicio toma imagen fecha {date} " )
             localPathImage =Paths.BUILD_IMAGE_FOLDER.format(date)
-            if ApiController.callTakeImage(pathDest=localPathImage, id=meRaspb.id,isDemo=isDemo,programName=programsaveCam,folderPath=reconstructFolder):
-                return ApiController.getResult(date,meRaspb.id)
+            if ApiController.callTakeImage(pathDest=localPathImage, id=config.meRaspb.id,isDemo=config.isDemo,programName=config.programsaveCam,folderPath=config.reconstructFolder):
+                return ApiController.getResult(date,config.meRaspb.id)
             else:
                 print("Ocurrió un error al ejecutar la llamada al programa C++")
                 return jsonify(ErrorResponse(data='', message="An error occurred").serialize())
