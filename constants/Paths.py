@@ -57,6 +57,8 @@ STATUS_RASPBERIES=os.path.join(DATA_FOLDER,MASTER_FOLDER, RB_FOLDER,STATUS_RASPB
 JPG = ".jpg"
 PNG = ".png"
 ZIP = ".zip"
+JSON = ".json"
+
 
 DEPTH_FILE = 'depth.png'
 POINT_FILE = 'points.csv'

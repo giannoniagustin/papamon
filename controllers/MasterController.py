@@ -73,7 +73,7 @@ class MasterController:
         reconstructSuccess = result   and rbFailList.__len__() == 0
 
         if (reconstructSuccess):
-            Sentry.customMessage(filename=request_id,path=outResult,eventName="Termino reconstrucción de imagen")  
+            Sentry.customMessage(filename=request_id+Paths.JSON,path=outResult,eventName="Termino reconstrucción de imagen")  
             StatusController.updateIfChange(Status(cameraRunning=True,lastImage=request_id,))
         else:
             StatusController.updateIfChange(Status(cameraRunning=False,lastImage=None))
