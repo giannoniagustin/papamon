@@ -46,7 +46,7 @@ IMAGES=os.path.join(documents_folder, 'out_reconstruct')+os.sep#documents_folder
 BUILD_IMAGE_FOLDER=IMAGES+"{}" # 1 id_rquest
    #Builded Image 
 BUILD_IMAGE_FILE=IMAGES+"{}"+os.sep+"{}"+os.sep+"{}"+"{}" # 1 id_request,2 id_rb, 3 id_request, 4 Extension file 
-
+RECONSTRUCTION_OUT_FILE=os.sep+"reconstruction.json"
 
 #MASTER PATHS
 #RASPBERIES  STATUS
