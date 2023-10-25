@@ -43,9 +43,6 @@ class MasterController:
                 response = requests.get(url,params=params)
                 if response.status_code == 200:
                     zip_data = io.BytesIO(response.content)
-                    #imageFile=Paths.BUILD_IMAGE_FILE.format(request_id,rB.id,request_id,Paths.ZIP)
-                    #ImageController.save(imageFile,response.content)
-                    #ImageController.extract(File.FileUtil.filePath(imageFile), response.content)
                     ImageController.extractMemory(localPathImage,zip_data)
                     print(f"Imagen descargada y almacenada con éxito de RB {rB.name} ")
                     rbSucces = True
@@ -82,7 +79,7 @@ class MasterController:
     @staticmethod
     def callReconstructImage(pathDest:str,isDemo:str,programName:str,folderPath:str):
         try:
-            resultSucces=True #cambiar por false esta para probar en windows
+            resultSucces=isDemo #cambiar por false esta para probar en windows
             args = ["-dir", f"{pathDest}"]
             os.chdir(folderPath)
             print(f"Current path {os.getcwd()}")
