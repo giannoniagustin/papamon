@@ -42,6 +42,10 @@ def configParameter():
         
     sistema_operativo = platform.system()
     print(f"Estás ejecutando en {sistema_operativo}.")
+    if (sistema_operativo == "Windows"):
+        config.programsaveCam = config.programsaveCam_Win
+    else:
+        config.programsaveCam = config.programsaveCam_Linux
           
 if __name__ == "__main__":
     print(os.linesep+"#################################################################"+os.linesep)
