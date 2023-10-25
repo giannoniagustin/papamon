@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 from controllers.MasterController import MasterController
 from controllers.scheduler.SchedulerController import SchedulerController
@@ -29,7 +30,7 @@ def processGetImages():
       schedule.run_pending()
       time1.sleep(1) 
 def configParameter():
-        # Imprime los parámetros
+    # Imprime los parámetros
     print("Parámetros recibidos:", sys.argv)
     # Verifica si "-demo" está en la lista de argumentos
     if "-demo" in sys.argv:
@@ -38,6 +39,9 @@ def configParameter():
     else:
         print("El parámetro '-demo' no está presente.")
         config.isDemo=False
+        
+    sistema_operativo = platform.system()
+    print(f"Estás ejecutando en {sistema_operativo}.")
           
 if __name__ == "__main__":
     print(os.linesep+"#################################################################"+os.linesep)
