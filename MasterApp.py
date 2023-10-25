@@ -29,6 +29,14 @@ def processGetImages():
      while True:
       schedule.run_pending()
       time1.sleep(1) 
+def processGetImagesEveryour():
+     Sentry.init()
+     Sentry.customMessage(filename=None,path=None,eventName="Inicio de Sentry ProcessGetImages ")  
+     SchedulerController.buildEverOur(job=getImages)
+     while True:
+      schedule.run_pending()
+      time1.sleep(1) 
+
 def configParameter():
     # Imprime los parámetros
     print("Parámetros recibidos:", sys.argv)
@@ -47,6 +55,10 @@ def configParameter():
     else:
         config.programsaveCam = config.programsaveCam_Linux
     print(f"Program to execute {config.programsaveCam} ")
+    
+    if ("-force" in sys.argv):
+        print("Se esta forzando reconstruccion")
+        config.forceReconstruc=True
           
 if __name__ == "__main__":
     print(os.linesep+"#################################################################"+os.linesep)
@@ -55,9 +67,12 @@ if __name__ == "__main__":
     print("#################################################################")
 
     initApp()
-    #processGetImages()
-    callReconstruct()
-    #Api.app.run(host='0.0.0.0', port=meRaspb.port)
+    if (config.forceReconstruc):
+        callReconstruct()
+        processGetImagesEveryour()
+    else:
+        processGetImages()
+        #Api.app.run(host='0.0.0.0', port=meRaspb.port)
     
     
 
