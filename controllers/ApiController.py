@@ -46,6 +46,7 @@ class ApiController:
             mapper = StatusMapper()
             newInstance = mapper.toStatus(new_data)
             StatusController.update(newInstance)
+            print(f'Status  --'+{newInstance})
             return jsonify( SuccessResponse(data=newInstance, message="Update status success").serialize())
 
         except FileNotFoundError as e:
@@ -120,7 +121,7 @@ class ApiController:
             print(f"Current path {os.getcwd()}")
             if (result):
                print(f"Imagen capturada exitosamente " )
-               lastImageR =TimeUtil.TimeUtil.timeToString(datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY)
+               lastImageR =TimeUtil.TimeUtil.timeToString(datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY_HH_MM)
             else:
                 print(f"Imagen no capturada " )
                 lastImageR =None  

@@ -25,7 +25,7 @@ def getImages():
 def processGetImages():
      Sentry.init()
      Sentry.customMessage(filename=None,path=None,eventName="Inicio de Sentry ProcessGetImages ")  
-     SchedulerController.build(job=getImages,pathScheduler=Paths.SCHEDULER_GET_IMAGES)
+     SchedulerController.build(job=callReconstruct,pathScheduler=Paths.SCHEDULER_GET_IMAGES)
      while True:
       schedule.run_pending()
       time1.sleep(1) 

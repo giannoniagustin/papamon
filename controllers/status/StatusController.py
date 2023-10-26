@@ -28,7 +28,8 @@ class StatusController:
                 lastUpdate.cameraRunning = newStatus.cameraRunning
             if (newStatus.lastImage is not None):
                 lastUpdate.lastImage = newStatus.lastImage 
-            StatusController.update(lastUpdate)
+            StatusController.update(lastUpdate)        
+            print(f"Status  --'{lastUpdate}")
         except FileNotFoundError as e:
                 print("An error occurred when status updating:", e)
                 raise
