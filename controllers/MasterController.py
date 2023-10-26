@@ -33,14 +33,14 @@ class MasterController:
         # Crear la carpeta con el ID de solicitud actual
         localPathImage =Paths.BUILD_IMAGE_FOLDER.format(request_id)
         outResult= localPathImage+Paths.RECONSTRUCTION_OUT_FILE
-        print(f"Out Result {outResult}")
+        print(f"Carpeta de salida de reconstrucción {outResult}")
         File.FileUtil.createFolder(localPathImage)
         listRasperr = RaspberryController.getRaspberries()
         for rB in listRasperr:
             try:
                 rbSucces = False
                 url= EndPoint.url_template.format(rB.ip,rB.port,EndPoint.IMAGE)
-                print("Url RB ",url)
+                print("Url grt images ",url)
                 params = {f"data": {request_id}}
                 response = requests.get(url,params=params)
                 if response.status_code == 200:
@@ -63,19 +63,12 @@ class MasterController:
                         rbFailList.append(rB)
         print(f"Listado de Raspberry con error: {rbFailList}")                
         result=MasterController.callReconstructImage(localPathImage,config.isDemo,config.programsaveCam,config.reconstructFolder)
-        '''      
-        bufferZip =File.FileUtil.zipFoler(localPathImage)
-        with open(localPathImage+os.sep+request_id+Paths.ZIP, 'wb') as zip_file:
-         zip_file.write(bufferZip.getvalue())
-        pathFileSen =localPathImage+os.sep+"0"+os.sep+"points.csv"
-        Sentry.customMessage(filename=request_id,path=pathFileSen,eventName="Termino reconstrucción de imagen") ''' 
-
         reconstructSuccess = result   and rbFailList.__len__() == 0
-
         if (reconstructSuccess):
             Sentry.customMessage(filename=request_id+Paths.JSON,path=outResult,eventName="Termino reconstrucción de imagen")  
             StatusController.updateIfChange(Status(cameraRunning=True,lastImage=request_id,))
         else:
+            Sentry.customMessage(eventName="Ocurrio un error en la reconstrucción de la imagen")  
             StatusController.updateIfChange(Status(cameraRunning=False,lastImage=None))
             
         return  reconstructSuccess
@@ -83,12 +76,12 @@ class MasterController:
     @staticmethod
     def callReconstructImage(pathDest:str,isDemo:str,programName:str,folderPath:str):
         try:
-            resultSucces=isDemo #cambiar por false esta para probar en windows
+            resultSucces=isDemo
             args = ["-dir", f"{pathDest}"]
             os.chdir(folderPath)
             print(f"Current path {os.getcwd()}")
             comando = [programName]+ args
-            print(f"comando a ejecutar {comando} ")
+            print(f"Comando a ejecutar {comando} ")
             resultado = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             # Capturar la salida estándar y de error
             salida_estandar =resultado.stdout

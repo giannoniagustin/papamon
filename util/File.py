@@ -81,18 +81,23 @@ class FileUtil:
     def createIsFileEmptyOrNotExist(path,fileExample):
       try:     
               if (FileUtil.isFileEmpty(path) or  not FileUtil.fileExists(path)):
-               FileUtil.writeFile(path,fileExample)
+                FileUtil.writeFile(path,fileExample)
       except Exception as e:
               print("An error occurred when isFileEmptyOrNotExist: ",e)
               raise
           
     @staticmethod
     def createFolder(folder):
-       if not os.path.exists(folder):    
-        os.makedirs(folder)
-        print(f"Carpeta '{folder}' creada exitosamente.")
-       else:
-        print(f"Carpeta '{folder}' ya existe.") 
+       try:      
+              if not os.path.exists(folder):    
+                     os.makedirs(folder)
+                     print(f"Carpeta '{folder}' creada exitosamente.")
+              else:
+                     print(f"Carpeta '{folder}' ya existe.") 
+       except Exception as e:
+                     print(f"An error occurred when create folder '{folder}' : ",e)
+                     raise
+              
     @staticmethod
     def filePath(file:str):
     # Obtener el directorio del archivo
