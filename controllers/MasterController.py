@@ -52,12 +52,14 @@ class MasterController:
                     print(f"Error al descargar la imagen de RB {rB.name}")
             except requests.exceptions.ConnectionError as e:
                     print("Error de conexión:", e)
+                    Sentry.captureException(e)
             except requests.exceptions.RequestException as e:
                     print("Error en la solicitud:", e)
+                    Sentry.captureException(e)
 
             except Exception as e:
                     print("Error en la solicitud:", e)
-
+                    Sentry.captureException(e)
             finally:
                     if not rbSucces:
                         rbFailList.append(rB)
@@ -94,8 +96,11 @@ class MasterController:
                 resultSucces = False
         except subprocess.CalledProcessError as e:
             print("Error al ejecutar el programa C++:", e)
+            Sentry.captureException(e)
         except Exception as e:
             print("Ocurrió un error:", e)
+            Sentry.captureException(e)
+
         finally:
             os.chdir("..")
             print(f"Current path {os.getcwd()}")

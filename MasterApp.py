@@ -11,9 +11,15 @@ from util.Sentry import Sentry
 import schedule
 import config.master.config as config
 def initApp():
-    configParameter()
+    
     Sentry.init()
     Sentry.customMessage(Paths.ME_FILE,Paths.ME,f"Inicio de App Master {datetime.datetime.now()}")   
+    print(os.linesep+"#################################################################"+os.linesep)
+    print(f"Inicio de App Master {datetime.datetime.now()}{os.linesep} Version {config.version} "+os.linesep)
+    print(f"Raspberry {config.meRaspb} "+os.linesep)
+    print("#################################################################")
+    configParameter()
+
 
 def callReconstruct():
     if (MasterController.getImages()):
@@ -62,10 +68,6 @@ def configParameter():
         config.forceReconstruc=True
           
 if __name__ == "__main__":
-    print(os.linesep+"#################################################################"+os.linesep)
-    print(f"Inicio de App Master {datetime.datetime.now()}{os.linesep} Version {config.version} "+os.linesep)
-    print(f"Raspberry {config.meRaspb} "+os.linesep)
-    print("#################################################################")
 
     initApp()
     if (config.forceReconstruc):

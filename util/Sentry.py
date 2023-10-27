@@ -34,6 +34,9 @@ class Sentry:
                         scope.clear()
                 else:
                         sentry_sdk.capture_message(eventName) 
+        @staticmethod
+        def captureException(e):
+            sentry_sdk.capture_exception(e)
         
 
      
