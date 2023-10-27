@@ -84,6 +84,11 @@ class SchedulerController:
      schedule.every(1).hour.do(job)
 
      
+    @staticmethod
+    def buildEveryMinute(job):
+     schedule.every(1).minute.do(job)
+
+     
             
 
 

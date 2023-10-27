@@ -20,22 +20,23 @@ def callReconstruct():
         print(f"Reconstruccion exitosa: {datetime.datetime.now()}")    
     else:
         print(f"Reconstruccion fallida,puede haber generado alguna imagen: {datetime.datetime.now()}")   
-def getImages(): 
-      MasterController.getImages()
-def processGetImages():
-     Sentry.init()
-     Sentry.customMessage(filename=None,path=None,eventName="Inicio de Sentry ProcessGetImages ")  
-     SchedulerController.build(job=callReconstruct,pathScheduler=Paths.SCHEDULER_GET_IMAGES)
+
+def processGetImages(job):
+     Sentry.customMessage(filename=None,path=None,eventName=f"Obteniendo Imagenes {datetime.datetime.now()} ")  
+     job()
      while True:
       schedule.run_pending()
       time1.sleep(1) 
-def processGetImagesEveryour():
-     Sentry.init()
-     Sentry.customMessage(filename=None,path=None,eventName="Inicio de Sentry ProcessGetImages ")  
-     SchedulerController.buildEverOur(job=getImages)
-     while True:
-      schedule.run_pending()
-      time1.sleep(1) 
+
+def everyOur():
+    SchedulerController.buildEverOur(job=callReconstruct)
+
+def everyMinute():
+    SchedulerController.buildEveryMinute(job=callReconstruct)
+def byScheduler():
+    SchedulerController.build(job=callReconstruct,pathScheduler=Paths.SCHEDULER_GET_IMAGES)
+
+    
 
 def configParameter():
     # Imprime los parámetros
@@ -69,10 +70,9 @@ if __name__ == "__main__":
     initApp()
     if (config.forceReconstruc):
         callReconstruct()
-        processGetImagesEveryour()
+        processGetImages(everyMinute)
     else:
-        processGetImages()
-        #Api.app.run(host='0.0.0.0', port=meRaspb.port)
+        processGetImages(byScheduler)
     
     
 

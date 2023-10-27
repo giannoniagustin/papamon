@@ -14,7 +14,9 @@ def checkStatus():
 def processCheckStatus():
      Sentry.init()
      Sentry.customMessage(filename=None,path=None,eventName="Inicio de Sentry ProcessCheckStatus ")  
-     SchedulerController.build(job=checkStatus,pathScheduler=Paths.SCHEDULER_STATUS)
+     #SchedulerController.build(job=checkStatus,pathScheduler=Paths.SCHEDULER_STATUS)
+     SchedulerController.buildEveryMinute(checkStatus)
+
      while True:
       schedule.run_pending()
       time.sleep(1)
