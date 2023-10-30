@@ -67,8 +67,13 @@ class MasterController:
         result=MasterController.callReconstructImage(localPathImage,config.isDemo,config.programsaveCam,config.reconstructFolder)
         reconstructSuccess = result   and rbFailList.__len__() == 0
         if (reconstructSuccess):
-            Sentry.customMessage(filename=request_id+Paths.JSON,path=outResult,eventName="Termino reconstrucción de imagen")  
-            StatusController.updateIfChange(Status(cameraRunning=True,lastImage=request_id,))
+            if (File.FileUtil.fileExists(outResult)):
+             Sentry.customMessage(filename=request_id+Paths.JSON,path=outResult,eventName="Termino reconstrucción de imagen")  
+             StatusController.updateIfChange(Status(cameraRunning=True,lastImage=request_id,))
+            else:
+                Sentry.customMessage(eventName="El archivo de reconstruccion no existe ")  
+                print("El archivo de reconstruccion no existe ")  
+                StatusController.updateIfChange(Status(cameraRunning=False,lastImage=None)) 
         else:
             Sentry.customMessage(eventName="Ocurrio un error en la reconstrucción de la imagen")  
             StatusController.updateIfChange(Status(cameraRunning=False,lastImage=None))
