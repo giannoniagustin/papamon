@@ -7,5 +7,5 @@ GET='get'
 #IMAGE
 IMAGE='image'
 #RASPBERRY
-RASPBERRY='raspberry'
+RASPBERRY='raspberries'
 

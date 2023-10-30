@@ -11,5 +11,4 @@ class StatusMapper:
     def toJson( self,instanceObject: Status) :
         # Convert  instance to dictionary and then to JSON
         jsonObject =Parser.toJson(instanceObject)
-        print('Status to Json --'+jsonObject)
         return jsonObject

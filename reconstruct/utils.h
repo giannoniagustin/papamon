@@ -6,11 +6,35 @@
 #include <fstream>              // File IO
 #include <iostream>             // Terminal IO
 #include <sstream>              // Stringstreams
-
+#include <map>
 #include <filesystem>
 #include "glm/glm.hpp"
 
 #include "scene.h"
+
+#define WARNING_SOMEFILES_ARE_MISSING 1
+#define PROCESS_OK 0
+#define GENERAL_ERROR -1
+#define INVALID_PATH -2
+#define FILE_NOT_FOUND -3
+#define CAMERA_NOT_FOUND -4
+#define CAMERA_FAILED -5
+#define RENDER_FAILED -6
+#define SCENE_FAILED_TO_RECONSTRUCT -10
+
+
+
+const std::map<int, std::string> list_of_messages = {
+       {PROCESS_OK, "OK"},
+        {WARNING_SOMEFILES_ARE_MISSING, "Warning : some files are missing"},
+       {GENERAL_ERROR, "General error"},
+         {INVALID_PATH, "Invalid path"},
+           {FILE_NOT_FOUND, "File was not found"},
+             {CAMERA_FAILED, "Camera could not return a valid image"},
+                {RENDER_FAILED, "Render failed"},
+       {SCENE_FAILED_TO_RECONSTRUCT, "Failed to reconstruct scene"}
+};
+
 
 void savePointsToCSV(object3D& o, std::string filename);
 

@@ -1,0 +1,121 @@
+{
+    "monday": [
+        {
+            "hour": 10,
+            "minute": 30,
+            "second": 0
+        },
+        {
+            "hour": 15,
+            "minute": 45,
+            "second": 0
+        },
+        {
+            "hour": 23,
+            "minute": 15,
+            "second": 0
+        }
+    ],
+    "tuesday": [
+        {
+            "hour": 10,
+            "minute": 30,
+            "second": 0
+        },
+        {
+            "hour": 15,
+            "minute": 45,
+            "second": 0
+        },
+        {
+            "hour": 23,
+            "minute": 15,
+            "second": 0
+        }
+    ],
+    "wednesday": [
+        {
+            "hour": 10,
+            "minute": 30,
+            "second": 0
+        },
+        {
+            "hour": 11,
+            "minute": "08",
+            "second": 0
+        },
+        {
+            "hour": 15,
+            "minute": 42,
+            "second": 0
+        }
+    ],
+    "thursday": [
+        {
+            "hour": 10,
+            "minute": 30,
+            "second": 0
+        },
+        {
+            "hour": 10,
+            "minute": 57,
+            "second": 0
+        },
+        {
+            "hour": 23,
+            "minute": 15,
+            "second": 0
+        }
+    ],
+    "friday": [
+        {
+            "hour": 10,
+            "minute": 30,
+            "second": 0
+        },
+        {
+            "hour": 15,
+            "minute": 45,
+            "second": 0
+        },
+        {
+            "hour": 23,
+            "minute": 15,
+            "second": 0
+        }
+    ],
+    "saturday": [
+        {
+            "hour": 10,
+            "minute": 30,
+            "second": 0
+        },
+        {
+            "hour": 15,
+            "minute": 45,
+            "second": 0
+        },
+        {
+            "hour": 23,
+            "minute": 15,
+            "second": 0
+        }
+    ],
+    "sunday": [
+        {
+            "hour": 10,
+            "minute": 30,
+            "second": 0
+        },
+        {
+            "hour": 15,
+            "minute": 45,
+            "second": 0
+        },
+        {
+            "hour": 23,
+            "minute": 15,
+            "second": 0
+        }
+    ]
+}

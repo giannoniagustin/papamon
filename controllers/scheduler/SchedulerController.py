@@ -13,7 +13,7 @@ class SchedulerController:
         try:
             mapper = SchedulerMapper()
             content = mapper.toJson(newStatus)
-            File.FileUtil.writeFile(Paths.SCHEDULER,content=content)
+            File.FileUtil.writeFile(Paths.SCHEDULER_STATUS,content=content)
         except FileNotFoundError as e:
                 print("An error occurred when Scheduler updating:", e)
                 raise
@@ -25,12 +25,16 @@ class SchedulerController:
         else:
                 print("Update Scheduler successfully. ")
     @staticmethod
-    def get():
+    def get(pathScheduler:str):
             myFile={}
             try:
-                myFile =File.FileUtil.readFile(Paths.SCHEDULER) 
-                statusMapper = SchedulerMapper()
-                scheduler_instance = statusMapper.toScheduler(dictFile=myFile) 
+                schedulerMapper = SchedulerMapper()
+                #chequeo si el archivo existe o es vacio y se crea
+                fileExample = schedulerMapper.toJson(File.FileUtil.readFile(Paths.SCHEDULER_GET_IMAGES_EXAMPLE))
+                File.FileUtil.createIsFileEmptyOrNotExist(pathScheduler,fileExample) 
+              
+                myFile =File.FileUtil.readFile(pathScheduler) 
+                scheduler_instance = schedulerMapper.toScheduler(dictFile=myFile) 
                 return scheduler_instance
             except FileNotFoundError as e:
                 print("An error occurred when get Scheduler: "+e.strerror)
@@ -43,30 +47,48 @@ class SchedulerController:
                 raise
 
     @staticmethod
-    def build(job): 
-        scheduler: Scheduler =  SchedulerController.get()
+    def build(job,pathScheduler:str): 
+        scheduler: Scheduler =  SchedulerController.get(pathScheduler)
+        print(f"Job {pathScheduler} is execute on days  : ")
         #Monday
         for hour in scheduler.monday:
-            print(f"{hour.hour}:{hour.minute}")
+            print(f"Monday :{hour.hour}:{hour.minute}")
             schedule.every().monday.at(f"{hour.hour}:{hour.minute}").do(job)
         #tuesday
         for hour in scheduler.tuesday:
+            print(f"Tuesday :{hour.hour}:{hour.minute}")
             schedule.every().tuesday.at(f"{hour.hour}:{hour.minute}").do(job)
         #wednesday
         for hour in scheduler.wednesday:
+            print(f"Wednesday :{hour.hour}:{hour.minute}")
             schedule.every().wednesday.at(f"{hour.hour}:{hour.minute}").do(job)
         #thursday
         for hour in scheduler.thursday:
+            print(f"Thursday :{hour.hour}:{hour.minute}")
             schedule.every().thursday.at(f"{hour.hour}:{hour.minute}").do(job)
         #friday
         for hour in scheduler.friday:
+            print(f"Friday :{hour.hour}:{hour.minute}")
             schedule.every().friday.at(f"{hour.hour}:{hour.minute}").do(job)
         #saturday
         for hour in scheduler.saturday:
+            print(f"Saturday :{hour.hour}:{hour.minute}")
             schedule.every().saturday.at(f"{hour.hour}:{hour.minute}").do(job)
         #sunday
         for hour in scheduler.sunday:
+            print(f"Sunday :{hour.hour}:{hour.minute}")
             schedule.every().sunday.at(f"{hour.hour}:{hour.minute}").do(job)
+            
+    @staticmethod
+    def buildEverOur(job):
+     schedule.every(1).hour.do(job)
+
+     
+    @staticmethod
+    def buildEveryMinute(job):
+     schedule.every(1).minute.do(job)
+
+     
             
 
 

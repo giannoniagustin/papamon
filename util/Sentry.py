@@ -26,7 +26,7 @@ class Sentry:
             sentry_sdk.capture_message("Inicio de Sentry") 
 
         @staticmethod
-        def customMessage(filename:str,path:str,eventName:str):
+        def customMessage(filename:str=None,path:str="",eventName:str=""):
                 if (filename != None):
                     with sentry_sdk.configure_scope() as scope:
                         scope.add_attachment(filename=filename,path=path)
@@ -34,6 +34,9 @@ class Sentry:
                         scope.clear()
                 else:
                         sentry_sdk.capture_message(eventName) 
+        @staticmethod
+        def captureException(e):
+            sentry_sdk.capture_exception(e)
         
 
      

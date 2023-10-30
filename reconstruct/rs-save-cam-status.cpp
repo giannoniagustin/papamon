@@ -115,7 +115,7 @@ void setImageDataColor(imageData* iD, rs2::video_frame f)
 // It can be useful for debugging an embedded system with no display.
 int main(int argc, char* argv[]) try
 {
-    std::cout << "Project PapaMon 18Oct2023" << "\n";
+    std::cout << "Project PapaMon 24Oct2023" << "\n";
 
     bool demoMode = false;
 
@@ -410,48 +410,59 @@ int main(int argc, char* argv[]) try
 #endif 
     }
 
-    std::cout << "Preparing to save files " << "\n";
-
-    // Write images to disk
-    std::string png_file_rgb = outputDir + "/rgb.png";
   
-    std::string png_file_depth = outputDir + "/depth.png";
-
-    if (color_frame != NULL)
+    try
     {
-        int wd = color_frame->w;
-        int hd = color_frame->h;
+        std::cout << "Preparing to save files " << "\n";
+
+        // Write images to disk
+        std::string png_file_rgb = outputDir + "/" + instanceID + "/rgb.png";
+
+        std::string png_file_depth = outputDir + "/" + instanceID + "/depth.png";
+
+        std::filesystem::create_directories(outputDir + "/" + instanceID + "/"); // Recursively create the target directory path if it does not exist.
+
+        if (color_frame != NULL)
+        {
+            int wd = color_frame->w;
+            int hd = color_frame->h;
 
 
-        // SAVING RGB FILE
-        stbi_write_png(png_file_rgb.c_str(), wd, hd,
-            color_frame->bytes_per_pixel/8, color_frame->data, color_frame->stride_data);
-        std::cout << "Saved " << png_file_rgb.c_str() << std::endl;
+            // SAVING RGB FILE
+            stbi_write_png(png_file_rgb.c_str(), wd, hd,
+                color_frame->bytes_per_pixel / 8, color_frame->data, color_frame->stride_data);
+            std::cout << "Saved " << png_file_rgb.c_str() << std::endl;
+        }
+        else
+        {
+            std::cout << "Color frame could not be saved" << std::endl;
+        }
+        // SAVING DEPTH FILE
+        if (filtered_depth != NULL)
+        {
+            stbi_write_png(png_file_depth.c_str(), filtered_depth->w, filtered_depth->h,
+                filtered_depth->bytes_per_pixel / 8, filtered_depth->data, filtered_depth->stride_data);
+            std::cout << "Saved " << png_file_depth.c_str() << std::endl;
+        }
+
+        if (points.get_data_size() > 0)
+        {
+            savePointsToCSV(o, outputDir + "/" + instanceID + "/points.csv");
+            std::cout << "Saved points.csv " << std::endl;
+        }
+        else
+        {
+            std::cout << "Points file could not be saved" << std::endl;
+        }
+
+        return EXIT_SUCCESS;
     }
-    else
+    catch (std::exception e)
     {
-        std::cout << "Color frame could not be saved" << std::endl;
-    }
-    // SAVING DEPTH FILE
-    if (filtered_depth != NULL)
-    {
-        stbi_write_png(png_file_depth.c_str(), filtered_depth->w, filtered_depth->h,
-            filtered_depth->bytes_per_pixel/8, filtered_depth->data, filtered_depth->stride_data);
-        std::cout << "Saved " << png_file_depth.c_str() << std::endl;
+        std::cout << "Exception at render loop :" << e.what() << "\n";
     }
 
-    if (points.get_data_size() > 0)
-    {
-        savePointsToCSV(o, outputDir + "/points.csv");
-        std::cout << "Saved points.csv " << std::endl;
-    }
-    else
-    {
-        std::cout << "Points file could not be saved" << std::endl;
-    }
-
-
-    return EXIT_SUCCESS;
+   
 }
 catch (const rs2::error& e)
 {
