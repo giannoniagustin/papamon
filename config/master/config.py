@@ -8,5 +8,7 @@ programsaveCam_Win = "rs-reconstruct.exe"
 reconstructFolder= "reconstruct"
 isDemo =False
 forceReconstruc = False
+forceCheckStatus = False
+
 version = "Master 1.0"
 SO=""
