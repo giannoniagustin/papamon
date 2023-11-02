@@ -68,7 +68,10 @@ glm::mat4 UpdateModelMatrix(glm::vec3 Translation, glm::vec3 euler)
     return ModelMatrix * transform;
 }
 
+void postProcess()
+{
 
+}
 
 //////////////////////////////////
 object3D mergeAll3DData()
@@ -98,6 +101,7 @@ object3D mergeAll3DData()
         }
     }
 
+  
     return obj;
 }
 
@@ -372,6 +376,7 @@ void render_wizard_ui(float w, float h, object3D& o)
 }
 #endif
 
+
 //////////////////////////////////////////////////////////////////////////
 std::vector<float> computeHeightMap(object3D& o,int wm, int hm)
 {
@@ -393,6 +398,9 @@ std::vector<float> computeHeightMap(object3D& o,int wm, int hm)
         }
 
     }
+
+    /// Apply interpolation
+    values = bicubicInterpolation(values, wm, hm);
 
     return values;
 }

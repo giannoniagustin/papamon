@@ -51,3 +51,5 @@ std::string str_toupper(std::string s);
 void saveAsObj(object3D& o, std::string outputFile);
 
 void getOBJFromFrameSet(object3D& o, rs2::video_frame& color,  rs2::points& points);
+
+std::vector<float> bicubicInterpolation(std::vector<float>& inputHM, int w, int h);

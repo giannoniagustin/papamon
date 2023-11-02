@@ -4,6 +4,15 @@
 #include <iostream>     // std::cout
 #include <sstream>  
 
+#ifdef OPENCV
+#include <opencv2/core.hpp>   // Include OpenCV API
+#include <opencv2/highgui.hpp>   // Include OpenCV API
+#include <opencv2/imgcodecs.hpp>   // Include OpenCV API
+#include <opencv2/imgproc.hpp>   // Include OpenCV API
+#include "opencv2/videoio.hpp"
+#include <opencv2/video.hpp>
+#endif
+
 template<typename Out>
 void splits(const std::string& s, char delim, Out result) {
     std::stringstream ss(s);
@@ -183,5 +192,50 @@ void savePointsToCSV(object3D& o, std::string filename)
 
 
     csv.close();
+
+}
+
+#ifdef OPENCV
+
+cv::Mat vectorToImg(std::vector<float> ihm, int w, int h)
+{
+    cv::Mat m(CV_32FC1, w,h);
+
+    m.data = (uchar*)ihm.data();
+
+    cv::resize(m, m, cv::Size(), 4.0, 4.0);
+
+    return m;
+}
+#endif
+
+//////////////////////////////////////////
+std::vector<float> bicubicInterpolation(std::vector<float>& inputHM, int w, int h)
+{
+   // first, add external bordes 0
+
+    std::vector<float> outputHM = inputHM;
+
+   // second, copy the content 
+
+   // third, for each element x,y
+
+    for (int i = 0; i<w ; i++)
+        for (int i = 0; i < w; i++)
+        {
+
+        }
+
+
+#ifdef OPENCV
+    cv::Mat m = vectorToImg(inputHM, w, h);
+
+    cv::imshow("Test", m);
+
+    cv::waitKey(-1);
+
+#endif
+
+    return outputHM;
 
 }
