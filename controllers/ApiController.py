@@ -20,6 +20,7 @@ import zipfile
 from flask import  make_response
 
 from util import TimeUtil
+from util.Sentry import Sentry
 
 class ApiController:    
     @staticmethod
@@ -114,8 +115,11 @@ class ApiController:
                 result = False
         except subprocess.CalledProcessError as e:
             print("Error al ejecutar el programa C++:", e)
+            Sentry.captureException(e)
+
         except Exception as e:
-            print("Ocurrió un error al ejecutar el programa C++::", e)
+                Sentry.captureException(e)
+                print("Ocurrió un error al ejecutar el programa C++::", e)
         finally:
             os.chdir("..")
             print(f"Current path {os.getcwd()}")
@@ -143,10 +147,12 @@ class ApiController:
 
         except FileExistsError as e:
             print(f"La carpeta '{date}' ya existe.")
+            Sentry.captureException(e)
             return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())  
 
         except Exception as e:
             print("Ocurrió un error:", e)
+            Sentry.captureException(e)
             return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  
 
     def getResult(date:str,id:str):
