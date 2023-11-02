@@ -72,7 +72,7 @@ if __name__ == "__main__":
     initApp()
     if (config.forceReconstruc):
         callReconstruct()
-        processGetImages(everyMinute)
+        processGetImages(everyOur)
     else:
         processGetImages(byScheduler)
     
