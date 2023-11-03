@@ -121,6 +121,28 @@ class FileUtil:
      except Exception as e:
               print("An error occurred when zipFoler: ",e)
               raise
+    @staticmethod
+    def isValidZip(bytes_io):
+              try:
+                     # Posiciona el objeto BytesIO al principio
+                     bytes_io.seek(0)
+                     # Intenta abrir el BytesIO como un archivo ZIP en modo lectura
+                     with zipfile.ZipFile(bytes_io, 'r') as zip_ref:
+                     # No se necesita hacer nada, solo queremos verificar si se puede abrir
+                            return True
+              except zipfile.BadZipFile:
+                     # El objeto BytesIO no contiene un archivo ZIP válido
+                     print(f"El objeto BytesIO no contiene un archivo ZIP válido")
+                     return False
+              except UnicodeDecodeError:
+                     # El archivo ZIP en el objeto BytesIO contiene caracteres no válidos en la codificación
+                     print(f"El archivo ZIP en el objeto BytesIO contiene caracteres no válidos en la codificación")
+
+                     return False
+              except Exception as e:
+                     # Otros errores inesperados
+                     print(f"Error al abrir el archivo ZIP desde BytesIO: {e}")
+                     return False
 
 
 
