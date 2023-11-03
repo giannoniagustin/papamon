@@ -58,7 +58,7 @@ class MasterController:
                     Sentry.captureException(e)
 
             except Exception as e:
-                    print("Error en la solicitud:", e)
+                    print("Error en obteenr imagen:", e)
                     Sentry.captureException(e)
             finally:
                     if not rbSucces:

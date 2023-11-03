@@ -143,17 +143,18 @@ class ApiController:
                 return ApiController.getResult(date,config.meRaspb.id)
             else:
                 print("Ocurrió un error al ejecutar la llamada al programa C++")
-                return jsonify(ErrorResponse(data='', message="An error occurred").serialize())
+                Sentry.customMessage(eventName="Ocurrió un error al ejecutar la llamada al programa C++")  
+                return jsonify(ErrorResponse(data='', message="An error occurred").serialize()),500
 
         except FileExistsError as e:
             print(f"La carpeta '{date}' ya existe.")
             Sentry.captureException(e)
-            return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())  
+            return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize()),500  
 
         except Exception as e:
             print("Ocurrió un error:", e)
             Sentry.captureException(e)
-            return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  
+            return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  ,500
 
     def getResult(date:str,id:str):
         folderPath =Paths.IMAGES+date+os.sep

@@ -90,7 +90,7 @@ class FileUtil:
     def createFolder(folder):
        try:      
               if not os.path.exists(folder):    
-                     os.makedirs(folder)
+                     os.makedirs(folder,exist_ok=True)
                      print(f"Carpeta '{folder}' creada exitosamente.")
               else:
                      print(f"Carpeta '{folder}' ya existe.") 
