@@ -1,3 +1,5 @@
+En Windows, instalar el SDK de InterRealSense : https://github.com/IntelRealSense/librealsense/releases/download/v2.54.2/Intel.RealSense.SDK-WIN10-2.54.2.5684.exe
+
 Instalar dependencias
 pip install requests //Ver si es pip o pip3
 python3 -m pip install sentry-sdk
