@@ -10,6 +10,7 @@ import constants.Paths as Paths
 from util.Sentry import Sentry
 import schedule
 import config.master.config as config
+TIME_SLEEP= 10
 def initApp():
     
     Sentry.init()
@@ -32,7 +33,7 @@ def processGetImages(job):
      job()
      while True:
       schedule.run_pending()
-      time1.sleep(1) 
+      time1.sleep(TIME_SLEEP) 
 
 def everyOur():
     SchedulerController.buildEverOur(job=callReconstruct)
