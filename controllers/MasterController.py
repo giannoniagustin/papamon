@@ -65,7 +65,7 @@ class MasterController:
                         rbFailList.append(rB)
         print(f"Listado de Raspberry con error: {rbFailList}")                
         result=MasterController.callReconstructImage(localPathImage,config.isDemo,config.programsaveCam,config.reconstructFolder)
-        reconstructSuccess = result   and rbFailList.__len__()  > 0
+        reconstructSuccess = result   and rbFailList.__len__()  < listRasperr.__len__()
         if (reconstructSuccess):
             if (File.FileUtil.fileExists(outResult)):
              Sentry.customMessage(filename=request_id+Paths.JSON,path=outResult,eventName="Reconstrucción de imagen")  

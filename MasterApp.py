@@ -39,6 +39,8 @@ def everyOur():
 
 def everyMinute():
     SchedulerController.buildEveryMinute(job=callReconstruct)
+def everySecond():
+    SchedulerController.buildEverySecond(job=callReconstruct)
 def byScheduler():
     SchedulerController.build(job=callReconstruct,pathScheduler=Paths.SCHEDULER_GET_IMAGES)
 
@@ -72,7 +74,7 @@ if __name__ == "__main__":
     initApp()
     if (config.forceReconstruc):
         callReconstruct()
-        processGetImages(everyOur)
+        processGetImages(everySecond)
     else:
         processGetImages(byScheduler)
     
