@@ -107,8 +107,6 @@ class ApiController:
             # Capturar la salida estándar y de error
             salida_estandar =resultado.stdout
             salida_error = resultado.stderr
-            print(f"Salida estándar:{salida_estandar}")
-            print(f"Salida Error:{salida_error}")
             if salida_estandar:
                result = True
             if salida_error:
@@ -140,7 +138,7 @@ class ApiController:
             print(f"Inicio toma imagen fecha {date} " )
             localPathImage =Paths.BUILD_IMAGE_FOLDER.format(date)
             if ApiController.callTakeImage(pathDest=localPathImage, id=config.meRaspb.id,isDemo=config.isDemo,programName=config.programsaveCam,folderPath=config.reconstructFolder):
-                return ApiController.getResult(date,config.meRaspb.id)
+                return ApiController.buildZip(date,config.meRaspb.id)
             else:
                 print("Ocurrió un error al ejecutar la llamada al programa C++")
                 Sentry.customMessage(eventName="Ocurrió un error al ejecutar la llamada al programa C++")  
@@ -156,7 +154,7 @@ class ApiController:
             Sentry.captureException(e)
             return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  ,500
 
-    def getResult(date:str,id:str):
+    def buildZip(date:str,id:str):
         folderPath =Paths.IMAGES+date+os.sep
         # Crear un archivo ZIP en memoria
         buffer = File.FileUtil.zipFoler(folderPath)
