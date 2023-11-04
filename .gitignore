@@ -3,6 +3,7 @@ __pycache__/
 # Ignorar archivos y directorios específicos (reemplaza "nombre_archivo_o_directorio" con los nombres reales)
 statusRaspberies.json
 raspberry.json
+raspberries.json
 scheduler.json
 schedulerGetImages.json
 me.json

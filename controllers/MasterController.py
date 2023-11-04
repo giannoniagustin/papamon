@@ -28,6 +28,7 @@ from typing import List
 class MasterController:
     @staticmethod
     def getImages():
+        print(os.linesep+"###########################INICIO OBTENCION DE IMAGENES######################################"+os.linesep)
         reconstructSuccess = False
         rbFailList:List[Raspberry] = []
         request_id = TimeUtil.TimeUtil.timeToString(datetime.datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY_HH_MM)
@@ -83,19 +84,19 @@ class MasterController:
                     
     @staticmethod
     def callReconstructImage(pathDest:str,isDemo:str,programName:str,folderPath:str):
+        print(os.linesep+"###########################INICIO RECONSTRUCCION IMAGENES######################################"+os.linesep)
+
         try:
             resultSucces=isDemo
             args = ["-dir", f"{pathDest}"]
             os.chdir(folderPath)
-            print(f"Current path {os.getcwd()}")
+            print(f"Cambio de path a {os.getcwd()}")
             comando = [programName]+ args
             print(f"Comando a ejecutar {comando} ")
             resultado = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             # Capturar la salida estándar y de error
             salida_estandar =resultado.stdout
             salida_error = resultado.stderr
-            print(f"Salida estándar:{salida_estandar}")
-            print(f"Salida Error:{salida_error}")
             if salida_estandar:
                resultSucces = True
             if salida_error:
@@ -109,7 +110,7 @@ class MasterController:
 
         finally:
             os.chdir("..")
-            print(f"Current path {os.getcwd()}")
+            print(f"Cambio de  path a {os.getcwd()}")
             return resultSucces
                     
     def getStatus()->List[StatusSlave]:
@@ -188,6 +189,7 @@ class MasterController:
         listRasperr = RaspberryController.getRaspberries()
         for rB in listRasperr:
             try:
+                print(f"------------------------")
                 print(f"Raspberry en Master {rB}")
                 rbSucces = False
                 url= EndPoint.url_template.format(rB.ip,rB.port,EndPoint.ME)
@@ -200,6 +202,8 @@ class MasterController:
                         rbSucces = True
                 else:
                     print(f"Error al comprobar la configuracion de RB {rB.name}")
+                print(f"------------------------")
+
             except requests.exceptions.ConnectionError as e:
                     print("Error de conexión:", e)
                     Sentry.captureException(e)

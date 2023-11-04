@@ -11,8 +11,7 @@ class RaspberryController:
             #Lista de raspberry a pedir las imagenes
             file={}
             try:    
-                path=Paths.RASPBERRY
-                print('Path Raspberry: '+path)
+                path=Paths.RASPBERRIES
                 file =File.FileUtil.readFile(path) 
                 mapper = RaspberryMapper()
                 instance = mapper.toRaspberies(dictFile=file) 
