@@ -1,4 +1,5 @@
 
+import time
 from flask import request,jsonify,send_file
 import os
 import constants.Paths as Paths
@@ -88,9 +89,13 @@ class ApiController:
                 
     @staticmethod
     def callTakeImage(pathDest:str,id:str ,isDemo:str,programName:str,folderPath:str):
-        result=isDemo
+        result=False
+        print(os.linesep+"#########################LLAMADO A PROGRAMA TOMA IMAGEN########################################"+os.linesep)
+        print(f"Carpeta destino {pathDest}")
+        print(f"ID de raspberry {id}")
         print(f"Ejecutando en modo demo {result}")
-
+        print(f"Programa a ejecutar {programName}")
+        print(f"Carpeta de ejecucion del programa {folderPath}")
         # Argumentos del programa
         if (isDemo):
             demo="-demo"
@@ -104,16 +109,16 @@ class ApiController:
             comando = [programName]+ args
             print(f"Comando a ejecutar {comando} ")
             resultado = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if (isDemo):
+                time.sleep(5)
             # Capturar la salida estándar y de error
-            salida_estandar =resultado.stdout
-            salida_error = resultado.stderr
-            if salida_estandar:
+            if resultado.returncode == 0:
                result = True
-            if salida_error:
+            else:
                 result = False
         except subprocess.CalledProcessError as e:
-            print("Error al ejecutar el programa C++:", e)
-            Sentry.captureException(e)
+                print("Error al ejecutar el programa C++:", e)
+                Sentry.captureException(e)
 
         except Exception as e:
                 Sentry.captureException(e)
@@ -126,8 +131,11 @@ class ApiController:
                lastImageR =TimeUtil.TimeUtil.timeToString(datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY_HH_MM)
             else:
                 print(f"Imagen no capturada " )
-                lastImageR =None  
-            StatusController.updateIfChange(newStatus=Status(cameraRunning=result, lastImage=lastImageR))    
+                lastImageR =None
+            try:      
+                StatusController.updateIfChange(newStatus=Status(cameraRunning=result, lastImage=lastImageR))  
+            except Exception as e:
+                    print("No se pudo actualizar el archivo de estado", e)
             return result
 
    
@@ -137,6 +145,7 @@ class ApiController:
             date = request.args.get('data')
             print(f"Inicio toma imagen fecha {date} " )
             localPathImage =Paths.BUILD_IMAGE_FOLDER.format(date)
+            print(f"Carpeta destino: {localPathImage} " )
             if ApiController.callTakeImage(pathDest=localPathImage, id=config.meRaspb.id,isDemo=config.isDemo,programName=config.programsaveCam,folderPath=config.reconstructFolder):
                 return ApiController.buildZip(date,config.meRaspb.id)
             else:
@@ -155,7 +164,10 @@ class ApiController:
             return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  ,500
 
     def buildZip(date:str,id:str):
+        print(f"Creando zip {date} " )
         folderPath =Paths.IMAGES+date+os.sep
+        print(f"Folder path {folderPath} " )
+        File.FileUtil.listFolders(folderPath=folderPath)
         # Crear un archivo ZIP en memoria
         buffer = File.FileUtil.zipFoler(folderPath)
         response = make_response(buffer.read())

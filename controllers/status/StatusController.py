@@ -29,7 +29,7 @@ class StatusController:
             if (newStatus.lastImage is not None):
                 lastUpdate.lastImage = newStatus.lastImage 
             StatusController.update(lastUpdate)        
-            print(f"Status  --'{lastUpdate}")
+            print(f"Nuevo Estado  --'{lastUpdate}")
         except FileNotFoundError as e:
                 print("An error occurred when status updating:", e)
                 raise

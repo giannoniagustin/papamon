@@ -27,10 +27,9 @@ class RaspberryController:
                 print("An error occurred when getRaspberries: ",e)
                 raise    
     @staticmethod
-    def getMe()-> Raspberry:
+    def getMe(path:str)-> Raspberry:
             meFile={}
             try:
-                path=Paths.ME
                 print('Path Me: '+path)
                 meFile =File.FileUtil.readFile(path) 
                 meMapper = RaspberryMapper()

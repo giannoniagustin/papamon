@@ -1,6 +1,8 @@
 import io
 import os
 import json
+import platform
+import subprocess
 import zipfile
 from io import BytesIO
 class FileUtil:
@@ -144,6 +146,25 @@ class FileUtil:
                      print(f"Error al abrir el archivo ZIP desde BytesIO: {e}")
                      return False
 
+    @staticmethod
+    def listFolders(folderPath):
+       print(f"Carpeta a listar: {folderPath}") # Ruta de la carpeta que deseas listar
+       # Determinar el sistema operativo
+       if platform.system() == "Windows":
+              # Ejecutar el comando "dir" en Windows
+              cmd = ["dir", folderPath]
+       else:
+       # Ejecutar el comando "ls" en sistemas tipo Unix (Linux)
+              cmd = ["ls", folderPath]
 
+       # Ejecutar el comando y capturar la salida
+       try:
+              result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+              print("Contenido de la carpeta:")
+              print(result.stdout)
+       except subprocess.CalledProcessError as e:
+              print(f"Error al listar la carpeta: {e}")
+       except FileNotFoundError:
+              print("El comando 'ls' o 'dir' no está disponible en este sistema.")
 
 

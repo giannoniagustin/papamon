@@ -5,6 +5,7 @@ import subprocess
 from controllers.raspberry.RaspberryController import RaspberryController
 import constants.Paths as Paths
 from controllers.status.StatusController import StatusController
+from mappers.raspberry.RaspberryMapper import RaspberryMapper
 from model.Raspberry import Raspberry
 from util import File,TimeUtil
 import constants.EndPoints as EndPoint
@@ -157,3 +158,61 @@ class MasterController:
         StatusRaspberiesController().update(listStatusRaspberies)
         Sentry.customMessage(Paths.STATUS_RASPBERIES_FILE,Paths.STATUS_RASPBERIES,f"Estado del sistema {datetime.datetime.now()}")      
         return listStatusRaspberies
+   
+   
+   
+    @staticmethod
+    def compareRaspberries(rB: Raspberry,rbSlave:Raspberry):
+        isEquals= True
+        if (rB.id != rbSlave.id):
+            print(f"Id distintos, en Master  {rB.id} y en Slave  {rbSlave.id} ")
+            isEquals= False
+        if (rB.name != rbSlave.name):
+            print(f"Name distintos, en Master  {rB.name} y en Slave  {rbSlave.name} ")
+            isEquals= False
+        if (rB.ip != rbSlave.ip):
+            print(f"IP distintos, en Master  {rB.ip} y en Slave  {rbSlave.ip} ")
+            isEquals= False
+        if (rB.port != rbSlave.port):
+            print(f"PORT distintos, en Master  {rB.port} y en Slave  {rbSlave.port} ")
+            isEquals= False
+            
+        return isEquals  
+   
+   
+    @staticmethod
+    def checkConfig():
+        checkConfigSuccess = False
+        rbFailList:List[Raspberry] = []
+        raspberryMapper= RaspberryMapper()
+        listRasperr = RaspberryController.getRaspberries()
+        for rB in listRasperr:
+            try:
+                print(f"Raspberry en Master {rB}")
+                rbSucces = False
+                url= EndPoint.url_template.format(rB.ip,rB.port,EndPoint.ME)
+                response = requests.get(url)
+                if response.status_code == 200:
+                    responseJson= response.json()
+                    rbSlave= raspberryMapper.toRaspberry(responseJson["data"])
+                    print(f"Raspberry en Slave {rbSlave}")
+                    if ( MasterController.compareRaspberries(rB,rbSlave)):
+                        rbSucces = True
+                else:
+                    print(f"Error al comprobar la configuracion de RB {rB.name}")
+            except requests.exceptions.ConnectionError as e:
+                    print("Error de conexión:", e)
+                    Sentry.captureException(e)
+            except requests.exceptions.RequestException as e:
+                    print("Error en la solicitud:", e)
+                    Sentry.captureException(e)
+
+            except Exception as e:
+                    print("Error al comprobar la configuracion de RB:", e)
+                    Sentry.captureException(e)
+            finally:
+                    if not rbSucces:
+                        rbFailList.append(rB)
+        print(f"Listado de Raspberry con error: {rbFailList}")                
+        checkConfigSuccess =  rbFailList.__len__() == 0
+        return  checkConfigSuccess
