@@ -144,7 +144,7 @@ class ApiController:
     def getImage():
         try:
             date = request.args.get('data')
-            print(f"Inicio toma imagen fecha {date} " )
+            print(os.linesep+f"#########################INICIO DE CAPTURA {date}########################################"+os.linesep)
             localPathImage =Paths.BUILD_IMAGE_FOLDER.format(date)
             print(f"Carpeta destino: {localPathImage} " )
             if ApiController.callTakeImage(pathDest=localPathImage, id=config.meRaspb.id,isDemo=config.isDemo,programName=config.programsaveCam,folderPath=config.reconstructFolder):

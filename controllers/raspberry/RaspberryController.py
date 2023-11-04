@@ -30,7 +30,6 @@ class RaspberryController:
     def getMe(path:str)-> Raspberry:
             meFile={}
             try:
-                print('Path Me: '+path)
                 meFile =File.FileUtil.readFile(path) 
                 meMapper = RaspberryMapper()
                 instance = meMapper.toRaspberry(dictFile=meFile) 
