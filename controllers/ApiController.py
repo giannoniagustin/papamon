@@ -93,7 +93,7 @@ class ApiController:
         print(os.linesep+"#########################LLAMADO A PROGRAMA TOMA IMAGEN########################################"+os.linesep)
         print(f"Carpeta destino {pathDest}")
         print(f"ID de raspberry {id}")
-        print(f"Ejecutando en modo demo {result}")
+        print(f"Ejecutando en modo demo {isDemo}")
         print(f"Programa a ejecutar {programName}")
         print(f"Carpeta de ejecucion del programa {folderPath}")
         # Argumentos del programa
