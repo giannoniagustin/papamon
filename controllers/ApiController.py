@@ -149,9 +149,10 @@ class ApiController:
             if ApiController.callTakeImage(pathDest=localPathImage, id=config.meRaspb.id,isDemo=config.isDemo,programName=config.programsaveCam,folderPath=config.reconstructFolder):
                 return ApiController.buildZip(date,config.meRaspb.id)
             else:
-                print("Ocurrió un error al ejecutar la llamada al programa C++")
-                Sentry.customMessage(eventName="Ocurrió un error al ejecutar la llamada al programa C++")  
-                return jsonify(ErrorResponse(data='', message="An error occurred").serialize()),500
+                message="Ocurrió un error al ejecutar la llamada al programa C++"
+                print(message)
+                Sentry.customMessage(eventName=message)  
+                return jsonify(ErrorResponse(data='', message=message).serialize()),500
 
         except FileExistsError as e:
             print(f"La carpeta '{date}' ya existe.")
