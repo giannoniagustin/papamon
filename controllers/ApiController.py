@@ -113,7 +113,7 @@ class ApiController:
                 time.sleep(5)
             # Capturar la salida estándar y de error
             print(f"Salida programa:{resultado.returncode}")
-            if resultado.returncode == 0:
+            if resultado.returncode == 1:
                result = True
             else:
                 result = False
