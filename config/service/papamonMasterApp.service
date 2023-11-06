@@ -2,7 +2,7 @@
 Description=PapamonMasterApp Python
 [Service]
 Type=simple
-ExecStart=/home/papamon/Documents/papamon/MasterApp.py
+ExecStart=/usr/bin/python3 /home/papamon/Documents/papamon/MasterApp.py
 WorkingDirectory=/home/papamon/Documents/papamon
 Restart=on-failure
 RestartSec=10
