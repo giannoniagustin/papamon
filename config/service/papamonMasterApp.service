@@ -1,0 +1,9 @@
+Todavia no lo agregue a servivcio
+[Unit]
+Description=PapamonMasterApp Python
+[Service]
+Type=simple
+ExecStart=/home/papamon/Documents/papamon/MasterApp.py
+WorkingDirectory=/home/papamon/Documents/papamon
+[Install]
+WantedBy=default.target

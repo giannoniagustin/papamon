@@ -1,0 +1,10 @@
+[Unit]
+Description=PapamonApp Python
+[Service]
+Type=simple
+ExecStart=/home/papamon/Documents/papamon/App.py
+WorkingDirectory=/home/papamon/Documents/papamon
+Restart=on-failure
+RestartSec=10
+[Install]
+WantedBy=default.target
