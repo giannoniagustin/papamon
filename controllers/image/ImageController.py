@@ -47,7 +47,7 @@ class ImageController:
     def extractMemory(folderPath:str,content: BytesIO, createFolder=True):
         try:
                 if (File.FileUtil.isValidZip(content)):
-                        print(f"Create folder path {folderPath} {folderPath}")
+                        print(f"Create folder path {folderPath}")
                         if (createFolder):
                                 
                                 folder = os.path.dirname(folderPath)
