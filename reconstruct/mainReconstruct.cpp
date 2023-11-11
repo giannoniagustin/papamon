@@ -791,7 +791,6 @@ int main(int argc, char* argv[]) try
 {
     /////////////////////////////////////////////////////
     std::cout << "Project Reconstruct version 11Nov2023" << "\n";
-
     bool showOutput = false;
     std::string inputDir = "";
     bool useLiveCamera = false;
