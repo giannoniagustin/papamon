@@ -1,4 +1,5 @@
 
+import os
 from mappers.scheduler.SchedulerMapper import SchedulerMapper
 import constants.Paths as Paths
 from model.Scheduler import Scheduler
@@ -48,6 +49,7 @@ class SchedulerController:
 
     @staticmethod
     def build(job,pathScheduler:str): 
+        print(os.linesep+"###########################SCHEDULER######################################"+os.linesep)
         scheduler: Scheduler =  SchedulerController.get(pathScheduler)
         print(f"Job {pathScheduler} is execute on days  : ")
         #Monday
@@ -87,6 +89,11 @@ class SchedulerController:
     @staticmethod
     def buildEveryMinute(job):
      schedule.every(1).minute.do(job)
+
+         
+    @staticmethod
+    def buildEverySecond(job):
+     schedule.every(1).second.do(job)
 
      
             

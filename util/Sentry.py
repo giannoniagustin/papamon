@@ -1,14 +1,13 @@
 
+import os
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
-
-import constants.Paths as Paths
-# Add an attachment
-from sentry_sdk import configure_scope
 
 class Sentry:
         @staticmethod
         def init():
+            print(os.linesep+"#########################INIT SENTRY########################################"+os.linesep)
+
             sentry_sdk.init(
                 dsn="https://907fed6f0f57920999ad05c29b8f74fa@o4505815265902592.ingest.sentry.io/4505815269113856",
                 integrations=[FlaskIntegration()],
@@ -20,7 +19,7 @@ class Sentry:
                 # of sampled transactions.
                 # We recommend adjusting this value in production.
                 profiles_sample_rate=1.0,
-                debug=True,  # Habilita el modo de depuración (opcional)
+                debug=False,  # Habilita el modo de depuración (opcional)
                 ) 
             # Habilita la integración de Sentry para multiprocessing
             sentry_sdk.capture_message("Inicio de Sentry") 

@@ -1,6 +1,8 @@
 import io
 import os
 import json
+import platform
+import subprocess
 import zipfile
 from io import BytesIO
 class FileUtil:
@@ -90,7 +92,7 @@ class FileUtil:
     def createFolder(folder):
        try:      
               if not os.path.exists(folder):    
-                     os.makedirs(folder)
+                     os.makedirs(folder,exist_ok=True)
                      print(f"Carpeta '{folder}' creada exitosamente.")
               else:
                      print(f"Carpeta '{folder}' ya existe.") 
@@ -121,7 +123,48 @@ class FileUtil:
      except Exception as e:
               print("An error occurred when zipFoler: ",e)
               raise
+    @staticmethod
+    def isValidZip(bytes_io):
+              try:
+                     # Posiciona el objeto BytesIO al principio
+                     bytes_io.seek(0)
+                     # Intenta abrir el BytesIO como un archivo ZIP en modo lectura
+                     with zipfile.ZipFile(bytes_io, 'r') as zip_ref:
+                     # No se necesita hacer nada, solo queremos verificar si se puede abrir
+                            return True
+              except zipfile.BadZipFile:
+                     # El objeto BytesIO no contiene un archivo ZIP válido
+                     print(f"El objeto BytesIO no contiene un archivo ZIP válido")
+                     return False
+              except UnicodeDecodeError:
+                     # El archivo ZIP en el objeto BytesIO contiene caracteres no válidos en la codificación
+                     print(f"El archivo ZIP en el objeto BytesIO contiene caracteres no válidos en la codificación")
 
+                     return False
+              except Exception as e:
+                     # Otros errores inesperados
+                     print(f"Error al abrir el archivo ZIP desde BytesIO: {e}")
+                     return False
 
+    @staticmethod
+    def listFolders(folderPath):
+       print(f"Carpeta a listar: {folderPath}") # Ruta de la carpeta que deseas listar
+       # Determinar el sistema operativo
+       if platform.system() == "Windows":
+              # Ejecutar el comando "dir" en Windows
+              cmd = ["dir", folderPath]
+       else:
+       # Ejecutar el comando "ls" en sistemas tipo Unix (Linux)
+              cmd = ["ls", folderPath]
+
+       # Ejecutar el comando y capturar la salida
+       try:
+              result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+              print("Contenido de la carpeta:")
+              print(result.stdout)
+       except subprocess.CalledProcessError as e:
+              print(f"Error al listar la carpeta: {e}")
+       except FileNotFoundError:
+              print("El comando 'ls' o 'dir' no está disponible en este sistema.")
 
 

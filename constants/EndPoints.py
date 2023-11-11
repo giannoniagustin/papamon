@@ -1,5 +1,7 @@
 url_template = "http://{}:{}/{}"
 
+#ME
+ME='/'
 #STATUS
 STATUS='status'
 #GET
