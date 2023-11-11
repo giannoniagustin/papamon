@@ -35,7 +35,7 @@ class MasterController:
         # Crear la carpeta con el ID de solicitud actual
         localPathImage =Paths.BUILD_IMAGE_FOLDER.format(request_id)
         outResult= localPathImage+Paths.RECONSTRUCTION_OUT_FILE
-        print(f"Carpeta de salida de reconstrucción {outResult}")
+        print(f"Carpeta de salida de reconstrucción {localPathImage}")
         File.FileUtil.createFolder(localPathImage)
         listRasperr = RaspberryController.getRaspberries()
         for rB in listRasperr:
