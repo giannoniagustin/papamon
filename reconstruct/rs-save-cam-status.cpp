@@ -15,6 +15,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include "utils.h"
+#include "scene.h"
 
 #ifdef RENDER3D
 #include "example.hpp"          // Include short list of convenience functions for rendering
