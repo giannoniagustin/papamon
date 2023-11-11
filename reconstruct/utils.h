@@ -59,6 +59,6 @@ void showHeightMapAsImage(std::vector<float>& inputHM, int w, int h, std::string
 void erode(std::vector<float>& inputHM, int w,  int h, int kernelSize);
 void dilate(std::vector<float>& inputHM, int w, int h, int kernelSize);
 
-void prepareCameraParameters(rs2::config& cfg);
+bool prepareCameraParameters(rs2::config& cfg);
 bool check_imu_is_supported();
 

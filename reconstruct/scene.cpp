@@ -515,7 +515,7 @@ void RenderHeightMap(float* pHeightMap)
 {
 	int X = 0, Y = 0;						// Create some variables to walk the array with.
 	float x, y, z;							// Create some variables for readability
-	float fColor = 0.0f;					// Create a variable to hold our color of the polygon
+	float fColor = 0.0f;					// Create a variable to hold our color of the polygonf
 
 	if (!pHeightMap) return;					// Make sure our height data is valid
 

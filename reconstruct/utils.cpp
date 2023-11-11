@@ -44,22 +44,32 @@ bool check_imu_is_supported()
     return found_gyro && found_accel;
 }
 
-void prepareCameraParameters(rs2::config& cfg)
+bool prepareCameraParameters(rs2::config& cfg)
 {
-    // Create a configuration for configuring the pipeline with a non default profile
-   
-    // Add pose stream
-    // Use a configuration object to request only depth from the pipeline
-    cfg.enable_stream(RS2_STREAM_DEPTH, RS2_FORMAT_Z16, 30);
-    cfg.enable_stream(RS2_STREAM_COLOR,  RS2_FORMAT_RGB8, 30);
-    if (check_imu_is_supported())
+    try
     {
-        cfg.enable_stream(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
-        cfg.enable_stream(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F);
+        if (!check_imu_is_supported()) return false;
+
+        // Create a configuration for configuring the pipeline with a non default profile
+
+        // Add pose stream
+        // Use a configuration object to request only depth from the pipeline
+        cfg.enable_stream(RS2_STREAM_DEPTH, 1280, 0, RS2_FORMAT_Z16, 30);
+        cfg.enable_stream(RS2_STREAM_COLOR, 1280, 0, RS2_FORMAT_RGB8, 30);
+        if (check_imu_is_supported())
+        {
+            cfg.enable_stream(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
+            cfg.enable_stream(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F);
+        }
+        else
+        {
+            std::cout << "IMU is not supported or not working" << "\n";
+        }
+        return true;
     }
-    else
+    catch (std::exception e)
     {
-        std::cout << "IMU is not supported or not working" << "\n";
+        return false;
     }
 }
 

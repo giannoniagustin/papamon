@@ -227,6 +227,11 @@ int main(int argc, char* argv[]) try
 
         }
     }
+    else
+    {
+        std::cout << "Not enough parameters. Now EXIT" << "\n";
+        return EXIT_FAILURE;
+    }
 
     if (demoMode)
     {
@@ -292,9 +297,15 @@ int main(int argc, char* argv[]) try
     try
     { 
         rs2::config cfg;
-        prepareCameraParameters(cfg);
-        // Start streaming with default recommended configuration
-        pipe.start(cfg);
+
+        if (prepareCameraParameters(cfg))
+        {
+
+            // Start streaming with default recommended configuration
+            pipe.start(cfg);
+        }
+        else
+            pipe.start();
 
         thr_filter.set_option(RS2_OPTION_MIN_DISTANCE, 0.3);
         thr_filter.set_option(RS2_OPTION_MAX_DISTANCE, 9.0);

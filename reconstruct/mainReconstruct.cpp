@@ -585,9 +585,14 @@ bool Wizard(std::string inputDir)
         register_glfw_callbacks(app, app_state);
 
         rs2::config cfg;
-        prepareCameraParameters(cfg);
-        // Start streaming with default recommended configuration
-        pipe.start(cfg);
+        if (prepareCameraParameters(cfg))
+        {
+
+            // Start streaming with default recommended configuration
+            pipe.start(cfg);
+        }
+        else
+            pipe.start();
 
         getScene()->cameras.clear();
 
@@ -671,11 +676,18 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
         register_glfw_callbacks(app, app_state);
 
         rs2::config cfg;
-        prepareCameraParameters(cfg);
+        if (useLiveCamera)
+        {
+            if (prepareCameraParameters(cfg))
+            {
 
-        // Start streaming with default recommended configuration
-        if (useLiveCamera)   pipe.start(cfg);
-
+                // Start streaming with default recommended configuration
+                pipe.start(cfg);
+            }
+            else
+                pipe.start();
+        }
+        
         Camera* live_cam = NULL;
         if (useLiveCamera)
         {
