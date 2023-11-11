@@ -17,10 +17,20 @@ public:
 	std::vector<glm::vec3> colors;
 
 	glm::vec3 min, max;
+	bool visible = true;
 	void computeMinMax();
 
 };
 
+class Plane
+{
+public:
+	glm::vec3 normal;
+	float distance;
+	bool enabled;
+
+	Plane(glm::vec3 n, float d);
+};
 
 
 class Camera
@@ -38,6 +48,9 @@ public:
 	bool is_visible = true;
 	float camRange = 5.0;
 
+	bool pose_data_enabled = false;
+	glm::vec3 pose_data = { 0.0f  , 0.0f, 0.0f };
+
 	object3D o;
 
 	Camera(std::string name, std::string serial);
@@ -53,9 +66,10 @@ public:
 
 	std::vector<Camera*> cameras;
 	std::vector<float> heightMap;
+	std::vector<float> raw_heightMap;
 	bool renderHeightMap = true;
-	// default resolution 10
-	int hm = 10, wm = 10;
+	// default resolution 20
+	int hm = 20, wm = 40;
 	int camerasID = 0;
 	int selectedCameraIndex = 0;
 	Camera* selectedCamera = NULL;

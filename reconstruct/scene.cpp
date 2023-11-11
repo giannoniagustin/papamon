@@ -42,6 +42,13 @@ rapidjson::Document readGeoJSON(const std::string& path, bool use_convert)
 #define M_PI 3.14156
 Scene* _sceneInstance = NULL;
 
+Plane::Plane(glm::vec3 n, float d)
+{
+	this->normal = n;
+	this->distance = d;
+	this->enabled = true;
+}
+
 Scene* getScene()
 {
 	if (!_sceneInstance) _sceneInstance = new Scene();
@@ -217,6 +224,20 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 			getScene()->roomSize.z = fid->value.GetFloat();
 		}
 
+		if (scene.HasMember("heightMap_width"))
+		{
+			auto fid = scene.FindMember("heightMap_width");
+			if (verboseOut) std::cout << "depth type:" << kTypeNames[fid->value.GetType()] << "\n";
+			getScene()->wm = fid->value.GetInt();
+		}
+
+		if (scene.HasMember("heightMap_depth"))
+		{
+			auto fid = scene.FindMember("heightMap_depth");
+			if (verboseOut) std::cout << "depth type:" << kTypeNames[fid->value.GetType()] << "\n";
+			getScene()->hm = fid->value.GetInt();
+		}
+
 
 		if (scene.HasMember("view_offset"))
 		{
@@ -350,6 +371,8 @@ void buildSceneJSON(std::string outputFile)
 	scene.AddMember("scene_depth", getScene()->roomSize.z, allocator);
 	scene.AddMember("view_offset", vecToArray(getScene()->viewPos, allocator), allocator);
 	scene.AddMember("view_rotation", vecToArray(getScene()->viewRot, allocator), allocator);
+	scene.AddMember("heightMap_width", getScene()->wm, allocator);
+	scene.AddMember("heightMap_depth", getScene()->hm, allocator);
 	document.AddMember("scene", scene, allocator);
 
 	
@@ -413,9 +436,10 @@ void buildStateJSON(std::string outputFile)
 
 	// create a rapidjson object type
 	rapidjson::Value scene(rapidjson::kObjectType);
-	scene.AddMember("heightMap_width", getScene()->hm, allocator);
-	scene.AddMember("heightMap_depth", getScene()->wm, allocator);
-	scene.AddMember("heightMap", vecToArray(getScene()->heightMap, allocator), allocator);
+	scene.AddMember("heightMap_width", getScene()->wm, allocator);
+	scene.AddMember("heightMap_depth", getScene()->hm, allocator);
+	scene.AddMember("processed_heightMap", vecToArray(getScene()->heightMap, allocator), allocator);
+	scene.AddMember("raw_heightMap", vecToArray(getScene()->raw_heightMap, allocator), allocator);
 	document.AddMember("estimation", scene, allocator);
 
 
@@ -430,50 +454,138 @@ void buildStateJSON(std::string outputFile)
 	file.close();
 }
 #ifdef RENDER3D
-void renderHeightMap(std::vector<float>& hs, int h, int w)
-{
-	glColor3f(1.0f, 1.0f, 1.0f);    // Color Blue
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+///////////////////////////////// HEIGHT \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+/////
+/////	This returns the height into the height map
+/////
+///////////////////////////////// HEIGHT \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+int MAP_SIZE_X = 50;
+int MAP_SIZE_Y = 50;
+
+float getHeight(float* pHeightMap, int X, int Y)
+{
+	// This is used to index into our height map array.
+	// When ever we are dealing with arrays, we want to make sure
+	// that we don't go outside of them, so we make sure that doesn't
+	// happen with a %.  This way x and y will cap out at (MAX_SIZE - 1)
+
+	int x = X % MAP_SIZE_X;					// Error check our x value
+	int y = Y % MAP_SIZE_Y;					// Error check our y value
+
+	if (!pHeightMap) return 0;				// Make sure our data is valid
+
+	// Below, we need to treat the single array like a 2D array.
+	// We can use the equation: index = (x + (y * arrayWidth) ).
+	// This is assuming we are using this assumption array[x][y]
+	// otherwise it's the opposite.  Now that we have the correct index,
+	// we will return the height in that index.
+
+	return pHeightMap[x + (y * MAP_SIZE_X)];	// Index into our height array and return the height
+}
+
+
+///////////////////////////////// SET VERTEX COLOR \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+/////
+/////	This sets the color value for a particular index, depending on the height index
+/////
+///////////////////////////////// SET VERTEX COLOR \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+
+void SetVertexColor(float* pHeightMap, int x, int y)
+{
+	if (!pHeightMap) return;					// Make sure our height data is valid
+
+	// Here we set the color for a vertex based on the height index.
+	// To make it darker, I start with -0.15f.  We also get a ratio
+	// of the color from 0 to 1.0 by dividing the height by 256.0f;
+	float fColor = 0.15f + (getHeight(pHeightMap, x, y) / 2.0 );
+
+	// Assign this green shade to the current vertex
+	glColor3f(0, fColor, 0);
+}
+
+
+///////////////////////////////// RENDER HEIGHT MAP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+/////
+/////	This renders the height map as QUADS
+/////
+///////////////////////////////// RENDER HEIGHT MAP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+
+void RenderHeightMap(float* pHeightMap)
+{
+	int X = 0, Y = 0;						// Create some variables to walk the array with.
+	float x, y, z;							// Create some variables for readability
+	float fColor = 0.0f;					// Create a variable to hold our color of the polygon
+
+	if (!pHeightMap) return;					// Make sure our height data is valid
 
 	glPushMatrix();
 
-	glScalef(getScene()->roomSize.x, 1.0, getScene()->roomSize.z);
-	// Draw reference grid
-	for (int i=0;i<h;i++)
-		for (int j = 0; j < w; j++)
+
+	glBegin(GL_QUADS);					// Render Quads
+
+	// The higher the polygon, the brighter the color is.
+
+	for (X = 0; X < MAP_SIZE_X; X += 1)
+		for (Y = 0; Y < MAP_SIZE_Y; Y += 1)
 		{
-			float height = 0; // hs[i * w + j];
-			glBegin(GL_QUADS);
-		
-			glVertex3f((1.0*(j+1))/w,height, (1.0*i)/h);
-			glVertex3f((1.0*j)/w, height, (1.0 * i) / h);
-			glVertex3f((1.0 * j) / w, height, (1.0*(i+1))/h);
-			glVertex3f((1.0 * (j + 1)) / w, height, (1.0 * (i + 1)) / h);
+			// Get the (X, Y, Z) value for the bottom left vertex		
+			x = X * getScene()->roomSize.x / MAP_SIZE_X;
+			y = getHeight(pHeightMap, X, Y);
+			z = Y * getScene()->roomSize.z / MAP_SIZE_Y;
 
-			glEnd();
+			// Set the color value of the current vertice
+			SetVertexColor(pHeightMap, X, Y);
 
+			glVertex3f(x, y, z);			// Send this vertex to OpenGL to be rendered (integer points are faster)
+
+			// Get the (X, Y, Z) value for the top left vertex		
+			x = X * getScene()->roomSize.x / MAP_SIZE_X;
+			y = getHeight(pHeightMap, X, Y + 1);
+			z = (Y + 1) * getScene()->roomSize.z / MAP_SIZE_Y;
+
+			// Set the color value of the current vertex
+			SetVertexColor(pHeightMap, X, Y+1);
+
+			glVertex3f(x, y, z);			// Send this vertex to OpenGL to be rendered
+
+			// Get the (X, Y, Z) value for the top right vertex		
+			x = (X + 1) * getScene()->roomSize.x / MAP_SIZE_X;
+			y = getHeight(pHeightMap, X + 1, Y + 1);
+			z = (Y + 1) * getScene()->roomSize.z / MAP_SIZE_Y;
+
+			// Set the color value of the current vertex
+			SetVertexColor(pHeightMap, X+1, Y+1);
+
+			glVertex3f(x, y, z);			// Send this vertex to OpenGL to be rendered
+
+			// Get the (X, Y, Z) value for the bottom right vertex		
+			x = (X + 1) * getScene()->roomSize.x / MAP_SIZE_X;
+			y = getHeight(pHeightMap, X + 1, Y);
+			z = Y * getScene()->roomSize.z / MAP_SIZE_Y;
+
+			// Set the color value of the current vertice
+			SetVertexColor(pHeightMap, X+1, Y);
+
+			glVertex3f(x, y, z);			// Send this vertex to OpenGL to be rendered
 		}
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glColor3f(0.5, 0.5, 0.5);
-	for (int i = 0; i < h-1; i++)
-		for (int j = 0; j < w-1; j++)
-		{
-			
-			glBegin(GL_QUADS);
+	glEnd();
 
-			glVertex3f((1.0 * (j + 1)) / w, hs[i * w + (j+1)], (1.0 * i) / h);
-			glVertex3f((1.0 * j) / w, hs[i * w + (j )], (1.0 * i) / h);
-			glVertex3f((1.0 * j) / w, hs[(i+1) * w + (j + 1)], (1.0 * (i + 1)) / h);
-			glVertex3f((1.0 * (j + 1)) / w, hs[(i+1) * w + (j + 1)], (1.0 * (i + 1)) / h);
-
-			glEnd();
-
-		}
+	// Reset the color
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	glPopMatrix();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
 
+void renderHeightMap(std::vector<float>& hs, int h, int w)
+{
+	MAP_SIZE_X = w;
+	MAP_SIZE_Y = h;
+
+
+	RenderHeightMap(hs.data());
+	return;
+	
 }
 
 void drawAxes()
@@ -779,7 +891,7 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 	
 	glColor3f(1.0, 1.0, 1.0);
 
-	if (getScene()->cameras.size() > 0)
+	if (o.visible)
 	{
 		glBegin(GL_POINTS);
 

@@ -32,13 +32,19 @@
 #endif
 
 #define M_PI 3.14156
+
+int MIN_AMOUNT_OF_POINTS = 5;
 int time_elaps = 0;
 
 /// Wizard parameters
 bool renderSceneBox = true;
+bool renderCloudPoints = true;
 int wizardStage = 0;
 int nCameras = 0;
 bool finishRender = false;
+bool filterPoints = true;
+bool doErode = true;
+bool doDilate = true;
 
 // Construct an object to manage view state
 #ifdef RENDER3D
@@ -55,6 +61,9 @@ rs2::align align_to_depth(RS2_STREAM_DEPTH);
 rs2::pointcloud pc;
 // We want the points object to be persistent so we can display the last cloud when a frame drops
 rs2::points points;
+
+std::vector<Plane*> filterPlanes = { new Plane(glm::vec3(0,0,1) , -5),
+                                     new Plane(glm::vec3(0,0,-1) , 5) };
 
 /// 
 glm::mat4 UpdateModelMatrix(glm::vec3 Translation, glm::vec3 euler)
@@ -73,8 +82,25 @@ void postProcess()
 
 }
 
+bool checkInsideVolume(glm::vec4 v)
+{
+   /*
+    for (auto p : filterPlanes)
+    {
+        glm::vec3 v3(v.x, v.y, v.z);
+        float vDotPlaneNormal = glm::dot(v3, p->normal);
+
+        if (vDotPlaneNormal < p->distance) return false;
+
+    }
+    return true;
+    */
+    return v.x > 0.0 && v.x < getScene()->roomSize.x && 
+           v.y < getScene()->roomSize.y && v.z < getScene()->roomSize.z;
+    
+}
 //////////////////////////////////
-object3D mergeAll3DData()
+object3D mergeAll3DData(bool filter)
 {
     object3D obj;
 
@@ -93,7 +119,9 @@ object3D mergeAll3DData()
                 glm::vec4 v(cam->o.vertexes[i].x, cam->o.vertexes[i].y, cam->o.vertexes[i].z, 1.0);
                 // apply matrix multiplication
                 v = m * v;
-               
+
+                if (filter && !checkInsideVolume(v)) continue;
+              
                 obj.vertexes.push_back(glm::vec3(v.x, v.y, v.z));
                 obj.tex_coords.push_back(glm::vec3(cam->o.tex_coords[i].x, cam->o.tex_coords[i].y,0.0));
                 obj.colors.push_back(cam->o.colors[i]);
@@ -129,8 +157,14 @@ bool renderCameraParameters(Camera* cam, int wW, int wH)
         if (ImGui::SliderFloat("ROLL", &cam->camRot.z, -180.0f, 180.0f)) { changed = true; }
         if (ImGui::SliderFloat("CamRange", &cam->camRange, 0.10f, 10.0f)) { changed = true; }
 
-
-
+        ImGui::Separator();
+        if (cam->pose_data_enabled)
+        {
+            ImGui::Text(("x:" + std::to_string(cam->pose_data.x)).c_str()); ImGui::SameLine();
+            ImGui::Text( ("y:"+std::to_string(cam->pose_data.y)).c_str()); ImGui::SameLine();
+            ImGui::Text( ("z:"+std::to_string(cam->pose_data.z)).c_str());
+        }
+        ImGui::Separator();
 
         ImGui::EndChild();
     }
@@ -140,7 +174,8 @@ bool renderCameraParameters(Camera* cam, int wW, int wH)
 
 bool renderSceneParameters()
 {
-    if (ImGui::Button("UpView"))
+    ImGui::Text("VIEWS");
+    if (ImGui::Button(" Up "))
     {
         // initial position
         getScene()->viewRot.x = -90;
@@ -153,17 +188,31 @@ bool renderSceneParameters()
     }
     ImGui::SameLine();
 
-    if (ImGui::Button("CamView"))
+    if (ImGui::Button("Lateral"))
     {
-        if (getScene()->selectedCamera)
-        {
-            // initial position
-            getScene()->viewRot = getScene()->selectedCamera->camRot;         
+        // initial position
+        getScene()->viewRot.x = 0;
+        getScene()->viewRot.y = -180;
+        getScene()->viewRot.z = 0;
 
-            getScene()->viewPos = -getScene()->selectedCamera->camPos;
-          
-        }
+        getScene()->viewPos.x = getScene()->roomSize.x / 2;
+        getScene()->viewPos.z = std::max(getScene()->roomSize.x, getScene()->roomSize.z);
+        getScene()->viewPos.y = -getScene()->roomSize.z / 2;
     }
+    ImGui::SameLine();
+    if (ImGui::Button("Front"))
+    {
+        // initial position
+        getScene()->viewRot.x = 0;
+        getScene()->viewRot.y = 90;
+        getScene()->viewRot.z = 0;
+
+        getScene()->viewPos.x = 0;
+        getScene()->viewPos.z = std::max(getScene()->roomSize.x, getScene()->roomSize.z) * 1.5;
+        getScene()->viewPos.y = -getScene()->roomSize.z / 2;
+    }
+
+    ImGui::Separator();
 
     float roomsizeX = getScene()->roomSize.x;
     float roomsizeY = getScene()->roomSize.y;
@@ -177,8 +226,11 @@ bool renderSceneParameters()
     if (changed) getScene()->roomSize = glm::vec3(roomsizeX, roomsizeY, roomsizeZ);
 
 
-    ImGui::SliderInt("ResolutionX", &getScene()->hm, 2, 50);
-    ImGui::SliderInt("ResolutionZ", &getScene()->wm, 2, 50);
+    ImGui::SliderInt("ResolutionX", &getScene()->wm, 2, 250);
+    ImGui::SliderInt("ResolutionZ", &getScene()->hm, 2, 250);
+
+    ImGui::SliderInt("MinAmountOfPoints", &MIN_AMOUNT_OF_POINTS, 2, 50);
+
 
     ImGui::Separator();
     ImGui::Separator();
@@ -208,12 +260,18 @@ void render_ui(float w, float h, object3D& o)
     ImGui_ImplGlfw_NewFrame(1);
     ImGui::SetNextWindowSize({ w, h });
    
-
+   
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     ImGui::Begin("Configuration", nullptr, 0);
     {
+        ImGui::SetWindowFontScale(1.25f);
+
         ImGui::Checkbox("RenderSceneBox", &renderSceneBox);
+        ImGui::Checkbox("renderCloudPoints", &renderCloudPoints);
         ImGui::Checkbox("RenderHeightMap", &getScene()->renderHeightMap);
+        ImGui::Checkbox("Filter", &filterPoints);
+        ImGui::Checkbox("Erosion", &doErode);
+        ImGui::Checkbox("Dilate", &doDilate);
         if (ImGui::Button("save configuration"))
         {
             buildSceneJSON("cameras.json");
@@ -225,10 +283,16 @@ void render_ui(float w, float h, object3D& o)
         }
 
         ImGui::Separator();        ImGui::Separator();
-        
+
         renderSceneParameters();
 
         ImGui::Separator();        ImGui::Separator();
+        ImGui::End();
+
+    }
+
+    ImGui::Begin("Cameras", nullptr, 0);
+    {
         if (ImGui::Button("New camera"))
         {
             getScene()->cameras.push_back(new Camera(std::to_string(getScene()->camerasID), ""));
@@ -383,9 +447,15 @@ std::vector<float> computeHeightMap(object3D& o,int wm, int hm)
 
     std::vector<float> values;
 
+    std::vector<int> incidence; // amount of point in this cell
+
     o.computeMinMax();
 
-    for (int i=0;i<wm*hm;i++)   values.push_back(0);
+    for (int i = 0; i < wm * hm; i++) 
+    {
+        values.push_back(0); 
+        incidence.push_back(0);
+    }
 
     for (int i = 0; i < o.vertexes.size(); i++)
     {
@@ -395,16 +465,35 @@ std::vector<float> computeHeightMap(object3D& o,int wm, int hm)
         if (ix >= 0 && iz >= 0 && ix < wm && iz < hm)
         {
             values[iz * wm + ix] = std::max(0.0f, std::max(values[iz * wm + ix], o.vertexes[i].y));
+            incidence[iz * wm + ix] += 1;
         }
 
     }
 
+    getScene()->raw_heightMap = values;
+
+    /////////////////////////////////////
+    // POST PROCESS
+
+    // remove cells with low incidence
+    for (int i = 0; i < wm * hm; i++)
+    {
+        if (incidence[i] < MIN_AMOUNT_OF_POINTS)
+            values[i] = 0;
+    }
+
+
     /// Apply interpolation
-    values = bicubicInterpolation(values, wm, hm);
+   // values = bicubicInterpolation(values, wm, hm);
+    if (doErode) erode(values, wm, hm,3);
+    if (doDilate) for (int i=0;i<3;i++) dilate(values, wm, hm, 3);
+
+    showHeightMapAsImage(values, wm, hm, "image", true);
 
     return values;
 }
 
+/// get frames from camera
 bool updateCamera(Camera* cam)
 {
     // get LIVE camera
@@ -417,6 +506,15 @@ bool updateCamera(Camera* cam)
 
         // Align all frames to depth viewport
         frames = align_to_depth.process(frames);
+
+        if (cam->pose_data_enabled)
+        {
+            auto f = frames.first_or_default(RS2_STREAM_ACCEL);
+            // Cast the frame to pose_frame and get its data
+            auto pose_data = f.as<rs2::motion_frame>().get_motion_data();
+
+            cam->pose_data = { pose_data.x, pose_data.y, pose_data.z };
+        }
 
 #ifdef RENDER3D
         // Upload the color frame to OpenGL
@@ -455,13 +553,14 @@ bool updateCamera(Camera* cam)
     }
 }
 
+// read points data
 bool readDataFromFile(Camera* cam, std::string srcDir)
 {
     std::cout << "Trying to read Vertexes info " << "\n";
 
     if (std::filesystem::exists(srcDir + "points.csv"))
     {
-        cam->o = readFromCSV(srcDir + "points.csv");
+        cam->o = readFromCSV(cam,srcDir + "points.csv");
         return true;
     }
     else
@@ -485,8 +584,10 @@ bool Wizard(std::string inputDir)
         // register callbacks to allow manipulation of the pointcloud
         register_glfw_callbacks(app, app_state);
 
+        rs2::config cfg;
+        prepareCameraParameters(cfg);
         // Start streaming with default recommended configuration
-        pipe.start();
+        pipe.start(cfg);
 
         getScene()->cameras.clear();
 
@@ -519,7 +620,9 @@ bool Wizard(std::string inputDir)
                 live_cam = getScene()->selectedCamera;
                 updateCamera(live_cam);
             }
-            object3D o = mergeAll3DData();
+            object3D o = mergeAll3DData(filterPoints);
+            o.visible = renderCloudPoints;
+
 
             std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
 
@@ -567,13 +670,17 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
         // register callbacks to allow manipulation of the pointcloud
         register_glfw_callbacks(app, app_state);
 
+        rs2::config cfg;
+        prepareCameraParameters(cfg);
+
         // Start streaming with default recommended configuration
-        pipe.start();
+        if (useLiveCamera)   pipe.start(cfg);
 
         Camera* live_cam = NULL;
         if (useLiveCamera)
         {
             live_cam = new Camera("live", "1");
+            live_cam->pose_data_enabled = check_imu_is_supported();
             getScene()->cameras.push_back(live_cam);
 
         }
@@ -592,7 +699,9 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
                 {
                     updateCamera(live_cam);
                 }
-                object3D o = mergeAll3DData();
+                object3D o = mergeAll3DData(filterPoints);
+
+                o.visible = renderCloudPoints;
 
                 std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
 
@@ -602,7 +711,7 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
                 drawScene(o, getScene()->viewPos, getScene()->viewRot, true, 0, (int)w, (int)h);
 
                 // render ui
-                render_ui(200, 200, o);
+                render_ui(350, 600, o);
 
                 if (frameIndex % 100 == 0)
                 {
@@ -648,11 +757,13 @@ bool Reconstruct(std::string inputDir)
     {
         // read data from camera
         std::cout << "Merge points  \n";
-        object3D o = mergeAll3DData();
+        object3D o = mergeAll3DData(filterPoints);
+        o.visible = renderCloudPoints;
+
 
         std::cout << "Compute Heightmap  \n";
 
-        std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
+        std::vector<float> heights = computeHeightMap(o, getScene()->hm*4, getScene()->wm*4);
 
         getScene()->heightMap.swap(heights);
 
@@ -679,7 +790,7 @@ bool Reconstruct(std::string inputDir)
 int main(int argc, char* argv[]) try
 {
     /////////////////////////////////////////////////////
-    std::cout << "Project Reconstruct 25Oct2023" << "\n";
+    std::cout << "Project Reconstruct version 11Nov2023" << "\n";
 
     bool showOutput = false;
     std::string inputDir = "";
@@ -747,8 +858,7 @@ int main(int argc, char* argv[]) try
 
         std::cout << "3D points info  read OK" << "\n";
 
-        getScene()->hm = 10;
-        getScene()->wm = 10;
+       
     }
     catch (const std::exception& e)
     {

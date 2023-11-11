@@ -1,13 +1,14 @@
 #pragma once
 
 
-#include <librealsense2/rs.hpp> // Include RealSense Cross Platform API
-
 #include <fstream>              // File IO
 #include <iostream>             // Terminal IO
 #include <sstream>              // Stringstreams
 #include <map>
 #include <filesystem>
+
+#include <librealsense2/rs.hpp> // Include RealSense Cross Platform API
+
 #include "glm/glm.hpp"
 
 #include "scene.h"
@@ -36,12 +37,12 @@ const std::map<int, std::string> list_of_messages = {
 };
 
 
-void savePointsToCSV(object3D& o, std::string filename);
+void savePointsToCSV(object3D& o,Camera* cam, std::string filename);
 
 std::vector<glm::vec3> readPointsFromFile(std::string filename);
 
 
-object3D readFromCSV(std::string filename);
+object3D readFromCSV(Camera* cam, std::string filename);
 
 object3D readFromOBJ(std::string filename);
 
@@ -53,3 +54,11 @@ void saveAsObj(object3D& o, std::string outputFile);
 void getOBJFromFrameSet(object3D& o, rs2::video_frame& color,  rs2::points& points);
 
 std::vector<float> bicubicInterpolation(std::vector<float>& inputHM, int w, int h);
+void showHeightMapAsImage(std::vector<float>& inputHM, int w, int h, std::string name, bool asSeudoColor);
+
+void erode(std::vector<float>& inputHM, int w,  int h, int kernelSize);
+void dilate(std::vector<float>& inputHM, int w, int h, int kernelSize);
+
+void prepareCameraParameters(rs2::config& cfg);
+bool check_imu_is_supported();
+
