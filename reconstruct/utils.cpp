@@ -19,6 +19,8 @@
 
 bool check_imu_is_supported()
 {
+#ifdef _WIN32
+    // there is a bug with context
     bool found_gyro = false;
     bool found_accel = false;
     rs2::context ctx;
@@ -42,12 +44,16 @@ bool check_imu_is_supported()
             break;
     }
     return found_gyro && found_accel;
+#else
+    return false;
+#endif
 }
 
 bool prepareCameraParameters(rs2::config& cfg)
 {
     try
     {
+        
         if (!check_imu_is_supported()) return false;
 
         // Create a configuration for configuring the pipeline with a non default profile
