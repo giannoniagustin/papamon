@@ -33,7 +33,6 @@
 
 #define M_PI 3.14156
 
-int MIN_AMOUNT_OF_POINTS = 5;
 int time_elaps = 0;
 
 /// Wizard parameters
@@ -45,6 +44,8 @@ bool finishRender = false;
 bool filterPoints = true;
 bool doErode = true;
 bool doDilate = true;
+
+std::string workDir = "";
 
 // Construct an object to manage view state
 #ifdef RENDER3D
@@ -77,11 +78,63 @@ glm::mat4 UpdateModelMatrix(glm::vec3 Translation, glm::vec3 euler)
     return ModelMatrix * transform;
 }
 
-void postProcess()
+
+//////////////////////////////////////////////////////////////////////////
+std::vector<float> computeHeightMap(object3D& o, int wm, int hm)
 {
 
+    std::vector<float> values;
+
+    std::vector<int> incidence; // amount of point in this cell
+
+    o.computeMinMax();
+
+    for (int i = 0; i < wm * hm; i++)
+    {
+        values.push_back(0);
+        incidence.push_back(0);
+    }
+
+    // compute pixels per cell : height and incidence
+    for (int i = 0; i < o.vertexes.size(); i++)
+    {
+        int ix = (int)(wm * (o.vertexes[i].x) / getScene()->roomSize.x);
+        int iz = (int)(hm * (o.vertexes[i].z) / getScene()->roomSize.z);
+
+        if (ix >= 0 && iz >= 0 && ix < wm && iz < hm)
+        {
+            values[iz * wm + ix] = std::max(0.0f, std::max(values[iz * wm + ix], o.vertexes[i].y));
+            incidence[iz * wm + ix] += 1;
+        }
+
+    }
+
+    getScene()->raw_heightMap = values;
+
+    /////////////////////////////////////
+    // POST PROCESS
+
+    // remove cells with low incidence
+    for (int i = 0; i < wm * hm; i++)
+    {
+        if (incidence[i] < getScene()->min_amounts_of_points)
+            values[i] = 0;
+    }
+
+
+    /// Apply interpolation
+   // values = bicubicInterpolation(values, wm, hm);
+    if (doErode) for (int i = 0; i < 2; i++) erode(values, wm, hm, 3);
+    if (doDilate) for (int i = 0; i < 3; i++) dilate(values, wm, hm, 3);
+
+    showHeightMapAsImage(values, wm, hm, "image", true);
+
+    return values;
 }
 
+
+///////////////////////////////////////////////
+// Filter
 bool checkInsideVolume(glm::vec4 v)
 {
    /*
@@ -114,7 +167,7 @@ object3D mergeAll3DData(bool filter)
         /* this segment actually prints the pointcloud */
         for (int i = 0; i < cam->o.vertexes.size(); i++)
         {
-            if (cam->o.vertexes[i].z>=0 && cam->o.vertexes[i].z< cam->camRange)
+            if (cam->o.vertexes[i].z>=cam->minRange && cam->o.vertexes[i].z< cam->camRange)
             {
                 glm::vec4 v(cam->o.vertexes[i].x, cam->o.vertexes[i].y, cam->o.vertexes[i].z, 1.0);
                 // apply matrix multiplication
@@ -226,10 +279,10 @@ bool renderSceneParameters()
     if (changed) getScene()->roomSize = glm::vec3(roomsizeX, roomsizeY, roomsizeZ);
 
 
-    ImGui::SliderInt("ResolutionX", &getScene()->wm, 2, 250);
-    ImGui::SliderInt("ResolutionZ", &getScene()->hm, 2, 250);
+    ImGui::SliderInt("ResolutionX", &getScene()->heightMap_depth, 2, 250);
+    ImGui::SliderInt("ResolutionZ", &getScene()->heightMap_width, 2, 250);
 
-    ImGui::SliderInt("MinAmountOfPoints", &MIN_AMOUNT_OF_POINTS, 2, 50);
+    ImGui::SliderInt("MinAmountOfPoints", &getScene()->min_amounts_of_points, 2, 50);
 
 
     ImGui::Separator();
@@ -277,9 +330,14 @@ void render_ui(float w, float h, object3D& o)
             buildSceneJSON("cameras.json");
         }
         ImGui::SameLine();
-        if (ImGui::Button("save to OBJ"))
+        if (ImGui::Button("save reconstruction"))
         {
-            saveAsObj(o, "/merged.obj");
+            std::cout << "Compute Heightmap  \n";
+            std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth);
+            getScene()->heightMap.swap(heights);
+            std::cout << "Save STATE  \n";
+            buildStateJSON(workDir + "/reconstruction.json");
+            std::cout << "Process finish ok \n";
         }
 
         ImGui::Separator();        ImGui::Separator();
@@ -441,58 +499,6 @@ void render_wizard_ui(float w, float h, object3D& o)
 #endif
 
 
-//////////////////////////////////////////////////////////////////////////
-std::vector<float> computeHeightMap(object3D& o,int wm, int hm)
-{
-
-    std::vector<float> values;
-
-    std::vector<int> incidence; // amount of point in this cell
-
-    o.computeMinMax();
-
-    for (int i = 0; i < wm * hm; i++) 
-    {
-        values.push_back(0); 
-        incidence.push_back(0);
-    }
-
-    for (int i = 0; i < o.vertexes.size(); i++)
-    {
-        int ix = (int)(wm * (o.vertexes[i].x ) / getScene()->roomSize.x);
-        int iz = (int)(hm * (o.vertexes[i].z ) / getScene()->roomSize.z);
-
-        if (ix >= 0 && iz >= 0 && ix < wm && iz < hm)
-        {
-            values[iz * wm + ix] = std::max(0.0f, std::max(values[iz * wm + ix], o.vertexes[i].y));
-            incidence[iz * wm + ix] += 1;
-        }
-
-    }
-
-    getScene()->raw_heightMap = values;
-
-    /////////////////////////////////////
-    // POST PROCESS
-
-    // remove cells with low incidence
-    for (int i = 0; i < wm * hm; i++)
-    {
-        if (incidence[i] < MIN_AMOUNT_OF_POINTS)
-            values[i] = 0;
-    }
-
-
-    /// Apply interpolation
-   // values = bicubicInterpolation(values, wm, hm);
-    if (doErode) erode(values, wm, hm,3);
-    if (doDilate) for (int i=0;i<3;i++) dilate(values, wm, hm, 3);
-
-    showHeightMapAsImage(values, wm, hm, "image", true);
-
-    return values;
-}
-
 /// get frames from camera
 bool updateCamera(Camera* cam)
 {
@@ -629,7 +635,7 @@ bool Wizard(std::string inputDir)
             o.visible = renderCloudPoints;
 
 
-            std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
+            std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth);
 
             getScene()->heightMap.swap(heights);
 
@@ -715,7 +721,7 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
 
                 o.visible = renderCloudPoints;
 
-                std::vector<float> heights = computeHeightMap(o, getScene()->hm, getScene()->wm);
+                std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth);
 
                 getScene()->heightMap.swap(heights);
 
@@ -775,7 +781,7 @@ bool Reconstruct(std::string inputDir)
 
         std::cout << "Compute Heightmap  \n";
 
-        std::vector<float> heights = computeHeightMap(o, getScene()->hm*4, getScene()->wm*4);
+        std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth);
 
         getScene()->heightMap.swap(heights);
 
@@ -802,9 +808,9 @@ bool Reconstruct(std::string inputDir)
 int main(int argc, char* argv[]) try
 {
     /////////////////////////////////////////////////////
-    std::cout << "Project Reconstruct version 11Nov2023" << "\n";
+    std::cout << "Project Reconstruct version 21Nov2023" << "\n";
     bool showOutput = false;
-    std::string inputDir = "";
+  
     bool useLiveCamera = false;
     bool runWizard = false;
     bool verbose = false;
@@ -821,8 +827,8 @@ int main(int argc, char* argv[]) try
 
             if (std::string(argv[i]) == "-dir")
             {
-                inputDir = argv[i + 1];
-                std::cout << "Using path " << inputDir << "\n";
+                workDir = argv[i + 1];
+                std::cout << "Using path " << workDir << "\n";
             }
 
             if (std::string(argv[i]) == "-live")
@@ -861,7 +867,7 @@ int main(int argc, char* argv[]) try
         std::cout << "Getting 3D points from files \n";
         for (int i = 0; i < getScene()->cameras.size(); i++)
         {
-            if (!readDataFromFile(getScene()->cameras[i], inputDir + "/" + std::to_string(i + 1) + "/"))
+            if (!readDataFromFile(getScene()->cameras[i], workDir + "/" + std::to_string(i + 1) + "/"))
             {
                 std::cout << list_of_messages.find(WARNING_SOMEFILES_ARE_MISSING)->second  << "\n";
            }
@@ -882,7 +888,7 @@ int main(int argc, char* argv[]) try
     if (runWizard)
     {
         std::cout << "RUNNING IN WIZARD MODE " << "\n";
-        Wizard(inputDir);
+        Wizard(workDir);
     }
     else
     if (showOutput)
@@ -890,7 +896,7 @@ int main(int argc, char* argv[]) try
 
 #ifdef RENDER3D
         std::cout << "RUNNING IN ONLINE CONFIGURATION MODE " << "\n";
-        Configurator(useLiveCamera, inputDir);
+        Configurator(useLiveCamera, workDir);
 #else
     std::cout << "Visualization not supported" << "\n";
 #endif
@@ -899,7 +905,7 @@ int main(int argc, char* argv[]) try
     else
     {
         std::cout << "RUNNING RECONSTRUCTION WITHOUT UI " << "\n";
-        Reconstruct(inputDir);
+        Reconstruct(workDir);
     }
 
 return PROCESS_OK;

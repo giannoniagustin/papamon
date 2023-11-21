@@ -46,7 +46,8 @@ public:
 
 	bool is_enabled = false;
 	bool is_visible = true;
-	float camRange = 5.0;
+	float camRange = 9.0;
+	float minRange = 0.4;
 
 	bool pose_data_enabled = false;
 	glm::vec3 pose_data = { 0.0f  , 0.0f, 0.0f };
@@ -69,8 +70,9 @@ public:
 	std::vector<float> raw_heightMap;
 	bool renderHeightMap = true;
 	// default resolution 20
-	int hm = 20, wm = 40;
+	int heightMap_width = 20, heightMap_depth = 40;
 	int camerasID = 0;
+	int min_amounts_of_points = 5;
 	int selectedCameraIndex = 0;
 	Camera* selectedCamera = NULL;
 

@@ -5,6 +5,7 @@
 
 #include <algorithm>            // std::min, std::max
 #include <array>
+#include <chrono>
 
 #include "scene.h"
 #include "glm/glm.hpp"
@@ -228,14 +229,22 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 		{
 			auto fid = scene.FindMember("heightMap_width");
 			if (verboseOut) std::cout << "depth type:" << kTypeNames[fid->value.GetType()] << "\n";
-			getScene()->wm = fid->value.GetInt();
+			getScene()->heightMap_depth = fid->value.GetInt();
 		}
 
 		if (scene.HasMember("heightMap_depth"))
 		{
 			auto fid = scene.FindMember("heightMap_depth");
 			if (verboseOut) std::cout << "depth type:" << kTypeNames[fid->value.GetType()] << "\n";
-			getScene()->hm = fid->value.GetInt();
+			getScene()->heightMap_width = fid->value.GetInt();
+		}
+
+
+		if (scene.HasMember("min_amount_of_points"))
+		{
+			auto fid = scene.FindMember("min_amount_of_points");
+			if (verboseOut) std::cout << "depth type:" << kTypeNames[fid->value.GetType()] << "\n";
+			getScene()->min_amounts_of_points = fid->value.GetInt();
 		}
 
 
@@ -371,8 +380,9 @@ void buildSceneJSON(std::string outputFile)
 	scene.AddMember("scene_depth", getScene()->roomSize.z, allocator);
 	scene.AddMember("view_offset", vecToArray(getScene()->viewPos, allocator), allocator);
 	scene.AddMember("view_rotation", vecToArray(getScene()->viewRot, allocator), allocator);
-	scene.AddMember("heightMap_width", getScene()->wm, allocator);
-	scene.AddMember("heightMap_depth", getScene()->hm, allocator);
+	scene.AddMember("heightMap_width", getScene()->heightMap_depth, allocator);
+	scene.AddMember("heightMap_depth", getScene()->heightMap_width, allocator);
+	scene.AddMember("min_amounts_of_points", getScene()->min_amounts_of_points, allocator);
 	document.AddMember("scene", scene, allocator);
 
 	
@@ -412,6 +422,16 @@ void buildSceneJSON(std::string outputFile)
 
 }
 
+std::string return_current_time_and_date() {
+	auto t = std::time(nullptr);
+	auto tm = *std::localtime(&t);
+
+	std::ostringstream oss;
+	oss << std::put_time(&tm, "%Y%m%d_%H%M%S");
+	auto str = oss.str();
+	return str;
+}
+
 /// Create JSON with state of
 void buildStateJSON(std::string outputFile)
 {
@@ -424,20 +444,49 @@ void buildStateJSON(std::string outputFile)
 	// must pass an allocator when the object may need to allocate memory
 	rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
 
-
-	int numActive_Cameras = getScene()->cameras.size();
-
 	// create a rapidjson object type
+	std::string dts = return_current_time_and_date();
+	
 	rapidjson::Value info(rapidjson::kObjectType);
-	info.AddMember("date", "50", allocator);
+	info.AddMember("date", rapidjson::Value().SetString((char*)dts.c_str(), dts.length()), allocator);
+
+	int numActive_Cameras = 0;
+	rapidjson::Value cameras_array(rapidjson::kArrayType);
+
+	for (auto cam : getScene()->cameras)
+	{
+		if (cam->o.vertexes.size() > 0)
+		{
+			numActive_Cameras++;
+			rapidjson::Value camO(rapidjson::kObjectType);
+			camO.AddMember("id", cam->id, allocator);
+			camO.AddMember("range", cam->camRange, allocator);
+			camO.AddMember("name", rapidjson::Value().SetString((char*)cam->name.c_str(), cam->name.length()), allocator);
+			camO.AddMember("serial", rapidjson::Value().SetString((char*)cam->serial.c_str(), cam->serial.length()), allocator);
+			camO.AddMember("location", vecToArray(cam->camPos, allocator), allocator);
+			camO.AddMember("orientation", vecToArray(cam->camRot, allocator), allocator);
+
+			cameras_array.PushBack(camO, allocator);
+		}
+	}
+	info.AddMember("cameras", cameras_array, allocator);
+	
 	info.AddMember("active_cameras", numActive_Cameras, allocator);
 	document.AddMember("info", info, allocator);
 	//  fromScratch["object"]["hello"] = "Yourname";
 
 	// create a rapidjson object type
 	rapidjson::Value scene(rapidjson::kObjectType);
-	scene.AddMember("heightMap_width", getScene()->wm, allocator);
-	scene.AddMember("heightMap_depth", getScene()->hm, allocator);
+	scene.AddMember("room_width", getScene()->roomSize.x, allocator);
+	scene.AddMember("room_depth", getScene()->roomSize.z, allocator);
+	scene.AddMember("room_height", getScene()->roomSize.y, allocator);
+
+	scene.AddMember("cell_size_Depth", getScene()->heightMap_depth / getScene()->roomSize.x, allocator);
+	scene.AddMember("cell_size_Width", getScene()->heightMap_width / getScene()->roomSize.z, allocator);
+
+
+	scene.AddMember("heightMap_depth", getScene()->heightMap_depth, allocator);
+	scene.AddMember("heightMap_width", getScene()->heightMap_width, allocator);
 	scene.AddMember("processed_heightMap", vecToArray(getScene()->heightMap, allocator), allocator);
 	scene.AddMember("raw_heightMap", vecToArray(getScene()->raw_heightMap, allocator), allocator);
 	document.AddMember("estimation", scene, allocator);
@@ -526,8 +575,8 @@ void RenderHeightMap(float* pHeightMap)
 
 	// The higher the polygon, the brighter the color is.
 
-	for (X = 0; X < MAP_SIZE_X; X += 1)
-		for (Y = 0; Y < MAP_SIZE_Y; Y += 1)
+	for (X = 0; X < MAP_SIZE_X-1; X ++)
+		for (Y = 0; Y < MAP_SIZE_Y-1; Y++)
 		{
 			// Get the (X, Y, Z) value for the bottom left vertex		
 			x = X * getScene()->roomSize.x / MAP_SIZE_X;
@@ -611,6 +660,28 @@ void drawAxes()
 
 void drawCube(glm::vec3 roomSize)
 {
+	glBegin(GL_BLEND);
+	glPushMatrix();
+	glTranslatef(0.0, 0.0, 0.0);
+
+	glScalef(roomSize.x, roomSize.y, roomSize.z);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	glBegin(GL_QUADS);        // Draw The Cube Using quads
+	glBlendFunc(GL_ONE, GL_ONE);
+
+	glColor3f(1.0f, 1.0f, 0.0f);    // Color Yellow
+	glVertex3f(1.0f, 0.0f, 0.0f);    // Top Right Of The Quad (Back)
+	glVertex3f(0.0f, 0.0f, 0.0f);    // Top Left Of The Quad (Back)
+	glVertex3f(0.0f, 1.0f, 0.0f);    // Bottom Left Of The Quad (Back)
+	glVertex3f(1.0f, 1.0f, 0.0f);    // Bottom Right Of The Quad (Back)
+	glEnd();
+	
+	glPopMatrix();
+	
+	glDisable(GL_BLEND);
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glPushMatrix();
@@ -858,11 +929,7 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 
 	glColor3f(1.0, 1.0, 1.0);
 	glEnable(GL_DEPTH_TEST);
-	if (renderSceneBox)
-	{
-		glLineWidth(2.0f);
-		drawCube(getScene()->roomSize);
-	}
+
 
 	for (auto cam : getScene()->cameras)
 	{
@@ -920,7 +987,13 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 
 	if (getScene()->heightMap.size() > 0 && getScene()->renderHeightMap)
 	{
-		renderHeightMap(getScene()->heightMap, getScene()->wm, getScene()->hm);
+		renderHeightMap(getScene()->heightMap, getScene()->heightMap_depth, getScene()->heightMap_width);
+	}
+
+	if (renderSceneBox)
+	{
+		glLineWidth(2.0f);
+		drawCube(getScene()->roomSize);
 	}
 
 	// OpenGL cleanup

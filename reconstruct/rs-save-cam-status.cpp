@@ -188,7 +188,7 @@ rs2::video_frame updateCameraFrames(Camera* live_cam)
 // It can be useful for debugging an embedded system with no display.
 int main(int argc, char* argv[]) try
 {
-    std::cout << "Project PapaMon version: 11Nov2023" << "\n";
+    std::cout << "Project PapaMon version: 21Nov2023" << "\n";
 
     bool demoMode = false;
 
