@@ -1,0 +1,10 @@
+[Unit]
+Description=Papamon Check Status App Python
+[Service]
+Type=simple
+ExecStart=/home/papamon/Documents/papamon/CheckStatusApp.py
+WorkingDirectory=/home/papamon/Documents/papamon
+Restart=on-failure
+RestartSec=10
+[Install]
+WantedBy=default.target
