@@ -15,9 +15,25 @@ has_force_param() {
     done
     return 1
 }
+has_slave_param() {
+    for var in "$@"; do
+        if [ "$var" == "slave" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+has_master_param() {
+    for var in "$@"; do
+        if [ "$var" == "master" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+make /home/papamon/Documents/papamon/reconstruct/Makefile
 
-
-if [ "$1" == "slave" ]; then
+if  has_slave_param  "$@" ; then
     echo "Configurando el servicio PapamonApp Slave"
     sudo systemctl enable papamonApp.service
     sudo systemctl stop papamonMasterApp.service
@@ -34,7 +50,7 @@ if [ "$1" == "slave" ]; then
     sudo systemctl status papamonApp.service
     echo "Estado servicio PapamonMasterApp Master"
     sudo systemctl status papamonMasterApp.service
-elif [ "$1" == "master" ]; then
+elif has_master_param  "$@"; then
     echo "Configurando el servicio PapamonMasterApp Master.."
     sudo systemctl enable papamonMasterApp.service
     sudo systemctl stop papamonApp.service
