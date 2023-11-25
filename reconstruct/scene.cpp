@@ -50,6 +50,22 @@ Plane::Plane(glm::vec3 n, float d)
 	this->enabled = true;
 }
 
+Scene::Scene()
+{
+	this->marks.push_back(new Mark());
+	this->marks.push_back(new Mark());
+
+}
+
+double Scene::getCellW()
+{
+	return this->roomSize.x / this->heightMap_width;
+}
+double Scene::getCellD()
+{
+	return this->roomSize.z / this->heightMap_depth;
+}
+
 Scene* getScene()
 {
 	if (!_sceneInstance) _sceneInstance = new Scene();
@@ -64,6 +80,11 @@ Camera::Camera(std::string name, std::string serial)
 	this->serial = serial;
 }
 
+void Mark::calcIndex()
+{
+	this->indexX = (int)((getScene()->heightMap_width * this->posX) / getScene()->roomSize.x);
+	this->indexZ = (int)((getScene()->heightMap_depth * this->posZ) / getScene()->roomSize.z);
+}
 
 //// Parse a JSON with Scene Data	
 void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
@@ -382,7 +403,7 @@ void buildSceneJSON(std::string outputFile)
 	scene.AddMember("view_rotation", vecToArray(getScene()->viewRot, allocator), allocator);
 	scene.AddMember("heightMap_width", getScene()->heightMap_depth, allocator);
 	scene.AddMember("heightMap_depth", getScene()->heightMap_width, allocator);
-	scene.AddMember("min_amounts_of_points", getScene()->min_amounts_of_points, allocator);
+	scene.AddMember("min_amount_of_points", getScene()->min_amounts_of_points, allocator);
 	document.AddMember("scene", scene, allocator);
 
 	
@@ -481,8 +502,11 @@ void buildStateJSON(std::string outputFile)
 	scene.AddMember("room_depth", getScene()->roomSize.z, allocator);
 	scene.AddMember("room_height", getScene()->roomSize.y, allocator);
 
-	scene.AddMember("cell_size_Depth", getScene()->heightMap_depth / getScene()->roomSize.x, allocator);
-	scene.AddMember("cell_size_Width", getScene()->heightMap_width / getScene()->roomSize.z, allocator);
+	scene.AddMember("cell_size_Depth", getScene()->getCellD(), allocator);
+	scene.AddMember("cell_size_Width", getScene()->getCellW(), allocator);
+	scene.AddMember("min_amounts_of_points", getScene()->min_amounts_of_points, allocator);
+
+	
 
 
 	scene.AddMember("heightMap_depth", getScene()->heightMap_depth, allocator);
@@ -512,6 +536,7 @@ void buildStateJSON(std::string outputFile)
 int MAP_SIZE_X = 50;
 int MAP_SIZE_Y = 50;
 
+
 float getHeight(float* pHeightMap, int X, int Y)
 {
 	// This is used to index into our height map array.
@@ -533,6 +558,97 @@ float getHeight(float* pHeightMap, int X, int Y)
 	return pHeightMap[x + (y * MAP_SIZE_X)];	// Index into our height array and return the height
 }
 
+void computeMinMaxHeight(float &_min, float &_max)
+{
+	
+	int sx = getScene()->marks[0]->indexX;
+	int sy = getScene()->marks[0]->indexZ;
+
+	int ex = getScene()->marks[1]->indexX;
+	int ey = getScene()->marks[1]->indexZ;
+
+	float* heightMap = getScene()->heightMap.data();
+
+	_min = 10000;
+	_max = 0;
+
+	float volume = 0;
+	float cellX = getScene()->getCellW();
+	float cellY = getScene()->getCellD();
+
+
+	for (int x = sx; x < ex; x++)
+		for (int y = sy; y < ey; y++)
+		{
+			float h = getHeight(heightMap, x, y);
+			_min = std::min(_min, h);
+			_max = std::max(_max, h);
+		}
+
+}
+
+double computeVolumeBetweenMarkers()
+{
+	int sx = getScene()->marks[0]->indexX;
+	int sy = getScene()->marks[0]->indexZ;
+
+	int ex = getScene()->marks[1]->indexX;
+	int ey = getScene()->marks[1]->indexZ;
+
+	float* heightMap = getScene()->heightMap.data();
+
+	float minHeight = 10000, maxHeight = 0;
+
+	float volume = 0;
+	float cellX = getScene()->getCellW();
+	float cellY = getScene()->getCellD();
+
+	computeMinMaxHeight(minHeight, maxHeight);
+
+
+	for (int x = sx; x < ex; x++)
+		for (int y = sy; y < ey; y++)
+		{
+			float height = getHeight(heightMap, x, y) - minHeight;
+
+
+			volume += height * cellX * cellY;
+		}
+
+
+	return volume;
+}
+double computeSurfaceBetweenMarkers()
+{
+
+	return 0;
+}
+
+double computeLinearHDistance()
+{
+	glm::vec2 v0(getScene()->marks[0]->posX , 0);
+	glm::vec2 v1(getScene()->marks[1]->posX , 0);
+
+	return  glm::length((v0 - v1));
+}
+double computeLinearVDistance()
+{
+	glm::vec2 v0(0, getScene()->marks[0]->posZ  );
+	glm::vec2 v1(0, getScene()->marks[1]->posZ );
+
+	return  glm::length((v0 - v1));
+}
+
+
+double computeLinearDistance()
+{
+	glm::vec2 v0(getScene()->marks[0]->posX , getScene()->marks[0]->posZ );
+	glm::vec2 v1(getScene()->marks[1]->posX , getScene()->marks[1]->posZ );
+
+	return  glm::length((v0 - v1));
+}
+
+
 
 ///////////////////////////////// SET VERTEX COLOR \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
 /////
@@ -549,8 +665,16 @@ void SetVertexColor(float* pHeightMap, int x, int y)
 	// of the color from 0 to 1.0 by dividing the height by 256.0f;
 	float fColor = 0.15f + (getHeight(pHeightMap, x, y) / 2.0 );
 
-	// Assign this green shade to the current vertex
-	glColor3f(0, fColor, 0);
+	if (getScene()->marks[0]->indexX <= x && getScene()->marks[0]->indexZ <= y &&
+		getScene()->marks[1]->indexX > x && getScene()->marks[1]->indexZ > y)
+	{
+		glColor3f(0, fColor, 1.0);
+	}
+	else
+	{
+		// Assign this green shade to the current vertex
+		glColor3f(0, fColor, 0);
+	}
 }
 
 
@@ -979,9 +1103,7 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 
 		glEnd();
 
-		o.vertexes.clear();
-		o.tex_coords.clear();
-		o.colors.clear();
+		
 	}
 	glColor3f(1.0, 1.0, 1.0);
 

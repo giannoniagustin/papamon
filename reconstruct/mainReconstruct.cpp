@@ -33,6 +33,8 @@
 
 #define M_PI 3.14156
 
+#define VERSION "version 25Nov2023"
+
 int time_elaps = 0;
 
 /// Wizard parameters
@@ -46,6 +48,7 @@ bool doErode = true;
 bool doDilate = true;
 
 std::string workDir = "";
+std::string camerasConfig = "cameras.json";
 
 // Construct an object to manage view state
 #ifdef RENDER3D
@@ -167,6 +170,7 @@ object3D mergeAll3DData(bool filter)
         /* this segment actually prints the pointcloud */
         for (int i = 0; i < cam->o.vertexes.size(); i++)
         {
+            if (!cam->use_for_reconstruction) continue;
             if (cam->o.vertexes[i].z>=cam->minRange && cam->o.vertexes[i].z< cam->camRange)
             {
                 glm::vec4 v(cam->o.vertexes[i].x, cam->o.vertexes[i].y, cam->o.vertexes[i].z, 1.0);
@@ -201,6 +205,7 @@ bool renderCameraParameters(Camera* cam, int wW, int wH)
         ImGui::Text(" CAMERA PARAMETERS ");
 
         ImGui::Checkbox("Visible", &cam->is_visible);
+        ImGui::Checkbox("Use4Reconstruct", &cam->use_for_reconstruction);
        
         if (ImGui::SliderFloat("CamPosX", &cam->camPos.x, -2.0f, 10.0f)) { changed = true; }
         if (ImGui::SliderFloat("CamPosY", &cam->camPos.y, -2.0f, 10.0f)) { changed = true; }
@@ -278,9 +283,9 @@ bool renderSceneParameters()
 
     if (changed) getScene()->roomSize = glm::vec3(roomsizeX, roomsizeY, roomsizeZ);
 
-
-    ImGui::SliderInt("ResolutionX", &getScene()->heightMap_depth, 2, 250);
-    ImGui::SliderInt("ResolutionZ", &getScene()->heightMap_width, 2, 250);
+    ImGui::SliderInt("ResolutionX", &getScene()->heightMap_width, 2, 250);
+    ImGui::SliderInt("ResolutionZ", &getScene()->heightMap_depth, 2, 250);
+    
 
     ImGui::SliderInt("MinAmountOfPoints", &getScene()->min_amounts_of_points, 2, 50);
 
@@ -296,6 +301,12 @@ bool renderSceneParameters()
     ImGui::SliderFloat("ViewRotX", &getScene()->viewRot.x, -180.0f, 180.0f);
     ImGui::SliderFloat("ViewRotY", &getScene()->viewRot.y, -180.0f, 180.0f);
     ImGui::SliderFloat("ViewRotZ", &getScene()->viewRot.z, -180.0f, 180.0f);
+
+
+
+   
+
+    
 
     return true;
 }
@@ -327,7 +338,7 @@ void render_ui(float w, float h, object3D& o)
         ImGui::Checkbox("Dilate", &doDilate);
         if (ImGui::Button("save configuration"))
         {
-            buildSceneJSON("cameras.json");
+            buildSceneJSON(camerasConfig);
         }
         ImGui::SameLine();
         if (ImGui::Button("save reconstruction"))
@@ -348,6 +359,40 @@ void render_ui(float w, float h, object3D& o)
         ImGui::End();
 
     }
+
+    ImGui::Begin("Helpers", nullptr, 0);
+    {
+      
+        ImGui::Separator();
+        ImGui::Text(" HELPER 1 (TopLeft) ");
+
+     
+        ImGui::SliderFloat("PosX", &getScene()->marks[0]->posX, 0, getScene()->roomSize.x);
+        ImGui::SliderFloat("PosY", &getScene()->marks[0]->posZ, 0, getScene()->roomSize.z);
+        ImGui::Separator();
+        ImGui::Text(" HELPER 2 (BottomRight) ");
+        ImGui::SliderFloat("PosX_", &getScene()->marks[1]->posX, getScene()->marks[0]->posX, getScene()->roomSize.x);
+        ImGui::SliderFloat("PosY_", &getScene()->marks[1]->posZ, getScene()->marks[0]->posZ, getScene()->roomSize.z);
+       
+        ImGui::Separator();
+        std::string infoH = "Horizontal Distance = " + std::to_string(computeLinearHDistance()) + " mts";
+        std::string infoV = "Vertical Distance = " + std::to_string(computeLinearVDistance()) + " mts";
+        std::string infoVolume = "Volume = " + std::to_string(computeVolumeBetweenMarkers()) + " mts";
+
+        float minH = 0, maxH = 0;
+        computeMinMaxHeight(minH, maxH);
+        std::string infoHeights = "Ranges = minH" + std::to_string(minH) + " maxH="+ std::to_string(maxH) + " mts";
+        ImGui::Text(infoH.c_str());
+        ImGui::Text(infoV.c_str());
+        ImGui::Text(infoVolume.c_str());
+        ImGui::Text(infoHeights.c_str());
+     
+        ImGui::End();
+
+        for (auto mark : getScene()->marks) mark->calcIndex();
+
+    }
+
 
     ImGui::Begin("Cameras", nullptr, 0);
     {
@@ -464,7 +509,7 @@ void render_wizard_ui(float w, float h, object3D& o)
             {
                 if (ImGui::Button("Save Cfg"))
                 {
-                    buildSceneJSON("cameras.json");
+                    buildSceneJSON(camerasConfig);
                 }
                 
                 if (ImGui::Button("Finish"))
@@ -733,8 +778,8 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
 
                 if (frameIndex % 100 == 0)
                 {
-                    saveAsObj(o, inputDir + "/merged.obj");
-                    buildStateJSON(inputDir + "/reconstruction.json");
+                  //  saveAsObj(o, inputDir + "/merged.obj");
+                  //  buildStateJSON(inputDir + "/reconstruction.json");
                 }
 
                 o.vertexes.clear();
@@ -808,12 +853,13 @@ bool Reconstruct(std::string inputDir)
 int main(int argc, char* argv[]) try
 {
     /////////////////////////////////////////////////////
-    std::cout << "Project Reconstruct version 21Nov2023" << "\n";
+    std::cout << "Project Reconstruct "<< VERSION << "\n";
     bool showOutput = false;
   
     bool useLiveCamera = false;
     bool runWizard = false;
     bool verbose = false;
+    
 
     if (argc > 1)
     {
@@ -823,6 +869,13 @@ int main(int argc, char* argv[]) try
             {
                 showOutput = true;
             }
+
+            if (std::string(argv[i]) == "-config")
+            {
+                camerasConfig = argv[i + 1];
+                std::cout << "Using cameraConfig " << camerasConfig << "\n";
+            }
+
 
 
             if (std::string(argv[i]) == "-dir")
@@ -846,6 +899,8 @@ int main(int argc, char* argv[]) try
             {
                 verbose = true;
             }
+
+
         }
     }
 
@@ -854,14 +909,14 @@ int main(int argc, char* argv[]) try
     {
         std::cout << "Reading cameras info " << "\n";
 
-        if (!std::filesystem::exists("cameras.json"))
+        if (!std::filesystem::exists(camerasConfig))
         {
             std::cout << list_of_messages.find(FILE_NOT_FOUND)->second << ". Cameras.json not found . Now eXIT " "\n";
           
             return FILE_NOT_FOUND;
         }
 
-        initScene("cameras.json", verbose);
+        initScene(camerasConfig, verbose);
         std::cout << "Camera info  read OK" << "\n";
 
         std::cout << "Getting 3D points from files \n";

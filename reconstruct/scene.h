@@ -32,6 +32,18 @@ public:
 	Plane(glm::vec3 n, float d);
 };
 
+class Mark
+{
+public:
+	bool enabled = true;
+
+	float posX = 0;
+	float posZ = 0;
+	int indexX, indexZ;
+
+	void calcIndex();
+};
+
 
 class Camera
 {
@@ -48,6 +60,7 @@ public:
 	bool is_visible = true;
 	float camRange = 9.0;
 	float minRange = 0.4;
+	bool use_for_reconstruction = true;
 
 	bool pose_data_enabled = false;
 	glm::vec3 pose_data = { 0.0f  , 0.0f, 0.0f };
@@ -75,11 +88,25 @@ public:
 	int min_amounts_of_points = 5;
 	int selectedCameraIndex = 0;
 	Camera* selectedCamera = NULL;
+	std::vector<Mark*> marks;
+
+	Scene();
+	double getCellW();
+	double getCellD();
 
 };
 
 
 Scene* getScene();
+
+double computeVolumeBetweenMarkers();
+double computeSurfaceBetweenMarkers();
+double computeLinearDistance();
+double computeLinearHDistance();
+double computeLinearVDistance();
+void computeMinMaxHeight(float& _min, float& _max);
+
+
 
 bool initScene(std::string inputJSONFile, bool verbose);
 void buildSceneJSON(std::string outputFile);
