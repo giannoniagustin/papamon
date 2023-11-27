@@ -53,7 +53,7 @@ def everyMinute():
 def everySecond():
     SchedulerController.buildEverySecond(job=callReconstruct)
 def byScheduler():
-    SchedulerController.build(job=callReconstruct,pathScheduler=Paths.SCHEDULER_GET_IMAGES)
+    SchedulerController.build(job=callReconstruct,pathScheduler=Paths.SCHEDULER_GET_IMAGES,pathSchedulerExample=Paths.SCHEDULER_GET_IMAGES_EXAMPLE)
 
     
 
