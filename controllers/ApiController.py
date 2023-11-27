@@ -110,9 +110,9 @@ class ApiController:
             print(f"Comando a ejecutar {comando} ")
             resultado = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if (isDemo):
+                resultado=0
                 time.sleep(5)
             # Capturar la salida estándar y de error
-            print(f"Salida programa:{resultado.returncode}")
             if resultado.returncode == 0:
                result = True
             else:
