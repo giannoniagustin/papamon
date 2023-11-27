@@ -14,7 +14,7 @@
 #CXX = g++
 #CXX = clang++
 
-EXE = rs-motion
+EXE = rs-test-motion
 SOURCES = rs-motion.cpp
 SOURCES += utils.cpp scene.cpp
 
