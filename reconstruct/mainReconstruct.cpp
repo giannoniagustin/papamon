@@ -56,7 +56,6 @@ texture tex;
 #endif
 
 
-rotation_estimator algo;
 // Declare RealSense pipeline, encapsulating the actual device and sensors
 rs2::pipeline pipe;
 rs2::align align_to_depth(RS2_STREAM_DEPTH);
@@ -564,18 +563,9 @@ bool updateCamera(Camera* cam)
             auto f = frames.first_or_default(RS2_STREAM_ACCEL);
             // Cast the frame to pose_frame and get its data
             auto accel_data = f.as<rs2::motion_frame>().get_motion_data();
-            algo.process_accel(accel_data);
+            
 
-
-            auto f2 = frames.first_or_default(RS2_STREAM_GYRO);
-            // Get accelerometer measurements
-            rs2_vector gyro_data = f2.as<rs2::motion_frame>().get_motion_data();
-            double ts = f2.get_timestamp();
-            // Call function that computes the angle of motion based on the retrieved data
-            algo.process_gyro(gyro_data, ts);
-            glm::vec3 euler = algo.get_theta();
-
-            cam->pose_data = { euler.x , euler.y , euler.z  };
+            cam->pose_data = { accel_data.x , accel_data.y , accel_data.z  };
         }
 
 #ifdef RENDER3D
