@@ -247,7 +247,7 @@ public:
 };
 
 
-bool check_imu_is_supported()
+bool check_imu_is_supported_by_cam()
 {
     bool found_gyro = false;
     bool found_accel = false;
@@ -277,7 +277,7 @@ bool check_imu_is_supported()
 int main(int argc, char * argv[]) try
 {
     // Before running the example, check that a device supporting IMU is connected
-    if (!check_imu_is_supported())
+    if (!check_imu_is_supported_by_cam())
     {
         std::cout << "Device supporting IMU not found";
         return EXIT_FAILURE;
