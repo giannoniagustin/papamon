@@ -31,8 +31,6 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-#define M_PI 3.14156
-
 #define VERSION "version 25Nov2023"
 
 int time_elaps = 0;
@@ -57,6 +55,8 @@ glfw_state app_state;
 texture tex;
 #endif
 
+
+rotation_estimator algo;
 // Declare RealSense pipeline, encapsulating the actual device and sensors
 rs2::pipeline pipe;
 rs2::align align_to_depth(RS2_STREAM_DEPTH);
@@ -295,8 +295,8 @@ bool renderSceneParameters()
 
 
     ImGui::SliderFloat("ViewPosX", &getScene()->viewPos.x, -20.0f, 20.0f);
-    ImGui::SliderFloat("ViewPosY", &getScene()->viewPos.y, -20.0f, 20.0f);
-    ImGui::SliderFloat("ViewPosZ", &getScene()->viewPos.z, -20.0f, 20.0f);
+    ImGui::SliderFloat("ViewPosY", &getScene()->viewPos.z, -20.0f, 20.0f);
+    ImGui::SliderFloat("ViewPosZ", &getScene()->viewPos.y, -20.0f, 20.0f);
 
     ImGui::SliderFloat("ViewRotX", &getScene()->viewRot.x, -180.0f, 180.0f);
     ImGui::SliderFloat("ViewRotY", &getScene()->viewRot.y, -180.0f, 180.0f);
@@ -560,11 +560,22 @@ bool updateCamera(Camera* cam)
 
         if (cam->pose_data_enabled)
         {
+            
             auto f = frames.first_or_default(RS2_STREAM_ACCEL);
             // Cast the frame to pose_frame and get its data
-            auto pose_data = f.as<rs2::motion_frame>().get_motion_data();
+            auto accel_data = f.as<rs2::motion_frame>().get_motion_data();
+            algo.process_accel(accel_data);
 
-            cam->pose_data = { pose_data.x, pose_data.y, pose_data.z };
+
+            auto f2 = frames.first_or_default(RS2_STREAM_GYRO);
+            // Get accelerometer measurements
+            rs2_vector gyro_data = f2.as<rs2::motion_frame>().get_motion_data();
+            double ts = f2.get_timestamp();
+            // Call function that computes the angle of motion based on the retrieved data
+            algo.process_gyro(gyro_data, ts);
+            glm::vec3 euler = algo.get_theta();
+
+            cam->pose_data = { euler.x , euler.y , euler.z  };
         }
 
 #ifdef RENDER3D
