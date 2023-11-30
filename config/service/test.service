@@ -2,7 +2,7 @@
 Description=Papamon Check Status App Python
 [Service]
 Type=simple
-ExecStart=/home/papamon/Documents/papamon/CheckStatusApp.py
+ExecStart=/home/papamon/Documents/papamon/Test.py
 WorkingDirectory=/home/papamon/Documents/papamon
 Restart=on-failure
 RestartSec=10

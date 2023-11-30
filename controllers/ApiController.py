@@ -110,13 +110,14 @@ class ApiController:
             print(f"Comando a ejecutar {comando} ")
             resultado = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if (isDemo):
-                resultado=0
+                result = True
                 time.sleep(5)
             # Capturar la salida estándar y de error
-            if resultado.returncode == 0:
-               result = True
-            else:
-                result = False
+            if ( not isDemo) :
+                if resultado.returncode == 0:
+                    result = True
+                else:
+                    result = False
         except subprocess.CalledProcessError as e:
                 print("Error al ejecutar el programa C++:", e)
                 Sentry.captureException(e)
