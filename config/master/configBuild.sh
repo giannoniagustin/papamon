@@ -1,6 +1,7 @@
 #!/bin/bash
 # Script para configurar build de PapamonApp Slave y PapamonApp Master
 # Autor: Agustin Giannoni
+# Ejemplo de uso: sudo ./configAllBuild.sh  [ruta de los Makefiles] [nombre del Makefile]
 
 
 # Verifica que se hayan proporcionado dos parámetros: directorio y nombre del Makefile
