@@ -26,6 +26,8 @@ if [ ! -f "$directorio_makefiles/$makefile" ]; then
     echo "El Makefile especificado no existe en el directorio proporcionado."
     exit 1
 fi
+# Cambia al directorio donde se encuentra el Makefile
+cd "$directorio_makefiles" || exit 1
 
 # Ejecuta el comando make con el Makefile especificado
 make -f "$directorio_makefiles/$makefile"
