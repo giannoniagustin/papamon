@@ -23,7 +23,7 @@ fi
 
 # Verifica si el Makefile existe en el directorio proporcionado
 if [ ! -f "$directorio_makefiles/$makefile" ]; then
-    echo "El Makefile especificado no existe en el directorio proporcionado."
+    echo "El Makefile especificado $makefile no existe en el directorio proporcionado."
     exit 1
 fi
 # Cambia al directorio donde se encuentra el Makefile
