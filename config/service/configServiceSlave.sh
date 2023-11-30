@@ -31,7 +31,7 @@ if  has_start_param  "$@" ; then
     sudo systemctl start  $nombre_servicio
     sudo systemctl status $nombre_servicio
 elif has_stop_param  "$@"; then
-    echo "Configurando Detencion de servicio PapamonApp Slave"
+    echo "Configurando Detencion de servicio PapamonApp $nombre_servicio"
     sudo systemctl stop $nombre_servicio
     sudo systemctl disable $nombre_servicio
     sudo systemctl status $nombre_servicio
