@@ -1,10 +1,10 @@
 #!/bin/bash
 # Script para configurar el servicio de PapamonApp Slave
 # Autor: Papamon
-# Ejemplo de uso: sudo ./configService.sh -name [nombre_servicio] start
+# Ejemplo de uso: sudo ./configService.sh -name [nombre_servicio] [start|stop]
 
 directorio="/home/papamon/Documents/papamon"
-nombre_servicio="papamonApp.service"  # Nombre del archivo de servicio
+nombre_servicio="No seteado"  # Nombre del archivo de servicio
 
 # Función para obtener el valor de -name si se proporciona
 get_name_param() {
