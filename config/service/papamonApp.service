@@ -4,7 +4,7 @@ After=systemd-user-sessions.service
 [Service]
 Type=simple
 User=papamon
-ExecStart=python3 -u /home/papamon/Documents/papamon/App.py      
+ExecStart=python3 -u /home/papamon/Documents/papamon/App.py   
 WorkingDirectory=/home/papamon/Documents/papamon
 Restart=on-failure
 RestartSec=10

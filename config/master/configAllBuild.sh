@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script para configurar build de PapamonApp Slave y PapamonApp Mast
+# Script para configurar build de PapamonApp Slave y PapamonApp Master
 # Autor: Agustin Giannoni
 
 
