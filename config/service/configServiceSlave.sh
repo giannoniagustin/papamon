@@ -33,7 +33,7 @@ has_stop_param() {
     done
     return 1
 }
-get_name_param "$@";then
+if get_name_param "$@"; then
 echo "Configurando el servicio PapamonApp $nombre_servicio"
 
 if  has_start_param  "$@" ; then
