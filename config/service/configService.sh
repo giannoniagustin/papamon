@@ -42,7 +42,11 @@ echo "Configurando el servicio PapamonApp $nombre_servicio"
 if  has_start_param  "$@" ; then
     echo "Configurando Inicio de servicio PapamonApp $nombre_servicio"
     
-    # Llama al script script_make.sh con los parámetros fijos
+    # Llama al script para buildear
+    echo "Buildeando Apps"
+    sudo ./configAllBuild.sh
+    
+    # Llama al script configCopyService.sh con los parámetros fijos
     sudo ./configCopyService.sh "$directorio_service/$nombre_servicio" "$directorio_systemd"
     sudo systemctl daemon-reload
     sudo systemctl stop $nombre_servicio
