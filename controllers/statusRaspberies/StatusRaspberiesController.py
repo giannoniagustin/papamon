@@ -11,6 +11,7 @@ class StatusRaspberiesController:
             mapper = StatusRaspberiesMapper()
             content = mapper.toJson(newStatus)
             #chequeo si el archivo existe o es vacio y se crea
+            print("File example read:")
             fileExample = mapper.toJson(File.FileUtil.readFile(Paths.STATUS_RASPBERIES_EXAMPLE))
             File.FileUtil.createIsFileEmptyOrNotExist(Paths.STATUS_RASPBERIES,fileExample) 
             if ( File.FileUtil.writeFile(Paths.STATUS_RASPBERIES,content=content)):
