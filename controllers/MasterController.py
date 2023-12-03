@@ -14,16 +14,13 @@ import datetime
 from mappers.status.StatusMapper import StatusMapper
 from controllers.statusRaspberies.StatusRaspberiesController import StatusRaspberiesController
 from controllers.image.ImageController import ImageController
-
 import config.master.config as config
-
-
-
 from model.StatusSlave import StatusSlave
 from model.Status import Status
-from model.StatusSystem import StatusSystem
 from util.Sentry import Sentry
 from typing import List
+import datetime
+
 
 class MasterController:
     @staticmethod
@@ -157,7 +154,9 @@ class MasterController:
                              
         listStatusRaspberies.append(StatusSlave(raspberry=config.meRaspb,status=statusMaster,message=message,state=has_error))            
         StatusRaspberiesController().update(listStatusRaspberies)
-        Sentry.customMessage(Paths.STATUS_RASPBERIES_FILE,Paths.STATUS_RASPBERIES,f"Estado del sistema {datetime.datetime.now()}")      
+        fileNameSentry =config.meRaspb.name+"-"+TimeUtil.TimeUtil.timeToString(datetime.datetime.now(), TimeUtil.TimeUtil.format_DD_MM_YYYY_HH_MM)+Paths.JSON
+
+        Sentry.customMessage(fileNameSentry,Paths.STATUS_RASPBERIES,f"Estado del sistema {datetime.datetime.now()}")      
         return listStatusRaspberies
    
    
