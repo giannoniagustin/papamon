@@ -3,6 +3,7 @@ import os
 import platform
 import sys
 import api.Api as Api
+from controllers.ApiController import ApiController
 from util.Sentry import Sentry
 import datetime
 import config.slave.config as config
@@ -25,12 +26,20 @@ def configParameter():
     else:
         config.programsaveCam = config.programsaveCam_Linux
 def initApp():
+    Sentry.init()
+    checkConfig()
     configParameter()
     print(os.linesep+"#################################################################"+os.linesep)
     print(f"Inicio de App Slave {datetime.datetime.now()} Version {config.version} "+os.linesep)
     print(f"Raspberry {config.meRaspb} "+os.linesep)
-    Sentry.init()
 
+def checkConfig():
+    print(os.linesep+"###########################CHECK CONFIGURATION######################################"+os.linesep)
+    if (ApiController.checkConfig()):
+        print("Configuracion correcta")
+    else:
+        print("Configuracion incorrecta,chequee archivos de conifguracion en la carpeta config/slave")
+        sys.exit()
 
 if __name__ == '__main__':
     initApp()

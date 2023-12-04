@@ -15,12 +15,12 @@ TIME_SLEEP= 10
 def initApp():
     
     Sentry.init()
+    checkConfig()
     Sentry.customMessage(Paths.ME_MASTER_FILE,Paths.ME_MASTER,f"Inicio de App Master {datetime.datetime.now()}")   
     print(os.linesep+"#################################################################"+os.linesep)
     print(f"Inicio de App Master {datetime.datetime.now()}{os.linesep} Version {config.version} "+os.linesep)
     print(f"Raspberry {config.meRaspb} "+os.linesep)
     configParameter()
-    checkConfig()
 
 
 def checkConfig():
@@ -29,7 +29,8 @@ def checkConfig():
     if (MasterController.checkConfig()):
         print("Configuracion correcta")
     else:
-        print("Configuracion incorrecta,chequee las ips,id,puertos y nombres de las Raspberries,deben coincidir.")
+        print("Configuracion incorrecta,chequee las ips,id,puertos y nombres de las Raspberries,deben coincidir.Los archivos de conifguracion se encuentran en la carpeta config/master")
+        sys.exit()
 
     
 def callReconstruct():

@@ -70,6 +70,14 @@ class FileUtil:
     def fileExists(file_path):
         return os.path.exists(file_path)
     @staticmethod
+    def checkIfFilesExists(*files):
+        result=True
+        for file in files:
+            if not FileUtil.fileExists(file):
+                print(f"El archivo '{file}' no existe.")
+                result= False
+        return result
+    @staticmethod
     def isFileEmpty(pathFile):
        try:
               with open(pathFile, 'r') as archivo:

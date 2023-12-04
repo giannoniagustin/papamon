@@ -1,4 +1,5 @@
 
+import sys
 import time
 from flask import request,jsonify,send_file
 import os
@@ -177,4 +178,15 @@ class ApiController:
         response.headers['Content-Type'] = 'application/zip'
         response.headers['Content-Disposition'] = f'attachment; filename={date}.zip'
         return response
+    @staticmethod
+    def checkConfig():
+        checkConfigSuccess = False
+        isExistsFilesConfig = File.FileUtil.checkIfFilesExists(Paths.ME_SLAVE) 
+        if(not isExistsFilesConfig):
+            print("No se encontraron los archivos de configuracion")
+            sys.exit()
+        else:
+            print("Se encontraron los archivos de configuracion")
+        checkConfigSuccess =  isExistsFilesConfig
+        return  checkConfigSuccess
 

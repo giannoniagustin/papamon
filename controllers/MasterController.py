@@ -2,6 +2,7 @@
 import io
 import os
 import subprocess
+import sys
 from controllers.raspberry.RaspberryController import RaspberryController
 import constants.Paths as Paths
 from controllers.status.StatusController import StatusController
@@ -67,7 +68,8 @@ class MasterController:
         reconstructSuccess = result   and rbFailList.__len__()  < listRasperr.__len__()
         if (reconstructSuccess):
             if (File.FileUtil.fileExists(outResult)):
-             Sentry.customMessage(filename=request_id+Paths.JSON,path=outResult,eventName="Reconstrucción de imagen")  
+             fileNameSentry =config.meRaspb.name+"-"+request_id+Paths.JSON
+             Sentry.customMessage(filename=fileNameSentry,path=outResult,eventName="Reconstrucción de imagen")  
              StatusController.updateIfChange(Status(cameraRunning=True,lastImage=request_id,))
             else:
                 Sentry.customMessage(eventName="El archivo de reconstruccion no existe ")  
@@ -183,6 +185,13 @@ class MasterController:
     @staticmethod
     def checkConfig():
         checkConfigSuccess = False
+        isExistsFilesConfig = File.FileUtil.checkIfFilesExists(Paths.ME_MASTER,Paths.RASPBERRIES) 
+        if(not isExistsFilesConfig):
+            print("No se encontraron los archivos de configuracion")
+            sys.exit()
+        else:
+            print("Se encontraron los archivos de configuracion")
+        
         rbFailList:List[Raspberry] = []
         raspberryMapper= RaspberryMapper()
         listRasperr = RaspberryController.getRaspberries()
@@ -216,6 +225,7 @@ class MasterController:
             finally:
                     if not rbSucces:
                         rbFailList.append(rB)
-        print(f"Listado de Raspberry con error: {rbFailList}")                
-        checkConfigSuccess =  rbFailList.__len__() == 0
+        print(f"Listado de Raspberry con error: {rbFailList}")  
+       
+        checkConfigSuccess =  rbFailList.__len__() == 0 and isExistsFilesConfig
         return  checkConfigSuccess
