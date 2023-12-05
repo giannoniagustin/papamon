@@ -22,6 +22,15 @@
 #include "rapidjson/filewritestream.h"
 
 
+///////////////////////////////// HEIGHT \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+/////
+/////	This returns the height into the height map
+/////
+///////////////////////////////// HEIGHT \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+int MAP_SIZE_X = 50;
+int MAP_SIZE_Y = 50;
+
+
 static std::vector<std::string> kTypeNames = { "Null", "False", "True", "Object", "Array", "String", "Number" };
 
 
@@ -86,6 +95,56 @@ void Mark::calcIndex()
 	this->indexZ = (int)((getScene()->heightMap_depth * this->posZ) / getScene()->roomSize.z);
 }
 
+
+float getHeight(float* pHeightMap, int X, int Y)
+{
+	// This is used to index into our height map array.
+	// When ever we are dealing with arrays, we want to make sure
+	// that we don't go outside of them, so we make sure that doesn't
+	// happen with a %.  This way x and y will cap out at (MAX_SIZE - 1)
+
+	int x = X % MAP_SIZE_X;					// Error check our x value
+	int y = Y % MAP_SIZE_Y;					// Error check our y value
+
+	if (!pHeightMap) return 0;				// Make sure our data is valid
+
+	// Below, we need to treat the single array like a 2D array.
+	// We can use the equation: index = (x + (y * arrayWidth) ).
+	// This is assuming we are using this assumption array[x][y]
+	// otherwise it's the opposite.  Now that we have the correct index,
+	// we will return the height in that index.
+
+	return pHeightMap[x + (y * MAP_SIZE_X)];	// Index into our height array and return the height
+}
+
+void computeMinMaxHeight(float& _min, float& _max)
+{
+
+	int sx = getScene()->marks[0]->indexX;
+	int sy = getScene()->marks[0]->indexZ;
+
+	int ex = getScene()->marks[1]->indexX;
+	int ey = getScene()->marks[1]->indexZ;
+
+	float* heightMap = getScene()->heightMap.data();
+
+	_min = 10000;
+	_max = 0;
+
+	float volume = 0.0f;
+	float cellX = (float)getScene()->getCellW();
+	float cellY = (float)getScene()->getCellD();
+
+
+	for (int x = sx; x < ex; x++)
+		for (int y = sy; y < ey; y++)
+		{
+			float h = getHeight(heightMap, x, y);
+			_min = std::min(_min, h);
+			_max = std::max(_max, h);
+		}
+
+}
 
 /////////////////////////////////////////////////
 // Calculate volume
@@ -636,64 +695,7 @@ void buildStateJSON(std::string outputFile)
 }
 #ifdef RENDER3D
 
-///////////////////////////////// HEIGHT \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
-/////
-/////	This returns the height into the height map
-/////
-///////////////////////////////// HEIGHT \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
-int MAP_SIZE_X = 50;
-int MAP_SIZE_Y = 50;
 
-
-float getHeight(float* pHeightMap, int X, int Y)
-{
-	// This is used to index into our height map array.
-	// When ever we are dealing with arrays, we want to make sure
-	// that we don't go outside of them, so we make sure that doesn't
-	// happen with a %.  This way x and y will cap out at (MAX_SIZE - 1)
-
-	int x = X % MAP_SIZE_X;					// Error check our x value
-	int y = Y % MAP_SIZE_Y;					// Error check our y value
-
-	if (!pHeightMap) return 0;				// Make sure our data is valid
-
-	// Below, we need to treat the single array like a 2D array.
-	// We can use the equation: index = (x + (y * arrayWidth) ).
-	// This is assuming we are using this assumption array[x][y]
-	// otherwise it's the opposite.  Now that we have the correct index,
-	// we will return the height in that index.
-
-	return pHeightMap[x + (y * MAP_SIZE_X)];	// Index into our height array and return the height
-}
-
-void computeMinMaxHeight(float &_min, float &_max)
-{
-	
-	int sx = getScene()->marks[0]->indexX;
-	int sy = getScene()->marks[0]->indexZ;
-
-	int ex = getScene()->marks[1]->indexX;
-	int ey = getScene()->marks[1]->indexZ;
-
-	float* heightMap = getScene()->heightMap.data();
-
-	_min = 10000;
-	_max = 0;
-
-	float volume = 0.0f;
-	float cellX = (float)getScene()->getCellW();
-	float cellY = (float)getScene()->getCellD();
-
-
-	for (int x = sx; x < ex; x++)
-		for (int y = sy; y < ey; y++)
-		{
-			float h = getHeight(heightMap, x, y);
-			_min = std::min(_min, h);
-			_max = std::max(_max, h);
-		}
-
-}
 
 
 
