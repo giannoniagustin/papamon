@@ -215,6 +215,39 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 		}
 	}
 
+
+	if (geoD.HasMember("helpers"))
+	{
+		const rapidjson::Value& helpers = geoD["helpers"];
+
+		if (verboseOut) std::cout << "Reading [helpers] section " << "\n";
+
+		if (helpers.HasMember("x0"))
+		{
+			auto fid = helpers.FindMember("x0");
+			getScene()->marks[0]->posX = fid->value.GetFloat();
+		}
+
+		if (helpers.HasMember("z0"))
+		{
+			auto fid = helpers.FindMember("z0");
+			getScene()->marks[0]->posZ = fid->value.GetFloat();
+		}
+
+		if (helpers.HasMember("x1"))
+		{
+			auto fid = helpers.FindMember("x1");
+			getScene()->marks[1]->posX = fid->value.GetFloat();
+		}
+
+		if (helpers.HasMember("z1"))
+		{
+			auto fid = helpers.FindMember("z1");
+			getScene()->marks[1]->posZ = fid->value.GetFloat();
+		}
+
+
+	}
 	
 
 	if (geoD.HasMember("scene"))
@@ -407,6 +440,13 @@ void buildSceneJSON(std::string outputFile, std::string code_version)
 	scene.AddMember("volume_in_helpers", computeVolumeBetweenMarkers(), allocator);
 	
 	document.AddMember("scene", scene, allocator);
+
+	rapidjson::Value helpers(rapidjson::kObjectType);
+	helpers.AddMember("x0", getScene()->marks[0]->posX, allocator);
+	helpers.AddMember("z0", getScene()->marks[0]->posZ, allocator);
+	helpers.AddMember("x1", getScene()->marks[1]->posX, allocator);
+	helpers.AddMember("z1", getScene()->marks[1]->posZ, allocator);
+	document.AddMember("helpers", helpers, allocator);
 
 	
 

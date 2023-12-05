@@ -359,7 +359,7 @@ void render_ui(float w, float h, object3D& o)
 
     }
 
-    ImGui::Begin("Helpers", nullptr, 0);
+    ImGui::Begin("Volume Helpers", nullptr, 0);
     {
       
         ImGui::Separator();
