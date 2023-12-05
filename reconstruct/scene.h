@@ -61,8 +61,8 @@ public:
 
 	bool is_enabled = false;
 	bool is_visible = true;
-	float camRange = 9.0;
-	float minRange = 0.4;
+	float camRange = 9.0f;
+	float minRange = 0.4f;
 	bool use_for_reconstruction = true;
 
 	bool pose_data_enabled = false;
@@ -112,7 +112,7 @@ void computeMinMaxHeight(float& _min, float& _max);
 
 
 bool initScene(std::string inputJSONFile, bool verbose);
-void buildSceneJSON(std::string outputFile);
+void buildSceneJSON(std::string outputFile, std::string code_version);
 
 void buildStateJSON(std::string outputFile);
 void drawCloudPoint(object3D& o, int width, int height);

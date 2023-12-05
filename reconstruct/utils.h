@@ -62,5 +62,5 @@ void erode(std::vector<float>& inputHM, int w,  int h, int kernelSize);
 void dilate(std::vector<float>& inputHM, int w, int h, int kernelSize);
 
 bool prepareCameraParameters(rs2::config& cfg);
-bool check_imu_is_supported();
+bool check_imu_is_supported_by_cam();
 

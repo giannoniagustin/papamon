@@ -375,7 +375,7 @@ rapidjson::Value vecToArray(std::vector<float>& vs, rapidjson::Document::Allocat
 
 
 /// 
-void buildSceneJSON(std::string outputFile)
+void buildSceneJSON(std::string outputFile, std::string code_version)
 {
 
 	rapidjson::Document document;
@@ -389,7 +389,7 @@ void buildSceneJSON(std::string outputFile)
 
 	// create a rapidjson object type
 	rapidjson::Value info(rapidjson::kObjectType);
-	info.AddMember("version", "50", allocator);
+	info.AddMember("version", rapidjson::Value().SetString((char*)code_version.c_str(), code_version.length()), allocator);
 	document.AddMember("info", info, allocator);
 	//  fromScratch["object"]["hello"] = "Yourname";
 
@@ -404,6 +404,8 @@ void buildSceneJSON(std::string outputFile)
 	scene.AddMember("heightMap_width", getScene()->heightMap_depth, allocator);
 	scene.AddMember("heightMap_depth", getScene()->heightMap_width, allocator);
 	scene.AddMember("min_amount_of_points", getScene()->min_amounts_of_points, allocator);
+	scene.AddMember("volume_in_helpers", computeVolumeBetweenMarkers(), allocator);
+	
 	document.AddMember("scene", scene, allocator);
 
 	
@@ -572,9 +574,9 @@ void computeMinMaxHeight(float &_min, float &_max)
 	_min = 10000;
 	_max = 0;
 
-	float volume = 0;
-	float cellX = getScene()->getCellW();
-	float cellY = getScene()->getCellD();
+	float volume = 0.0f;
+	float cellX = (float)getScene()->getCellW();
+	float cellY = (float)getScene()->getCellD();
 
 
 	for (int x = sx; x < ex; x++)
@@ -587,6 +589,8 @@ void computeMinMaxHeight(float &_min, float &_max)
 
 }
 
+/////////////////////////////////////////////////
+// Calculate volume
 double computeVolumeBetweenMarkers()
 {
 	int sx = getScene()->marks[0]->indexX;
@@ -600,8 +604,8 @@ double computeVolumeBetweenMarkers()
 	float minHeight = 10000, maxHeight = 0;
 
 	float volume = 0;
-	float cellX = getScene()->getCellW();
-	float cellY = getScene()->getCellD();
+	float cellX = (float)getScene()->getCellW();
+	float cellY = (float)getScene()->getCellD();
 
 	computeMinMaxHeight(minHeight, maxHeight);
 
@@ -1092,7 +1096,7 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 		{
 			if (o.colors.size() > 0)
 			{
-				glColor3f(o.colors[i].x / 255.0, o.colors[i].y / 255.0, o.colors[i].z / 255.0);
+				glColor3f(o.colors[i].x / 255.0f, o.colors[i].y / 255.0f, o.colors[i].z / 255.0f);
 			}
 			else
 				glTexCoord2f(o.tex_coords[i].x, o.tex_coords[i].y);

@@ -29,7 +29,7 @@ glm::vec3 convertToEulerAngle(rs2_vector accel_data)
 /// check optimal parameters
 
 
-bool check_imu_is_supported()
+bool check_imu_is_supported_by_cam()
 {
 #ifdef _WIN32
     // there is a bug with context
@@ -66,7 +66,7 @@ bool prepareCameraParameters(rs2::config& cfg)
     try
     {
         
-        if (!check_imu_is_supported()) return false;
+        if (!check_imu_is_supported_by_cam()) return false;
 
         // Create a configuration for configuring the pipeline with a non default profile
 
@@ -74,7 +74,7 @@ bool prepareCameraParameters(rs2::config& cfg)
         // Use a configuration object to request only depth from the pipeline
         cfg.enable_stream(RS2_STREAM_DEPTH, 1280, 0, RS2_FORMAT_Z16, 30);
         cfg.enable_stream(RS2_STREAM_COLOR, 1280, 0, RS2_FORMAT_RGB8, 30);
-        if (check_imu_is_supported())
+        if (check_imu_is_supported_by_cam())
         {
             cfg.enable_stream(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
             cfg.enable_stream(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F);
@@ -140,8 +140,8 @@ void getOBJFromFrameSet(object3D& o, rs2::video_frame& color, rs2::points& point
 
     for (int i = 0; i < points.size(); i++)
     {
-        int xi = tex_coords[i].u * w;
-        int yi = tex_coords[i].v * h;
+        int xi = (int)(tex_coords[i].u * w);
+        int yi = (int)(tex_coords[i].v * h);
 
         if (tex_coords[i].u >= 0 && tex_coords[i].v >= 0 && tex_coords[i].u <= 1.0 && tex_coords[i].v <= 1.0)
         {
@@ -403,7 +403,7 @@ void showHeightMapAsImage(std::vector<float>& inputHM, int w, int h,std::string 
 //////////////////////////////////////////
 
 // Bilinear interpolation function
-float bilinearInterpolation(const std::vector<float>& matrix, float x, float y, int w, int h) {
+float bilinearInterpolation(const std::vector<float>& matrix, int x, int y, int w, int h) {
     int x0 = x;
     int y0 = y;
     int x1 = x;
@@ -423,13 +423,13 @@ float bilinearInterpolation(const std::vector<float>& matrix, float x, float y, 
     // search down
     while (y1 < h-1) { if (matrix[y1 * w + x] > 0) break; y1++; }
 
-    float dx = (1.0*(x - x0))/std::max(1,x1-x0);
-    float dy = (1.0*(y - y0))/ std::max(1, y1-y0);
+    float dx = (1.0f*(x - x0))/std::max(1,x1-x0);
+    float dy = (1.0f*(y - y0))/ std::max(1, y1-y0);
 
-    float value00 = matrix[ y * w + x0];
-    float value01 = matrix[ y1 * w + x];
-    float value10 = matrix[ y * w + x1];
-    float value11 = matrix[ y1 * w + x];
+    float value00 = (float)matrix[ y * w + x0];
+    float value01 = (float)matrix[ y1 * w + x];
+    float value10 = (float)matrix[ y * w + x1];
+    float value11 = (float)matrix[ y1 * w + x];
 
     float interpolatedValue = (1 - dx) *dy  * value00 +
         dx *dy  * value10 +

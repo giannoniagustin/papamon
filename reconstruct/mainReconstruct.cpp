@@ -31,7 +31,7 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-#define VERSION "version 25Nov2023"
+#define VERSION "version 5Dic2023"
 
 int time_elaps = 0;
 
@@ -337,7 +337,7 @@ void render_ui(float w, float h, object3D& o)
         ImGui::Checkbox("Dilate", &doDilate);
         if (ImGui::Button("save configuration"))
         {
-            buildSceneJSON(camerasConfig);
+            buildSceneJSON(camerasConfig, VERSION);
         }
         ImGui::SameLine();
         if (ImGui::Button("save reconstruction"))
@@ -508,7 +508,7 @@ void render_wizard_ui(float w, float h, object3D& o)
             {
                 if (ImGui::Button("Save Cfg"))
                 {
-                    buildSceneJSON(camerasConfig);
+                    buildSceneJSON(camerasConfig, VERSION);
                 }
                 
                 if (ImGui::Button("Finish"))
@@ -629,7 +629,8 @@ bool Wizard(std::string inputDir)
     // Create a simple OpenGL window for rendering:
     try
     {
-        window app(1280, 720, "Papamon - 3D Viewer");
+        std::string header = "Papamon - 3D Viewer. " + std::string( VERSION);
+        window app(1280, 720,  header.c_str());
         ImGui_ImplGlfw_Init(app, false);
         // Setup Platform/Renderer bindings
 
@@ -744,7 +745,7 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
         if (useLiveCamera)
         {
             live_cam = new Camera("live", "1");
-            live_cam->pose_data_enabled = check_imu_is_supported();
+            live_cam->pose_data_enabled = check_imu_is_supported_by_cam();
             getScene()->cameras.push_back(live_cam);
 
         }

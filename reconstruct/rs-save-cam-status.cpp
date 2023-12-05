@@ -188,7 +188,7 @@ rs2::video_frame updateCameraFrames(Camera* live_cam)
 // It can be useful for debugging an embedded system with no display.
 int main(int argc, char* argv[]) try
 {
-    std::cout << "Project PapaMon version: 21Nov2023" << "\n";
+    std::cout << "Project PapaMon version: 5Dic2023" << "\n";
 
     bool demoMode = false;
 
@@ -330,7 +330,7 @@ int main(int argc, char* argv[]) try
 
     Camera* live_cam = NULL;
     live_cam = new Camera("live", "1");
-    live_cam->pose_data_enabled = check_imu_is_supported();
+    live_cam->pose_data_enabled = check_imu_is_supported_by_cam();
   
 
     int maxFrames = 2000;
