@@ -86,6 +86,72 @@ void Mark::calcIndex()
 	this->indexZ = (int)((getScene()->heightMap_depth * this->posZ) / getScene()->roomSize.z);
 }
 
+
+/////////////////////////////////////////////////
+// Calculate volume
+double computeVolumeBetweenMarkers()
+{
+	int sx = getScene()->marks[0]->indexX;
+	int sy = getScene()->marks[0]->indexZ;
+
+	int ex = getScene()->marks[1]->indexX;
+	int ey = getScene()->marks[1]->indexZ;
+
+	float* heightMap = getScene()->heightMap.data();
+
+	float minHeight = 10000, maxHeight = 0;
+
+	float volume = 0;
+	float cellX = (float)getScene()->getCellW();
+	float cellY = (float)getScene()->getCellD();
+
+	computeMinMaxHeight(minHeight, maxHeight);
+
+
+	for (int x = sx; x < ex; x++)
+		for (int y = sy; y < ey; y++)
+		{
+			float height = getHeight(heightMap, x, y) - minHeight;
+
+
+			volume += height * cellX * cellY;
+		}
+
+
+	return volume;
+}
+double computeSurfaceBetweenMarkers()
+{
+
+	return 0;
+}
+
+double computeLinearHDistance()
+{
+	glm::vec2 v0(getScene()->marks[0]->posX, 0);
+	glm::vec2 v1(getScene()->marks[1]->posX, 0);
+
+	return  glm::length((v0 - v1));
+}
+double computeLinearVDistance()
+{
+	glm::vec2 v0(0, getScene()->marks[0]->posZ);
+	glm::vec2 v1(0, getScene()->marks[1]->posZ);
+
+	return  glm::length((v0 - v1));
+}
+
+
+double computeLinearDistance()
+{
+	glm::vec2 v0(getScene()->marks[0]->posX, getScene()->marks[0]->posZ);
+	glm::vec2 v1(getScene()->marks[1]->posX, getScene()->marks[1]->posZ);
+
+	return  glm::length((v0 - v1));
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
 //// Parse a JSON with Scene Data	
 void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 {
@@ -627,69 +693,6 @@ void computeMinMaxHeight(float &_min, float &_max)
 			_max = std::max(_max, h);
 		}
 
-}
-
-/////////////////////////////////////////////////
-// Calculate volume
-double computeVolumeBetweenMarkers()
-{
-	int sx = getScene()->marks[0]->indexX;
-	int sy = getScene()->marks[0]->indexZ;
-
-	int ex = getScene()->marks[1]->indexX;
-	int ey = getScene()->marks[1]->indexZ;
-
-	float* heightMap = getScene()->heightMap.data();
-
-	float minHeight = 10000, maxHeight = 0;
-
-	float volume = 0;
-	float cellX = (float)getScene()->getCellW();
-	float cellY = (float)getScene()->getCellD();
-
-	computeMinMaxHeight(minHeight, maxHeight);
-
-
-	for (int x = sx; x < ex; x++)
-		for (int y = sy; y < ey; y++)
-		{
-			float height = getHeight(heightMap, x, y) - minHeight;
-
-
-			volume += height * cellX * cellY;
-		}
-
-
-	return volume;
-}
-double computeSurfaceBetweenMarkers()
-{
-
-	return 0;
-}
-
-double computeLinearHDistance()
-{
-	glm::vec2 v0(getScene()->marks[0]->posX , 0);
-	glm::vec2 v1(getScene()->marks[1]->posX , 0);
-
-	return  glm::length((v0 - v1));
-}
-double computeLinearVDistance()
-{
-	glm::vec2 v0(0, getScene()->marks[0]->posZ  );
-	glm::vec2 v1(0, getScene()->marks[1]->posZ );
-
-	return  glm::length((v0 - v1));
-}
-
-
-double computeLinearDistance()
-{
-	glm::vec2 v0(getScene()->marks[0]->posX , getScene()->marks[0]->posZ );
-	glm::vec2 v1(getScene()->marks[1]->posX , getScene()->marks[1]->posZ );
-
-	return  glm::length((v0 - v1));
 }
 
 
