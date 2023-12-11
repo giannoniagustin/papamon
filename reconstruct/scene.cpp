@@ -671,8 +671,7 @@ void buildStateJSON(std::string outputFile)
 	scene.AddMember("cell_size_Depth", getScene()->getCellD(), allocator);
 	scene.AddMember("cell_size_Width", getScene()->getCellW(), allocator);
 	scene.AddMember("min_amounts_of_points", getScene()->min_amounts_of_points, allocator);
-
-	
+	scene.AddMember("volume_in_helpers", computeVolumeBetweenMarkers(), allocator);
 
 
 	scene.AddMember("heightMap_depth", getScene()->heightMap_depth, allocator);
@@ -681,6 +680,14 @@ void buildStateJSON(std::string outputFile)
 	scene.AddMember("raw_heightMap", vecToArray(getScene()->raw_heightMap, allocator), allocator);
 	document.AddMember("estimation", scene, allocator);
 
+	document.AddMember("scene", scene, allocator);
+
+	rapidjson::Value helpers(rapidjson::kObjectType);
+	helpers.AddMember("x0", getScene()->marks[0]->posX, allocator);
+	helpers.AddMember("z0", getScene()->marks[0]->posZ, allocator);
+	helpers.AddMember("x1", getScene()->marks[1]->posX, allocator);
+	helpers.AddMember("z1", getScene()->marks[1]->posZ, allocator);
+	document.AddMember("helpers", helpers, allocator);
 
 
 	rapidjson::StringBuffer strbuf;
