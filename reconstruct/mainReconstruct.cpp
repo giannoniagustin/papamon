@@ -31,7 +31,7 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-#define VERSION "version 5Dic2023"
+#define VERSION "version 12Dic2023"
 
 int time_elaps = 0;
 

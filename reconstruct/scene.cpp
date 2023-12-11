@@ -222,8 +222,7 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 	int procMask = 0;
 	double imageWidth = 0;
 	double imageHeight = 0;
-	bool handAreContaminated = false;
-	bool elemtsAreContaminated = false;
+
 
 	if (!geoD.HasMember("info"))
 	{
