@@ -5,6 +5,8 @@ import platform
 import subprocess
 import zipfile
 from io import BytesIO
+
+from model.ListFiles import ListFiles
 class FileUtil:
      #Parsea a JSON , ver si hay otro tipo de archivo 
     @staticmethod
@@ -174,5 +176,23 @@ class FileUtil:
               print(f"Error al listar la carpeta: {e}")
        except FileNotFoundError:
               print("El comando 'ls' o 'dir' no está disponible en este sistema.")
+              
+    @staticmethod
+    def getFiles(directory):
+              try:
+                     # Obtener la lista de elementos (archivos y carpetas) en el directorio
+                     items = os.listdir(directory)
+                     # Separar elementos en archivos y carpetas
+                     files =[item for item in items if os.path.isfile(os.path.join(directory, item))]
+                     folders = [item for item in items if os.path.isdir(os.path.join(directory, item))]
+                     return {
+                     "files": files,
+                     "folders": folders}
+                     
+              except FileNotFoundError:
+                     return None
+              except Exception as e:
+                     print(f"Error al listar la carpeta: {e}")
+                     return None
 
 

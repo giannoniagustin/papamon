@@ -1,6 +1,8 @@
 from flask import Flask,request, jsonify
 from controllers.MasterApiController import MasterApiController
 import uuid
+import constants.Paths as Paths
+
 
 
 app = Flask(__name__)
@@ -40,6 +42,13 @@ def geImage():
 @app.route('/raspberries', methods=['GET'])
 def raspberries():
     return MasterApiController.getRaspberries()
+
+# Endpoint para obtener el listado de carpetas
+@app.route('/reconstruct', methods=['GET'])
+def reconstruct_folders():
+    location = Paths.IMAGES # Reemplaza con tu ubicación
+    return MasterApiController.get_folder_list(location)
+
 
 
 if __name__ == '__main__':

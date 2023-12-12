@@ -4,7 +4,11 @@ import time
 from flask import request,jsonify,send_file
 import os
 import constants.Paths as Paths
+from mappers.listFile.ListFileMapper import ListFileMapper
+from model.ListFiles import ListFiles
 from model.Status import Status
+
+from util import File
 
 from model.Response import SuccessResponse,ErrorResponse
 from mappers.status.StatusMapper import StatusMapper
@@ -85,5 +89,18 @@ class MasterApiController:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())  
             except Exception as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())
-                
+    # Función para obtener el listado de carpetas en una ubicación
+    @staticmethod
+    def get_folder_list(location):
+            #Lista de carpetas en la ubicación
+            try:
+                instance =File.FileUtil.getFiles(location)
+            #    mapper = ListFileMapper()
+                return jsonify( SuccessResponse(data=instance, message="Listado de carpetas y archivos").serialize())
+            except FileNotFoundError as e:
+                return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())
+            except IOError as e:
+                return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())  
+            except Exception as e:
+                return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())           
 

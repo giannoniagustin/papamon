@@ -86,7 +86,7 @@ def configParameter():
           
 if __name__ == "__main__":
     initApp()
-    # Iniciar el servidor Flask en un subproceso diferente
+        # Iniciar el servidor Flask en un subproceso diferente
     api_thread = threading.Thread(target=MasterApi.app.run, kwargs={'host': '0.0.0.0', 'port': config.meRaspb.port})
     api_thread.start()
     if (config.forceReconstruc):
