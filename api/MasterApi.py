@@ -49,6 +49,10 @@ def reconstruct_folders():
     location = Paths.IMAGES # Reemplaza con tu ubicación
     return MasterApiController.get_folder_list(location)
 
+@app.route('/reconstruct/download', methods=['GET'])
+def getReconstructForDate():
+    return MasterApiController.getReconstructForDate()
+
 
 
 if __name__ == '__main__':

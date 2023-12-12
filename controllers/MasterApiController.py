@@ -102,5 +102,42 @@ class MasterApiController:
             except IOError as e:
                 return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize())  
             except Exception as e:
-                return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())           
+                return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())        
+    
+    @staticmethod
+    def getReconstructForDate():
+        try:
+            date = request.args.get('data')
+            print(os.linesep+f"#########################INICIO DE RECUPERO RECONSTRUCT {date}########################################"+os.linesep)
+            localPathImage =Paths.BUILD_IMAGE_FOLDER.format(date)
+            print(f"Carpeta destino: {localPathImage} " )
+            if  os.path.exists(localPathImage):
+                return MasterApiController.buildZip(date,config.meRaspb.id)
+            else:
+                message="Ocurrió un error al recuperar las imágenes. No existe la carpeta de destino."
+                print(message)
+        
+                return jsonify(ErrorResponse(data='', message=message).serialize()),500
+
+        except FileExistsError as e:
+            print(f"La carpeta '{date}' ya existe.")
+            Sentry.captureException(e)
+            return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize()),500  
+
+        except Exception as e:
+            print("Ocurrió un error:", e)
+            Sentry.captureException(e)
+            return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  ,500
+
+    def buildZip(date:str,id:str):
+        print(f"Creando zip {date} " )
+        folderPath =Paths.IMAGES+date+os.sep
+        print(f"Folder path {folderPath} " )
+        File.FileUtil.listFolders(folderPath=folderPath)
+        # Crear un archivo ZIP en memoria
+        buffer = File.FileUtil.zipFoler(folderPath)
+        response = make_response(buffer.read())
+        response.headers['Content-Type'] = 'application/zip'
+        response.headers['Content-Disposition'] = f'attachment; filename={date}.zip'
+        return response   
 
