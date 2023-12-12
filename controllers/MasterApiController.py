@@ -111,7 +111,7 @@ class MasterApiController:
             print(os.linesep+f"#########################INICIO DE RECUPERO RECONSTRUCT {date}########################################"+os.linesep)
             localPathImage =Paths.BUILD_IMAGE_FOLDER.format(date)
             print(f"Carpeta destino: {localPathImage} " )
-            if  os.path.exists(localPathImage):
+            if  File.FileUtil.fileExists(localPathImage):
                 return MasterApiController.buildZip(date,config.meRaspb.id)
             else:
                 message="Ocurrió un error al recuperar las imágenes. No existe la carpeta de destino."
