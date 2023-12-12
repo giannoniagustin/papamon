@@ -2,9 +2,10 @@
 import os
 import platform
 import sys
+import threading
 from controllers.MasterController import MasterController
 from controllers.scheduler.SchedulerController import SchedulerController
-
+import api.MasterApi as MasterApi
 import datetime
 import time as time1
 import constants.Paths as Paths
@@ -16,7 +17,7 @@ def initApp():
     
     Sentry.init()
     checkConfig()
-    Sentry.customMessage(Paths.ME_MASTER_FILE,Paths.ME_MASTER,f"Inicio de App Master {datetime.datetime.now()}")   
+    #Sentry.customMessage(Paths.ME_MASTER_FILE,Paths.ME_MASTER,f"Inicio de App Master {datetime.datetime.now()}")   
     print(os.linesep+"#################################################################"+os.linesep)
     print(f"Inicio de App Master {datetime.datetime.now()}{os.linesep} Version {config.version} "+os.linesep)
     print(f"Raspberry {config.meRaspb} "+os.linesep)
@@ -34,7 +35,7 @@ def checkConfig():
 
     
 def callReconstruct():
-    Sentry.customMessage(filename=None,path=None,eventName=f"Obteniendo Imagenes {datetime.datetime.now()} ")  
+    #Sentry.customMessage(filename=None,path=None,eventName=f"Obteniendo Imagenes {datetime.datetime.now()} ")  
     if (MasterController.getImages()):
         print(f"Reconstruccion exitosa: {datetime.datetime.now()}")    
     else:
@@ -84,13 +85,18 @@ def configParameter():
         config.forceReconstruc=True
           
 if __name__ == "__main__":
-
     initApp()
+    # Iniciar el servidor Flask en un subproceso diferente
+    api_thread = threading.Thread(target=MasterApi.app.run, kwargs={'host': '0.0.0.0', 'port': config.meRaspb.port})
+    api_thread.start()
     if (config.forceReconstruc):
         callReconstruct()
-        processGetImages(everyOur)
+        scheduler_thread = threading.Thread(target=processGetImages, args=(everyOur,))
+        scheduler_thread.start()
     else:
-        processGetImages(byScheduler)
-    
+        scheduler_thread = threading.Thread(target=processGetImages, args=(byScheduler,))
+        scheduler_thread.start()
+
+
     
 
