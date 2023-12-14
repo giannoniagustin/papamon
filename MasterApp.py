@@ -84,11 +84,18 @@ def configParameter():
         print("Se esta forzando reconstruccion")
         config.forceReconstruc=True
           
+def initApi():
+    # Define the initApi function here
+    MasterController.initApi()
+
+def initNgrok():
+    # Define the initApi function here
+    MasterController.initNgrok()
 if __name__ == "__main__":
     initApp()
-        # Iniciar el servidor Flask en un subproceso diferente
-    api_thread = threading.Thread(target=MasterApi.app.run, kwargs={'host': '0.0.0.0', 'port': config.meRaspb.port})
-    api_thread.start()
+    initApi()
+    initNgrok()    
+
     if (config.forceReconstruc):
         callReconstruct()
         scheduler_thread = threading.Thread(target=processGetImages, args=(everyOur,))
