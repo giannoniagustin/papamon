@@ -38,7 +38,7 @@ class MasterController:
     def runNgrok():
         print("Ejecutando ngrok...")
         try:
-            command = f"ngrok http --domain={config.programNegrokUrl} {config.meRaspb.port}"
+            command = f"ngrok http --domain={config.programNgrokUrl} {config.meRaspb.port}"
             print("Comando a ejecutar inicio ngrok:", command)
             process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output, error = process.communicate()

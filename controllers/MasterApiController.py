@@ -105,9 +105,8 @@ class MasterApiController:
                 return jsonify(ErrorResponse(data='', message="An error occurred: ").serialize())        
     
     @staticmethod
-    def getReconstructForDate():
+    def getReconstructForDate(date:str):
         try:
-            date = request.args.get('data')
             print(os.linesep+f"#########################INICIO DE RECUPERO RECONSTRUCT {date}########################################"+os.linesep)
             localPathImage =Paths.BUILD_IMAGE_FOLDER.format(date)
             print(f"Carpeta destino: {localPathImage} " )
@@ -129,6 +128,55 @@ class MasterApiController:
             Sentry.captureException(e)
             return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  ,500
 
+    @staticmethod
+    def getRGBForDateAndCamera(date,idCamera:str):
+        try:
+            print(os.linesep+f"#########################INICIO DE RECUPERO RGB FECHA {date} CAMARA {idCamera}-########################################"+os.linesep)
+            localPathImage =Paths.BUILD_PATH_FILE_RGB.format(date,idCamera,Paths.RGB_FILE)
+            print(f"Carpeta destino: {localPathImage} " )
+            if  File.FileUtil.fileExists(localPathImage):
+                return MasterApiController.buildZipFile(localPathImage,"RGB_"+date+"_"+idCamera)
+            else:
+                message="Ocurrió un error al recuperar la imágen RGB. No existe la carpeta de destino."
+                print(message)
+        
+                return jsonify(ErrorResponse(data='', message=message).serialize()),500
+
+        except FileExistsError as e:
+            print(f"La carpeta '{date}' ya existe.")
+            Sentry.captureException(e)
+            return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize()),500  
+
+        except Exception as e:
+            print("Ocurrió un error:", e)
+            Sentry.captureException(e)
+            return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  ,500
+    @staticmethod
+    def getReconsResultForDate(date):
+        try:
+            print(os.linesep+f"#########################INICIO DE RECUPERO RECONSTRUCCION FILE {date} -########################################"+os.linesep)
+            localPathImage =Paths.BUILD_PATH_FILE_RECONSTRUCT.format(date,Paths.RECONSTRUCTION_FILE)
+
+            print(f"Carpeta destino: {localPathImage} " )
+            if  File.FileUtil.fileExists(localPathImage):
+                return MasterApiController.buildZipFile(localPathImage,"RECONSTRUCTION_"+date)
+            else:
+                message="Ocurrió un error al recuperar archivo reconstruct. No existe la carpeta de destino."
+                print(message)
+        
+                return jsonify(ErrorResponse(data='', message=message).serialize()),500
+
+        except FileExistsError as e:
+            print(f"La carpeta '{date}' ya existe.")
+            Sentry.captureException(e)
+            return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize()),500  
+
+        except Exception as e:
+            print("Ocurrió un error:", e)
+            Sentry.captureException(e)
+            return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  ,500
+
+
     def buildZip(date:str,id:str):
         print(f"Creando zip {date} " )
         folderPath =Paths.IMAGES+date+os.sep
@@ -140,4 +188,21 @@ class MasterApiController:
         response.headers['Content-Type'] = 'application/zip'
         response.headers['Content-Disposition'] = f'attachment; filename={date}.zip'
         return response   
+    
+    def buildZipFile(filePath:str,nameZipFile:str):
+        print(f"Creando zip {filePath}")
+        # Verificar si el archivo existe antes de crear el ZIP
+        if os.path.exists(filePath):
+            # Crear un archivo ZIP en memoria
+            buffer = File.FileUtil.zipFile(filePath)
+            # Configurar la respuesta HTTP con el contenido del ZIP
+            buffer.seek(0)
+            response = make_response(buffer.read())
+            response.headers['Content-Type'] = 'application/zip'
+            response.headers['Content-Disposition'] = f'attachment; filename={nameZipFile}.zip'
+            return response
+        else:
+            # Manejar el caso donde el archivo no existe
+            return jsonify(ErrorResponse(data='', message="An error occurred: El archivo no existe ").serialize())        
+
 

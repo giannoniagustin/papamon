@@ -51,8 +51,17 @@ def reconstruct_folders():
 
 @app.route('/reconstruct/download', methods=['GET'])
 def getReconstructForDate():
-    return MasterApiController.getReconstructForDate()
+    date = request.args.get('date')
+    return MasterApiController.getReconstructForDate(date)
 
+@app.route('/reconstruct/download/rgb/<int:idCamera>', methods=['GET'])
+def getRGBForDateAndCamera(idCamera):
+        date = request.args.get('date')
+        return MasterApiController.getRGBForDateAndCamera(date=date,idCamera=str(idCamera))
+@app.route('/reconstruct/download/result', methods=['GET'])
+def getReconsResultForDate():
+        date = request.args.get('date')
+        return MasterApiController.getReconsResultForDate(date=date)
 
 
 if __name__ == '__main__':
