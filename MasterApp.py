@@ -37,9 +37,11 @@ def checkConfig():
 def callReconstruct():
     #Sentry.customMessage(filename=None,path=None,eventName=f"Obteniendo Imagenes {datetime.datetime.now()} ")  
     if (MasterController.getImages()):
-        print(f"Reconstruccion exitosa: {datetime.datetime.now()}")    
+        print(f"Reconstruccion exitosa: {datetime.datetime.now()}")  
     else:
         print(f"Reconstruccion fallida,puede haber generado alguna imagen: {datetime.datetime.now()}")   
+    MasterController.getStatus() 
+
 
 def processGetImages(job):
      job()
