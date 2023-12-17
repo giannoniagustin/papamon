@@ -1,0 +1,14 @@
+[Unit]
+Description=Script de Sincronización Rclone
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=papamon
+Type=oneshot
+ExecStart=sudo /home/papamon/Documents/papamon/config/service/syncRClone.sh
+Restart=on-failure
+RestartSec=60s
+
+[Install]
+WantedBy=multi-user.target
