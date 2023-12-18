@@ -5,7 +5,6 @@ import sys
 import threading
 from controllers.MasterController import MasterController
 from controllers.scheduler.SchedulerController import SchedulerController
-import api.MasterApi as MasterApi
 import datetime
 import time as time1
 import constants.Paths as Paths

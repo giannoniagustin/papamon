@@ -4,6 +4,7 @@ from flask import request,jsonify,send_file
 import os
 import constants.Paths as Paths
 import psutil
+import shutil
 
 
 from util import File
@@ -215,6 +216,49 @@ class MasterApiController:
             print("Ocurrió un error:", e)
             Sentry.captureException(e)
             return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  ,500
+    @staticmethod
+    def deleteReconstructForDate(date:str):
+        try:
+            print(os.linesep+f"#########################INICIO DE DELETE RECONSTRUCT {date}########################################"+os.linesep)
+            localPathImage =Paths.BUILD_IMAGE_FOLDER.format(date)
+            print(f"Carpeta a borrar destino: {localPathImage} " )
+            if  File.FileUtil.fileExists(localPathImage):
+                return MasterApiController.buildZip(date,config.meRaspb.id)
+            else:
+                message="Ocurrió un error al recuperar las imágenes. No existe la carpeta de destino."
+                print(message)
+        
+                return jsonify(ErrorResponse(data='', message=message).serialize()),500
+
+        except FileExistsError as e:
+            print(f"La carpeta '{date}' ya existe.")
+            Sentry.captureException(e)
+            return jsonify(ErrorResponse(data='', message="An error occurred: "+e.strerror).serialize()),500  
+
+        except Exception as e:
+            print("Ocurrió un error:", e)
+            Sentry.captureException(e)
+            return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  ,500
+        
+    @staticmethod    
+    def deleteFolder(date:str):
+        print(f"Eliminando carpeta {date} " )
+        folderPath =Paths.IMAGES+date+os.sep
+        print(f"Folder path {folderPath} " )
+        try:
+            # Verificar si la ruta es una carpeta
+            if os.path.isdir(folderPath):
+                # Eliminar la carpeta y su contenido de manera recursiva
+                shutil.rmtree(folderPath)
+                return jsonify( SuccessResponse(data=f"Carpeta {folderPath} eliminada correctamente", message="Carpeta eliminada").serialize())
+            else:
+                # Manejar el caso donde la ruta no es una carpeta
+                return jsonify(ErrorResponse(data='', message="An error occurred: La ruta no es una carpeta ").serialize())
+        except Exception as e:
+            print("Ocurrió un error:", e)
+            Sentry.captureException(e)
+            return jsonify(ErrorResponse(data='', message=f"Error al eliminar carpeta {e.strerror} ").serialize())  ,500
+
 
     
 
