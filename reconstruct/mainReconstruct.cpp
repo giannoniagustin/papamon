@@ -31,7 +31,7 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-#define VERSION "version 12Dic2023"
+#define VERSION "version 18Dic2023"
 
 int time_elaps = 0;
 
@@ -832,8 +832,8 @@ bool Reconstruct(std::string inputDir)
 
         getScene()->heightMap.swap(heights);
 
-        std::cout << "Save as OBJ  \n";
-        saveAsObj(o, inputDir + "/merged.obj");
+        //std::cout << "Save as OBJ  \n";
+        //saveAsObj(o, inputDir + "/merged.obj");
 
         std::cout << "Save STATE  \n";
         buildStateJSON(inputDir + "/reconstruction.json");
