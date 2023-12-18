@@ -1,12 +1,10 @@
 
-import sys
-import time
+
 from flask import request,jsonify,send_file
 import os
 import constants.Paths as Paths
-from mappers.listFile.ListFileMapper import ListFileMapper
-from model.ListFiles import ListFiles
-from model.Status import Status
+import psutil
+
 
 from util import File
 
@@ -203,6 +201,21 @@ class MasterApiController:
             return response
         else:
             # Manejar el caso donde el archivo no existe
-            return jsonify(ErrorResponse(data='', message="An error occurred: El archivo no existe ").serialize())        
+            return jsonify(ErrorResponse(data='', message="An error occurred: El archivo no existe ").serialize())   
+        
+    @staticmethod
+    def getFreeSpace(path='/'):
+        try:
+
+            disk_usage = psutil.disk_usage(path)
+            free_space_gb = disk_usage.free / (1024 ** 3)  # Espacio libre en GB
+            result=f"Espacio libre en disco: {free_space_gb} GB"
+            return jsonify( SuccessResponse(data=result, message="Espacio libre en disco").serialize())
+        except Exception as e:
+            print("Ocurrió un error:", e)
+            Sentry.captureException(e)
+            return jsonify(ErrorResponse(data='', message=f"An error occurred {e.strerror} ").serialize())  ,500
+
+    
 
 

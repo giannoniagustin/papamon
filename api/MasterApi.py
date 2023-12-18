@@ -62,7 +62,10 @@ def getRGBForDateAndCamera(idCamera):
 def getReconsResultForDate():
         date = request.args.get('date')
         return MasterApiController.getReconsResultForDate(date=date)
-
+    
+@app.route('/freespace', methods=['GET'])
+def getFreeSpace():
+        return MasterApiController.getFreeSpace()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
