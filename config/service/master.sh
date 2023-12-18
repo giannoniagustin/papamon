@@ -31,12 +31,14 @@ if  has_start_param  "$@" ; then
     sudo ./configService.sh -name "$papamonCheckStatusAppService" start
     sudo ./configService.sh -name "$syncRCloneService" start
     sudo ./configService.sh -name "$syncRCloneTimer" start
+    sudo ./configService.sh -name "$papamonMasterAppService" start
 elif has_stop_param  "$@"; then
     echo "Configurando Detencion de Master"
     #Stop Service
     sudo ./configService.sh -name "$papamonCheckStatusAppService" stop
     sudo ./configService.sh -name "$syncRCloneService" stop
     sudo ./configService.sh -name "$syncRCloneTimer" stop
+    sudo ./configService.sh -name "$papamonMasterAppService" stop
 fi
 
 
