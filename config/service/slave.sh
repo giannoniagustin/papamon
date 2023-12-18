@@ -26,8 +26,6 @@ if  has_start_param  "$@" ; then
     echo "Configurando Inicio de Slave"
     #Start Service
     sudo ./configService.sh -name "$papamonAppService" start
-
-    fi
 elif has_stop_param  "$@"; then
     echo "Configurando Detencion de Slave"
     #Stop Service
