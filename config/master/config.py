@@ -6,6 +6,7 @@ meRaspb: Raspberry = RaspberryController.getMe(Paths.ME_MASTER)
 programsaveCam = ""
 programsaveCam_Linux = "./rs-reconstruct"
 programsaveCam_Win = "rs-reconstruct.exe"
+programNegrokUrl = "likely-liked-sawfly.ngrok-free.app"
 reconstructFolder= "reconstruct"
 isDemo =False
 forceReconstruc = False

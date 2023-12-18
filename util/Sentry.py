@@ -22,7 +22,7 @@ class Sentry:
                 debug=False,  # Habilita el modo de depuración (opcional)
                 ) 
             # Habilita la integración de Sentry para multiprocessing
-            sentry_sdk.capture_message("Inicio de Sentry") 
+           # sentry_sdk.capture_message("Inicio de Sentry") 
 
         @staticmethod
         def customMessage(filename:str=None,path:str="",eventName:str=""):

@@ -3,6 +3,8 @@ import io
 import os
 import subprocess
 import sys
+import threading
+from controllers.MasterApiController import MasterApiController
 from controllers.raspberry.RaspberryController import RaspberryController
 import constants.Paths as Paths
 from controllers.status.StatusController import StatusController
@@ -21,9 +23,44 @@ from model.Status import Status
 from util.Sentry import Sentry
 from typing import List
 import datetime
+import api.MasterApi as MasterApi
 
 
 class MasterController:
+    @staticmethod
+    def initApi():
+            # Define the initApi function here
+            api_thread = threading.Thread(target=MasterApi.app.run, kwargs={'host': '0.0.0.0', 'port': config.meRaspb.port})
+            api_thread.start()
+    
+    
+    @staticmethod
+    def runNgrok():
+        print("Ejecutando ngrok...")
+        try:
+            command = f"ngrok http --domain={config.programNegrokUrl} {config.meRaspb.port}"
+            print("Comando a ejecutar inicio ngrok:", command)
+            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output, error = process.communicate()
+
+            if output:
+                print("Salida:", output.decode("utf-8"))
+            if error:
+                print("Error al ejecutar negrok:", error.decode("utf-8"))
+
+        except Exception as e:
+            print("Error al ejecutar el comando:", e)
+    @staticmethod
+    def initNgrok():
+        # Ejecutar el comando en un hilo separado
+        print("Iniciando ngrok...")
+        ngrok_thread = threading.Thread(target=MasterController.runNgrok)
+        ngrok_thread.start()
+        
+
+
+        
+    
     @staticmethod
     def getImages():
         print(os.linesep+"###########################INICIO OBTENCION DE IMAGENES######################################"+os.linesep)
