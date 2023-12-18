@@ -31,7 +31,7 @@ def checkConfig():
         print("Configuracion correcta")
     else:
         print("Configuracion incorrecta,chequee las ips,id,puertos y nombres de las Raspberries,deben coincidir.Los archivos de conifguracion se encuentran en la carpeta config/master")
-        sys.exit()
+        #sys.exit()
 
     
 def callReconstruct():
