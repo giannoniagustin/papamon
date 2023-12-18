@@ -134,6 +134,22 @@ class FileUtil:
               print("An error occurred when zipFoler: ",e)
               raise
     @staticmethod
+    def zipFile(filePath):
+              try:
+                     print("zipFoler: " + filePath)
+                     # Crear un archivo ZIP en memoria
+                     buffer = io.BytesIO()
+                     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                            # Obtener la ruta relativa del archivo desde una carpeta base
+                            rel_path = os.path.relpath(filePath, os.path.dirname(filePath))
+                            # Agregar el archivo al ZIP con la ruta relativa para mantener la estructura
+                            zipf.write(filePath, rel_path)
+
+                     return buffer
+              except Exception as e:
+                     print("An error occurred when zipFile: ", e)
+                     raise
+    @staticmethod
     def isValidZip(bytes_io):
               try:
                      # Posiciona el objeto BytesIO al principio

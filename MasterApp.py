@@ -5,7 +5,6 @@ import sys
 import threading
 from controllers.MasterController import MasterController
 from controllers.scheduler.SchedulerController import SchedulerController
-import api.MasterApi as MasterApi
 import datetime
 import time as time1
 import constants.Paths as Paths
@@ -31,15 +30,17 @@ def checkConfig():
         print("Configuracion correcta")
     else:
         print("Configuracion incorrecta,chequee las ips,id,puertos y nombres de las Raspberries,deben coincidir.Los archivos de conifguracion se encuentran en la carpeta config/master")
-        sys.exit()
+        #sys.exit()
 
     
 def callReconstruct():
     #Sentry.customMessage(filename=None,path=None,eventName=f"Obteniendo Imagenes {datetime.datetime.now()} ")  
     if (MasterController.getImages()):
-        print(f"Reconstruccion exitosa: {datetime.datetime.now()}")    
+        print(f"Reconstruccion exitosa: {datetime.datetime.now()}")  
     else:
         print(f"Reconstruccion fallida,puede haber generado alguna imagen: {datetime.datetime.now()}")   
+    MasterController.getStatus() 
+
 
 def processGetImages(job):
      job()
