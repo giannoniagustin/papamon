@@ -41,18 +41,20 @@ echo "Configurando el servicio PapamonApp $nombre_servicio"
 
 if  has_start_param  "$@" ; then
     echo "Configurando Inicio de servicio PapamonApp $nombre_servicio"
-    
+
     # Llama al script para buildear
     echo "Buildeando Apps"
     sudo ./configAllBuild.sh
-    
+
     # Llama al script configCopyService.sh con los parámetros fijos
     sudo ./configCopyService.sh "$directorio_service/$nombre_servicio" "$directorio_systemd"
     sudo systemctl daemon-reload
+    if $nombre_servicio != "syncRClone.service"; then
     sudo systemctl stop $nombre_servicio
     sudo systemctl enable $nombre_servicio
     sudo systemctl start  $nombre_servicio
     sudo systemctl status $nombre_servicio
+    fi
 elif has_stop_param  "$@"; then
     echo "Configurando Detencion de servicio PapamonApp $nombre_servicio"
     sudo systemctl stop $nombre_servicio
