@@ -1,6 +1,7 @@
 [Unit]
 Description=PapamonMasterApp Python
-After=systemd-user-sessions.service
+After=systemd-user-sessions.service network-online.target
+Wants=network-online.target
 [Service]
 Type=simple
 User=papamon

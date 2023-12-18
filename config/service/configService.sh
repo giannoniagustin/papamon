@@ -53,13 +53,13 @@ if  has_start_param  "$@" ; then
     sudo systemctl stop $nombre_servicio
     sudo systemctl enable $nombre_servicio
     sudo systemctl start  $nombre_servicio
-    sudo systemctl status $nombre_servicio
+    #sudo systemctl status $nombre_servicio
     fi
 elif has_stop_param  "$@"; then
     echo "Configurando Detencion de servicio PapamonApp $nombre_servicio"
     sudo systemctl stop $nombre_servicio
     sudo systemctl disable $nombre_servicio
-    sudo systemctl status $nombre_servicio
+    #sudo systemctl status $nombre_servicio
 fi
 else
     echo "No se ha proporcionado el parametro -name"
