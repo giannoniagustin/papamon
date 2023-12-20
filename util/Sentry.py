@@ -33,6 +33,25 @@ class Sentry:
                         scope.clear()
                 else:
                         sentry_sdk.capture_message(eventName) 
+      
+        @staticmethod
+        def sendFile(filename: str, path: str , eventName: str ):
+            try:
+
+                with sentry_sdk.configure_scope() as scope:
+                    try:
+                        scope.add_attachment(filename=filename, path=path)
+                        sentry_sdk.capture_message(eventName)
+                        scope.clear()
+                    except Exception as e:
+                        print(f"Error al enviar el evento a Sentry: {e}")
+                        return False
+
+                return True  # Devolver True si se envió exitosamente
+            except Exception as e:
+                print(f"Error al enviar el evento a Sentry: {e}")
+                return False  # Devolver False si ocurrió un error durante el envío
+        
         @staticmethod
         def captureException(e):
             sentry_sdk.capture_exception(e)

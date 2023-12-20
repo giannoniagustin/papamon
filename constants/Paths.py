@@ -79,3 +79,8 @@ DEPTH_FILE = 'depth.png'
 POINT_FILE = 'points.csv'
 RGB_FILE = 'rgb.png'
 RECONSTRUCTION_FILE ="reconstruction.json"
+
+#SYNC
+SYNC_FOLDER='sync'
+SYNC_FILE_NAME='sync.json'
+SYNC_SEND_FILE = os.path.join(SYNC_FOLDER,SYNC_FILE_NAME)

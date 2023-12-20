@@ -26,12 +26,27 @@ class FileUtil:
                 print("An error occurred :", e)
                 raise
     
+    @staticmethod
+    def openFile(file_path,mode='r'):
+         content = {}
+         try:   
+            with open(file_path, 'r') as file:
+                return file
+         except FileNotFoundError as e:
+                print("An error File Not Found", e)
+                raise
+         except IOError as e:
+                print("An error IOError", e)
+                raise
+         except Exception as e:
+                print("An error occurred :", e)
+                raise
     
     @staticmethod
-    def writeFile(file_path, content):
+    def writeFile(file_path, content,mode='w'):
          try:   
             print('File path write: '+file_path)
-            with open(file_path, 'w') as file:
+            with open(file_path, mode) as file:
                 file.write(content)
                 return True
          except FileNotFoundError as e:
