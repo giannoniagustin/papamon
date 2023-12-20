@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 import os
+import requests
 import constants.Paths as Paths
 from util.Sentry import Sentry
 from util import File
+from util.Parser import Parser
+import config.sync.config as config
 
 def initApp():
+    Sentry.init()               
     print(os.linesep+"#################################################################"+os.linesep)
     print(f"Inicio de SyncApp   "+os.linesep)
     configParameter()
+    
 
 def configParameter():
     print(os.linesep+"#########################CONFIGURATIONS########################################"+os.linesep)
@@ -45,11 +50,9 @@ def saveSentFiles(archivos_enviados):
     except IOError as e:
         print(f"Error al guardar archivos enviados: {e}")
 def loadSentFiles():
-  
     syncSendFile = Paths.SYNC_SEND_FILE
     sentFiles = set()
     File.FileUtil.createFolder(File.FileUtil.filePath(syncSendFile))
-
     try:
         if not File.FileUtil.fileExists(syncSendFile):
             File.FileUtil.writeFile(syncSendFile, "")
@@ -60,19 +63,54 @@ def loadSentFiles():
     except Exception as e:
         # Manejar el caso donde el archivo de registros aún no existe
         print(f"Error al cargar archivos enviados: {e}")
+        raise
     return sentFiles
 def sendToBackend(file:str,filename:str=""):
-   # sendToSentry(file,filename)
+   sendToSentry(file,filename)
+   sendToFirestore(file,filename)
    print("sendToBackend")
 
 def sendToSentry(file:str,filename:str=""):
-    Sentry.init()   
-                        
     Sentry.sendFile(filename=filename,path=file,eventName=f"Historial de Reconstruccion")
+def sendToFirestore(file:str,filename:str="")->bool:
+            sendSuccess = False
+            try:
+                url= config.reconstructionUrl
+                print("Url firebase ",url)
+                # Leer el contenido del archivo
+                json_file_content = File.FileUtil.readFile(file)
+                json_file = Parser.toJson(json_file_content)
+                # Configurar los encabezados para indicar que estás enviando un JSON
+                headers = {'Content-Type': 'application/json'}
+                # Realizar la solicitud POST con el JSON
+                response = requests.post(url, data=json_file, headers=headers)
+                if response.status_code == 200:
+                    print(f"Archivo enviado a Firebase: {response.status_code}")
+                    sendSuccess = True
+                else:
+                    print(f"Error al enviar archivo a Firebase: {response.status_code}")
+                    raise
+            except requests.exceptions.ConnectionError as e:
+                    print("Error de conexión:", e)
+                    Sentry.captureException(e)
+                    raise
+            except requests.exceptions.RequestException as e:
+                    print("Error en la solicitud:", e)
+                    Sentry.captureException(e)
+                    raise
 
+            except Exception as e:
+                    print("Error al enviar archivo a Firebase", e)
+                    Sentry.captureException(e)
+                    raise
+            finally:
+                    return sendSuccess
 if __name__ == "__main__":
-    initApp()
-    sentFiles(Paths.IMAGES)
+    try:
+        initApp()
+        sentFiles(Paths.IMAGES)
+    except Exception as e:
+        print("Error en la aplicación:", e)
 
 
 

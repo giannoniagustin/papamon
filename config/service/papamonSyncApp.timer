@@ -1,0 +1,10 @@
+[Unit]
+Description=Temporizador para ejecutar el servicio de sincronizacion custom cada X tiempo
+
+[Timer]
+OnUnitActiveSec=5m
+OnBootSec=5m
+Unit=papamonSyncApp.service
+
+[Install]
+WantedBy=timers.target
