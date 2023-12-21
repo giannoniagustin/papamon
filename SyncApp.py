@@ -37,7 +37,8 @@ def sentFiles(ruta_base):
                     except Exception as e:
                         print(f"Error al enviar el archivo {fullFilePath} a Sentry: {e}")
                 else:
-                    print(f"El archivo {fullFilePath} ya ha sido enviado previamente.")
+                    #print(f"El archivo {fullFilePath} ya ha sido enviado previamente.")
+                    pass
     saveSentFiles(newSentFiles)
 def saveSentFiles(archivos_enviados):
     syncSendFile = Paths.SYNC_SEND_FILE
