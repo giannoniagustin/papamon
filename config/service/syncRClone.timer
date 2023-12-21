@@ -2,7 +2,7 @@
 Description=Temporizador para ejecutar el servicio cada X tiempo
 
 [Timer]
-OnUnitActiveSec=5m
+OnUnitActiveSec=300m
 OnBootSec=5m
 Unit=syncRClone.service
 

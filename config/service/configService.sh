@@ -49,7 +49,7 @@ if  has_start_param  "$@" ; then
     # Llama al script configCopyService.sh con los parámetros fijos
     sudo ./configCopyService.sh "$directorio_service/$nombre_servicio" "$directorio_systemd"
     sudo systemctl daemon-reload
-    if [ "$nombre_servicio" != "syncRClone.service" and "$nombre_servicio" != "papamonSyncApp.service" ]; then
+    if [ "$nombre_servicio" != "syncRClone.service" -a "$nombre_servicio" != "papamonSyncApp.service" ]; then
     sudo systemctl stop $nombre_servicio
     sudo systemctl enable $nombre_servicio
     sudo systemctl start  $nombre_servicio
