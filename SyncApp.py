@@ -5,7 +5,7 @@ import constants.Paths as Paths
 from util.Sentry import Sentry
 from util import File
 from util.Parser import Parser
-from util import Util
+from util.Util import Util
 import config.sync.config as config
 
 def initApp():
