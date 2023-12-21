@@ -3,8 +3,8 @@
 if ping -q -c 1 -W 1 8.8.8.8 >/dev/null; then
     # Ejecutar el comando si hay conexión a internet
         echo "Hay conexión a internet."
-        mkdir -p /home/papamon/Documents/out_reconstruct/log/
-        rclone --filter-from=/home/papamon/Documents/papamon/config/service/syncFilter.txt sync /home/papamon/Documents/out_reconstruct drive:/out_reconstruct -P -v --log-file /home/papamon/Documents/out_reconstruct/log/rclone.txt
+        mkdir -p /home/papamon/Documents/out_reconstruct_prod/log/
+        sudo rclone --filter-from=/home/papamon/Documents/papamon/config/service/syncFilter.txt sync /home/papamon/Documents/out_reconstruct drive:/out_reconstruct_prod -P -v --log-file /home/papamon/Documents/out_reconstruct_prod/log/rclone.txt
         exit
 
 else
