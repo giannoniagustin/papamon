@@ -1,5 +1,5 @@
 [Unit]
-Description=PapamonMasterApp Python
+Description=Papamon SyncApp Service
 Requires=network-online.target
 Wants=network-online.target
 After= network-online.target systemd-user-sessions.service 
@@ -8,7 +8,7 @@ After= network-online.target systemd-user-sessions.service
 Type=simple
 User=papamon
 TimeoutStartSec=200
-ExecStartPre=/bin/sleep 90
+ExecStartPre=/bin/sleep 5
 ExecStart=python3 -u /home/papamon/Documents/papamon/SyncApp.py
 WorkingDirectory=/home/papamon/Documents/papamon
 Restart=on-failure
