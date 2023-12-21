@@ -7,7 +7,6 @@ class Sentry:
         @staticmethod
         def init():
             print(os.linesep+"#########################INIT SENTRY########################################"+os.linesep)
-
             sentry_sdk.init(
                 dsn="https://907fed6f0f57920999ad05c29b8f74fa@o4505815265902592.ingest.sentry.io/4505815269113856",
                 integrations=[FlaskIntegration()],

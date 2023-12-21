@@ -5,6 +5,7 @@ import constants.Paths as Paths
 from util.Sentry import Sentry
 from util import File
 from util.Parser import Parser
+from util import Util
 import config.sync.config as config
 
 def initApp():
@@ -71,7 +72,11 @@ def sendToBackend(file:str,filename:str=""):
    print("sendToBackend")
 
 def sendToSentry(file:str,filename:str=""):
-    Sentry.sendFile(filename=filename,path=file,eventName=f"Historial de Reconstruccion")
+    if Util.checkInternetConnection():
+        Sentry.sendFile(filename=filename,path=file,eventName=f"Historial de Reconstruccion")
+        
+    else:
+         raise Exception("No hay conexión a Internet.")
 def sendToFirestore(file:str,filename:str="")->bool:
             sendSuccess = False
             try:
@@ -89,15 +94,15 @@ def sendToFirestore(file:str,filename:str="")->bool:
                     sendSuccess = True
                 else:
                     print(f"Error al enviar archivo a Firebase: {response.status_code}")
-                    raise
+                    raise Exception(f"Error al enviar archivo a Firebase: {response.status_code}")
             except requests.exceptions.ConnectionError as e:
                     print("Error de conexión:", e)
                     Sentry.captureException(e)
-                    raise
+                    raise  Exception(e)
             except requests.exceptions.RequestException as e:
                     print("Error en la solicitud:", e)
                     Sentry.captureException(e)
-                    raise
+                    raise  Exception(e)
 
             except Exception as e:
                     print("Error al enviar archivo a Firebase", e)

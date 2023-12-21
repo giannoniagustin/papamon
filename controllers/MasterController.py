@@ -106,7 +106,7 @@ class MasterController:
         if (reconstructSuccess):
             if (File.FileUtil.fileExists(outResult)):
              fileNameSentry =config.meRaspb.name+"-"+request_id+Paths.JSON
-             Sentry.customMessage(filename=fileNameSentry,path=outResult,eventName="Reconstrucción de imagen")  
+             #Sentry.customMessage(filename=fileNameSentry,path=outResult,eventName="Reconstrucción de imagen")  
              StatusController.updateIfChange(Status(cameraRunning=True,lastImage=request_id,))
             else:
                 Sentry.customMessage(eventName="El archivo de reconstruccion no existe ")  
