@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 import requests
 import constants.Paths as Paths
 from util.Sentry import Sentry
@@ -7,7 +8,7 @@ from util import File
 from util.Parser import Parser
 from util.Util import Util
 import config.sync.config as config
-
+isDemo=False
 def initApp():
     Sentry.init()               
     print(os.linesep+"#################################################################"+os.linesep)
@@ -17,6 +18,10 @@ def initApp():
 
 def configParameter():
     print(os.linesep+"#########################CONFIGURATIONS########################################"+os.linesep)
+    if "-demo" in sys.argv:
+        print("El parámetro '-demo' está presente.")
+        global isDemo
+        isDemo=True
 
 def sentFiles(ruta_base):
     sentFiles = loadSentFiles()
@@ -73,8 +78,16 @@ def sendToBackend(file:str,filename:str=""):
    print("sendToBackend")
 
 def sendToSentry(file:str,filename:str=""):
+    global isDemo
+    nameEvent="Historial de Reconstruccion"
     if Util.checkInternetConnection():
-        Sentry.sendFile(filename=filename,path=file,eventName=f"Historial de Reconstruccion")
+        if isDemo:
+          nameEvent="Historial de Reconstruccion Demo" 
+          Sentry.sendFile(filename=filename,path=file,eventName=f"{nameEvent}")
+
+        else:
+          nameEvent="Historial de Reconstruccion"  
+          Sentry.sendFile(filename=filename,path=file,eventName=f"{nameEvent}")
         
     else:
          raise Exception("No hay conexión a Internet.")
