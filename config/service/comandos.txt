@@ -1,0 +1,16 @@
+sudo journalctl -u papamonMasterApp.service -f
+sudo journalctl -u papamonApp.service -f
+sudo journalctl -u papamonCheckStatusApp.service -f
+sudo journalctl -u syncRClone.service -f
+sudo journalctl -u syncRClone.timer -f
+
+
+sudo systemctl status papamonMasterApp.service
+sudo systemctl status papamonApp.service
+sudo systemctl status papamonCheckStatusApp.service
+sudo systemctl status syncRClone.service
+sudo systemctl status syncRClone.timer
+
+ pip3 install -r requirements.txt
+ 
+sudo chmod +x App.py
