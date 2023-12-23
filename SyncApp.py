@@ -8,6 +8,7 @@ from util import File
 from util.Parser import Parser
 from util.Util import Util
 import config.sync.config as config
+import config.master.config as MasterConfig
 isDemo=False
 def initApp():
     Sentry.init()               
@@ -74,19 +75,19 @@ def loadSentFiles():
     return sentFiles
 def sendToBackend(file:str,filename:str=""):
    sendToSentry(file,filename)
-   sendToFirestore(file,filename)
+   #sendToFirestore(file,filename)
    print("sendToBackend")
 
 def sendToSentry(file:str,filename:str=""):
     global isDemo
-    nameEvent="Historial de Reconstruccion"
+    nameEvent="Reconstrucción de imagen"
+    filename =MasterConfig.meRaspb.name+"-"+filename
     if Util.checkInternetConnection():
         if isDemo:
-          nameEvent="Historial de Reconstruccion Demo" 
+          nameEvent=f"{nameEvent} Demo" 
           Sentry.sendFile(filename=filename,path=file,eventName=f"{nameEvent}")
 
         else:
-          nameEvent="Historial de Reconstruccion"  
           Sentry.sendFile(filename=filename,path=file,eventName=f"{nameEvent}")
         
     else:

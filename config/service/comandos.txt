@@ -18,4 +18,11 @@ systemctl daemon-reload
  
 sudo chmod +x App.py
 
+Si tira error con dependencias 
+"/usr/lib/python3/dist-packages/requests/__init__.py:87: RequestsDependencyWarning: urllib3 (2.0.4) or chardet (4.0.0) doesn't match a supported version!
+  warnings.warn("urllib3 ({}) or chardet ({}) doesn't match a supported ""
+  Ejecutar :
+
+sudo python3 -m pip install --upgrade requests
+
 
