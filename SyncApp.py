@@ -81,7 +81,7 @@ def sendToBackend(file:str,filename:str=""):
 def sendToSentry(file:str,filename:str=""):
     global isDemo
     nameEvent="Reconstrucción de imagen"
-    filename =MasterConfig.meRaspb.name+"-"+filename
+    filename =MasterConfig.meRaspb.name+"-"+file
     if Util.checkInternetConnection():
         if isDemo:
           nameEvent=f"{nameEvent} Demo" 
