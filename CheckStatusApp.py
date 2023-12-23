@@ -16,7 +16,7 @@ import config.master.config as config
 def initApp():
     
     Sentry.init()
-    Sentry.customMessage(filename=None,eventName=f"Inicio de App CheckStatus {datetime.datetime.now()}") 
+    #Sentry.customMessage(filename=None,eventName=f"Inicio de App CheckStatus {datetime.datetime.now()}") 
     configParameter()
     print(os.linesep+"#################################################################"+os.linesep)
     print(f"Inicio de App Check Status {datetime.datetime.now()}{os.linesep} Version {config.version} "+os.linesep)
