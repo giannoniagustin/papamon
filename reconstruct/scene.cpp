@@ -30,6 +30,8 @@
 int MAP_SIZE_X = 50;
 int MAP_SIZE_Y = 50;
 
+static std::vector<glm::vec3> colors = { glm::vec3(1,0.3,0.3), glm::vec3(0.9,1,0.3),glm::vec3(0.3,0.3,1.0),glm::vec3(0.8,0.2,0.9),glm::vec3(0.8,0.8,0.9) };
+
 
 static std::vector<std::string> kTypeNames = { "Null", "False", "True", "Object", "Array", "String", "Number" };
 
@@ -747,7 +749,10 @@ void RenderHeightMap(float* pHeightMap)
 
 	if (!pHeightMap) return;					// Make sure our height data is valid
 
+	
 	glPushMatrix();
+
+
 
 
 	glBegin(GL_QUADS);					// Render Quads
@@ -839,18 +844,20 @@ void drawAxes()
 
 void drawCube(glm::vec3 roomSize)
 {
-	glBegin(GL_BLEND);
+	
 	glPushMatrix();
 	glTranslatef(0.0, 0.0, 0.0);
 
 	glScalef(roomSize.x, roomSize.y, roomSize.z);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
 
 	glBegin(GL_QUADS);        // Draw The Cube Using quads
-	glBlendFunc(GL_ONE, GL_ONE);
-
-	glColor3f(1.0f, 1.0f, 0.0f);    // Color Yellow
+	
+	glColor4f(0.5f, 0.50f, 0.50f, 0.5f);    // Color Yellow
 	glVertex3f(1.0f, 0.0f, 0.0f);    // Top Right Of The Quad (Back)
 	glVertex3f(0.0f, 0.0f, 0.0f);    // Top Left Of The Quad (Back)
 	glVertex3f(0.0f, 1.0f, 0.0f);    // Bottom Left Of The Quad (Back)
@@ -1053,6 +1060,14 @@ void drawCloudPoint(object3D& o, int width, int height)
 	/* this segment actually prints the pointcloud */
 	for (int i = 0; i < o.vertexes.size(); i++)
 		{
+			if (getScene()->colorEachCamera)
+			{
+				int camIndex = (int)o.vertexes[i].w;
+				glm::vec3 color = colors[camIndex];
+				glColor3f(color.x , color.y , color.z );
+
+			}
+			else
 			if (o.colors.size() > 0)
 			{
 				glColor3f(o.colors[i].x / 255.0, o.colors[i].y / 255.0, o.colors[i].z / 255.0);
@@ -1145,6 +1160,14 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 		/* this segment actually prints the pointcloud */
 		for (int i = 0; i < o.vertexes.size(); i++)
 		{
+			if (getScene()->colorEachCamera)
+			{
+				int camIndex = (int)o.vertexes[i].w;
+				glm::vec3 color = colors[camIndex];
+				glColor3f(color.x, color.y, color.z);
+
+			}
+			else
 			if (o.colors.size() > 0)
 			{
 				glColor3f(o.colors[i].x / 255.0f, o.colors[i].y / 255.0f, o.colors[i].z / 255.0f);
