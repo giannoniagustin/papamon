@@ -15,7 +15,7 @@
 struct object3D
 {
 public:
-	std::vector<glm::vec3> vertexes;
+	std::vector<glm::vec4> vertexes;
 	std::vector<glm::vec3> tex_coords;
 	std::vector<glm::vec3> colors;
 
@@ -92,6 +92,8 @@ public:
 	int selectedCameraIndex = 0;
 	Camera* selectedCamera = NULL;
 	std::vector<Mark*> marks;
+	bool colorEachCamera = false;
+	int pointSize = 1;
 
 	Scene();
 	double getCellW();

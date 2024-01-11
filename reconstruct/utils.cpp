@@ -74,6 +74,9 @@ bool prepareCameraParameters(rs2::config& cfg)
         // Use a configuration object to request only depth from the pipeline
         cfg.enable_stream(RS2_STREAM_DEPTH, 1280, 0, RS2_FORMAT_Z16, 30);
         cfg.enable_stream(RS2_STREAM_COLOR, 1280, 0, RS2_FORMAT_RGB8, 30);
+
+        
+
         if (check_imu_is_supported_by_cam())
         {
             cfg.enable_stream(RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F);
@@ -125,7 +128,7 @@ void getOBJFromFrameSet(object3D& o, rs2::video_frame& color, rs2::points& point
 
         for (int i = 0; i < points.size(); i++)
         {
-            o.vertexes.push_back(glm::vec3(0, 0, 0));
+            o.vertexes.push_back(glm::vec4(0, 0, 0,0));
             o.tex_coords.push_back(glm::vec3(0, 0, 0));
             o.colors.push_back(glm::vec3(0, 0, 0));
         }
@@ -155,7 +158,7 @@ void getOBJFromFrameSet(object3D& o, rs2::video_frame& color, rs2::points& point
         {
             o.colors[i] = glm::vec3(0, 0, 0);
         }
-        o.vertexes[i] = glm::vec3(vertices[i].x, vertices[i].y, vertices[i].z);
+        o.vertexes[i] = glm::vec4(vertices[i].x, vertices[i].y, vertices[i].z,0);
         o.tex_coords[i] = glm::vec3(tex_coords[i].u, tex_coords[i].v, 0.0);
 
     }
@@ -164,7 +167,7 @@ void getOBJFromFrameSet(object3D& o, rs2::video_frame& color, rs2::points& point
 
 void saveAsObj(object3D& o, std::string outputFile)
 {
-    std::vector<glm::vec3> vs = o.vertexes;
+    std::vector<glm::vec4> vs = o.vertexes;
 //    # wavefront obj fit3d
 //        v 53.5864 114.006 453.241
 //       v 53.4813 113.924 453.239
@@ -181,7 +184,7 @@ void saveAsObj(object3D& o, std::string outputFile)
     // again write inputted data into the file.
     for (int i = 0; i < vs.size(); i++)
     {
-        outfile << "v " << vs[i].x<<" "<< vs[i].y << " "<< vs[i].z << std::endl;
+        outfile << "v " << vs[i].x<<" "<< vs[i].y << " "<< vs[i].z << " "<< vs[i].w<< std::endl;
     }
     // close the opened file.
     outfile.close();
@@ -245,7 +248,7 @@ object3D readFromCSV(Camera* cam, std::string filename )
             o.colors.push_back(color);
         }
 
-        o.vertexes.push_back(pos);
+        o.vertexes.push_back(glm::vec4(pos.x, pos.y, pos.z, cam->id));
         o.tex_coords.push_back(tex);
     }
 

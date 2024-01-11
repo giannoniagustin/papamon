@@ -188,7 +188,7 @@ rs2::video_frame updateCameraFrames(Camera* live_cam)
 // It can be useful for debugging an embedded system with no display.
 int main(int argc, char* argv[]) try
 {
-    std::cout << "Project PapaMon version: 18Dic2023" << "\n";
+    std::cout << "Project PapaMon version: 10Jan2024" << "\n";
 
     bool demoMode = false;
 
@@ -300,15 +300,23 @@ int main(int argc, char* argv[]) try
 
         if (prepareCameraParameters(cfg))
         {
-
+           
+           
             // Start streaming with default recommended configuration
             pipe.start(cfg);
+
+           
         }
         else
+        {
             pipe.start();
+            // auto profile = 
+           
+        }
+            
 
         thr_filter.set_option(RS2_OPTION_MIN_DISTANCE, 0.3);
-        thr_filter.set_option(RS2_OPTION_MAX_DISTANCE, 9.0);
+        thr_filter.set_option(RS2_OPTION_MAX_DISTANCE, 10.0);
 
         // The following order of emplacement will dictate the orders in which filters are applied
         filters["Decimate"] = &dec_filter;

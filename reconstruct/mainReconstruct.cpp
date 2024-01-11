@@ -31,7 +31,7 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-#define VERSION "version 18Dic2023"
+#define VERSION "version 10Jan2024"
 
 int time_elaps = 0;
 
@@ -159,6 +159,8 @@ object3D mergeAll3DData(bool filter)
 {
     object3D obj;
 
+    int camIndex = 0;
+
     for (auto cam : getScene()->cameras)
     {
         glm::vec3 rotAdapt = cam->camRot;
@@ -178,11 +180,13 @@ object3D mergeAll3DData(bool filter)
 
                 if (filter && !checkInsideVolume(v)) continue;
               
-                obj.vertexes.push_back(glm::vec3(v.x, v.y, v.z));
+                obj.vertexes.push_back(glm::vec4(v.x, v.y, v.z, camIndex));
                 obj.tex_coords.push_back(glm::vec3(cam->o.tex_coords[i].x, cam->o.tex_coords[i].y,0.0));
                 obj.colors.push_back(cam->o.colors[i]);
             }
         }
+
+        camIndex++;
     }
 
   
@@ -206,9 +210,9 @@ bool renderCameraParameters(Camera* cam, int wW, int wH)
         ImGui::Checkbox("Visible", &cam->is_visible);
         ImGui::Checkbox("Use4Reconstruct", &cam->use_for_reconstruction);
        
-        if (ImGui::SliderFloat("CamPosX", &cam->camPos.x, -2.0f, 10.0f)) { changed = true; }
-        if (ImGui::SliderFloat("CamPosY", &cam->camPos.y, -2.0f, 10.0f)) { changed = true; }
-        if (ImGui::SliderFloat("CamPosZ", &cam->camPos.z, -2.0f, 10.0f)) { changed = true; }
+        if (ImGui::SliderFloat("CamPosX", &cam->camPos.x, -2.0f, 25.0f)) { changed = true; }
+        if (ImGui::SliderFloat("CamPosY", &cam->camPos.y, -2.0f, 25.0f)) { changed = true; }
+        if (ImGui::SliderFloat("CamPosZ", &cam->camPos.z, -2.0f, 25.0f)) { changed = true; }
         if (ImGui::SliderFloat("PITCH", &cam->camRot.x, -180.0f, 180.0f)) { changed = true; }
         if (ImGui::SliderFloat("YAW", &cam->camRot.y, -180.0f, 180.0f)) { changed = true; }
         if (ImGui::SliderFloat("ROLL", &cam->camRot.z, -180.0f, 180.0f)) { changed = true; }
@@ -284,24 +288,23 @@ bool renderSceneParameters()
 
     ImGui::SliderInt("ResolutionX", &getScene()->heightMap_width, 2, 250);
     ImGui::SliderInt("ResolutionZ", &getScene()->heightMap_depth, 2, 250);
-    
-
     ImGui::SliderInt("MinAmountOfPoints", &getScene()->min_amounts_of_points, 2, 50);
 
-
     ImGui::Separator();
     ImGui::Separator();
 
 
-    ImGui::SliderFloat("ViewPosX", &getScene()->viewPos.x, -20.0f, 20.0f);
-    ImGui::SliderFloat("ViewPosY", &getScene()->viewPos.z, -20.0f, 20.0f);
-    ImGui::SliderFloat("ViewPosZ", &getScene()->viewPos.y, -20.0f, 20.0f);
+    ImGui::SliderFloat("ViewPosX", &getScene()->viewPos.x, -20.0f, 40.0f);
+    ImGui::SliderFloat("ViewPosY", &getScene()->viewPos.z, -20.0f, 40.0f);
+    ImGui::SliderFloat("ViewPosZ", &getScene()->viewPos.y, -20.0f, 40.0f);
 
     ImGui::SliderFloat("ViewRotX", &getScene()->viewRot.x, -180.0f, 180.0f);
     ImGui::SliderFloat("ViewRotY", &getScene()->viewRot.y, -180.0f, 180.0f);
     ImGui::SliderFloat("ViewRotZ", &getScene()->viewRot.z, -180.0f, 180.0f);
 
 
+    ImGui::Checkbox("ColorEachCamera", &getScene()->colorEachCamera);
+    ImGui::SliderInt("PointSize", &getScene()->pointSize, 1, 10);
 
    
 
