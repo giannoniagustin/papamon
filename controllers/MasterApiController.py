@@ -186,6 +186,9 @@ class MasterApiController:
         response = make_response(buffer.read())
         response.headers['Content-Type'] = 'application/zip'
         response.headers['Content-Disposition'] = f'attachment; filename={date}.zip'
+        response.headers['Cache-Control']='no-store'
+        response.headers['Connection']='keep-alive'
+        response.headers['Content-Transfer-Encoding']='chunked'
         return response   
     
     def buildZipFile(filePath:str,nameZipFile:str):
@@ -199,6 +202,9 @@ class MasterApiController:
             response = make_response(buffer.read())
             response.headers['Content-Type'] = 'application/zip'
             response.headers['Content-Disposition'] = f'attachment; filename={nameZipFile}.zip'
+            response.headers['Cache-Control']='no-store'
+            response.headers['Connection']='keep-alive'
+            response.headers['Content-Transfer-Encoding']='chunked'
             return response
         else:
             # Manejar el caso donde el archivo no existe
