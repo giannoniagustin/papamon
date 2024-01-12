@@ -1,3 +1,4 @@
 + reconstruction.json
++ points.csv
 + /log/*
 - *
