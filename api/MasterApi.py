@@ -6,6 +6,9 @@ import constants.Paths as Paths
 
 
 app = Flask(__name__)
+# Configurar timeouts
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 60000
+app.config['SEND_FILE_TIMEOUT'] = 60000  # Tiempo en segundos
 # Diccionario para almacenar identificadores de solicitud
 request_ids = {}
 @app.before_request
