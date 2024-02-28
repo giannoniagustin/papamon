@@ -31,7 +31,7 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-#define VERSION "version 10Jan2024"
+#define VERSION "version 28Feb2024"
 
 int time_elaps = 0;
 
@@ -47,6 +47,7 @@ bool doDilate = true;
 
 std::string workDir = "";
 std::string camerasConfig = "cameras.json";
+std::string outreconstructionfile = "reconstruction.json";
 
 // Construct an object to manage view state
 #ifdef RENDER3D
@@ -349,7 +350,7 @@ void render_ui(float w, float h, object3D& o)
             std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth);
             getScene()->heightMap.swap(heights);
             std::cout << "Save STATE  \n";
-            buildStateJSON(workDir + "/reconstruction.json");
+            buildStateJSON(workDir + "/"+ outreconstructionfile);
             std::cout << "Process finish ok \n";
         }
 
@@ -839,7 +840,7 @@ bool Reconstruct(std::string inputDir)
         //saveAsObj(o, inputDir + "/merged.obj");
 
         std::cout << "Save STATE  \n";
-        buildStateJSON(inputDir + "/reconstruction.json");
+        buildStateJSON(inputDir + "/" + outreconstructionfile);
 
         std::cout << "Process finish ok \n";
 
@@ -889,6 +890,12 @@ int main(int argc, char* argv[]) try
                 std::cout << "Using path " << workDir << "\n";
             }
 
+            if (std::string(argv[i]) == "-out")
+            {
+                outreconstructionfile = argv[i + 1];
+                std::cout << "Using out " << outreconstructionfile << "\n";
+            }
+
             if (std::string(argv[i]) == "-live")
             {
                 useLiveCamera = true;
@@ -927,7 +934,12 @@ int main(int argc, char* argv[]) try
         std::cout << "Getting 3D points from files \n";
         for (int i = 0; i < getScene()->cameras.size(); i++)
         {
-            if (!readDataFromFile(getScene()->cameras[i], workDir + "/" + std::to_string(i + 1) + "/"))
+            /// try to read camera ID
+            int cameraIndex = getScene()->cameras[i]->id;
+            if (cameraIndex == 0)
+                cameraIndex = i + 1;
+
+            if (!readDataFromFile(getScene()->cameras[i], workDir + "/" + std::to_string(cameraIndex) + "/"))
             {
                 std::cout << list_of_messages.find(WARNING_SOMEFILES_ARE_MISSING)->second  << "\n";
            }

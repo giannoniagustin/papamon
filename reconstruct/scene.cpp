@@ -312,6 +312,13 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 					cam->camPos.z = coordsM[2].GetFloat();
 				}
 
+				if (camera.HasMember("id"))
+				{
+					auto fid = camera.FindMember("id");
+					if (verboseOut) std::cout << "id type:" << kTypeNames[fid->value.GetType()] << "\n";
+					cam->id = fid->value.GetInt();
+				}
+
 				if (camera.HasMember("range"))
 				{
 					auto fid = camera.FindMember("range");
