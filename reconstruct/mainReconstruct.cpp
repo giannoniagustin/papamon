@@ -31,7 +31,7 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-#define VERSION "version 28Feb2024"
+#define VERSION "version 08Mar2024"
 
 int time_elaps = 0;
 
@@ -81,9 +81,62 @@ glm::mat4 UpdateModelMatrix(glm::vec3 Translation, glm::vec3 euler)
     return ModelMatrix * transform;
 }
 
+////////////////////////////////////////
+////////////// for interpolation
+glm::vec2 map3DToImage(glm::vec3 v, int wm, int hm)
+{
+    int ix = (int)(wm * (v.x) / getScene()->roomSize.x);
+    int iz = (int)(hm * (v.z) / getScene()->roomSize.z);
+
+    return glm::vec2(ix, iz);
+}
+
+
+////////////////////////////////////////
+////////////// for interpolation
+std::vector<float> fillHeightMapWithVisibleMap(int wm, int hm)
+{
+    std::vector<float> mask;
+
+    for (int x = 0; x < wm; x++)
+        for (int y = 0; y < hm; y++)
+            mask.push_back(0);
+
+    for (int icam = 0; icam < getScene()->cameras.size(); icam++)
+    {
+        std::vector<glm::vec3> area = getScene()->cameras[icam]->generatePolygonVisibleArea();
+
+        std::vector<glm::vec2> areaPolygon;
+        for (int i = 0; i < area.size(); i++)
+        {
+            glm::vec2 p = map3DToImage(area[i], wm, hm);
+            areaPolygon.push_back(p);
+        }
+
+
+        for (int x = 0; x < wm; x++)
+            for (int y = 0; y < hm; y++)
+            {
+                double dist = _pointPolygonTest(areaPolygon, glm::vec2(x, y), true);
+                if (dist > 0)
+                {
+                    mask[y * wm + x] = icam + 1;
+                    //if (values[y * wm + x] == 0.0) values[y * wm + x] = getScene()->cameras[icam]->camPos.y;
+                }
+
+
+            }
+    }
+    showHeightMapAsImage(mask, wm, hm, "mask", true, 4);
+#ifdef OPENCV
+    cv::waitKey(50);
+#endif
+    return mask;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
-std::vector<float> computeHeightMap(object3D& o, int wm, int hm)
+std::vector<float> computeHeightMap(object3D& o, int wm, int hm, bool doInterpolation )
 {
 
     std::vector<float> values;
@@ -124,14 +177,24 @@ std::vector<float> computeHeightMap(object3D& o, int wm, int hm)
             values[i] = 0;
     }
 
+    if (doInterpolation)
+    {
+        std::cout << "Applying interpolation strategies" << "\n";
 
-    /// Apply interpolation
-   // values = bicubicInterpolation(values, wm, hm);
-    if (doErode) for (int i = 0; i < 2; i++) erode(values, wm, hm, 3);
-    if (doDilate) for (int i = 0; i < 3; i++) dilate(values, wm, hm, 3);
+        auto mask = fillHeightMapWithVisibleMap(getScene()->heightMap_width, getScene()->heightMap_depth);
 
-    showHeightMapAsImage(values, wm, hm, "image", true);
+        showHeightMapAsImage(values, wm, hm, "orig_image", true, 2);
+        /// Apply interpolation
+        values = bicubicInterpolation(values, wm, hm, mask);
+      
+        showHeightMapAsImage(values, wm, hm, "interp_image", true, 2);
 
+    }
+    else
+    {
+
+        showHeightMapAsImage(values, wm, hm, "image", true);
+    }
     return values;
 }
 
@@ -347,7 +410,7 @@ void render_ui(float w, float h, object3D& o)
         if (ImGui::Button("save reconstruction"))
         {
             std::cout << "Compute Heightmap  \n";
-            std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth);
+            std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth, false);
             getScene()->heightMap.swap(heights);
             std::cout << "Save STATE  \n";
             buildStateJSON(workDir + "/"+ outreconstructionfile);
@@ -627,7 +690,7 @@ bool readDataFromFile(Camera* cam, std::string srcDir)
 }
 
 /// //////////////////////////////////////
-bool Wizard(std::string inputDir)
+bool Wizard(std::string inputDir, bool doInterpolation)
 {
 #ifdef RENDER3D
     // Create a simple OpenGL window for rendering:
@@ -686,7 +749,7 @@ bool Wizard(std::string inputDir)
             o.visible = renderCloudPoints;
 
 
-            std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth);
+            std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth, doInterpolation);
 
             getScene()->heightMap.swap(heights);
 
@@ -719,7 +782,7 @@ bool Wizard(std::string inputDir)
 }
 
 
-bool Configurator(bool useLiveCamera, std::string inputDir)
+bool Configurator(bool useLiveCamera, std::string inputDir, bool doInterpolation)
 {
 #ifdef RENDER3D
     try
@@ -772,7 +835,7 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
 
                 o.visible = renderCloudPoints;
 
-                std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth);
+                std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth, doInterpolation);
 
                 getScene()->heightMap.swap(heights);
 
@@ -820,7 +883,7 @@ bool Configurator(bool useLiveCamera, std::string inputDir)
 /// //////////////////////////////////////
 /// 
 
-bool Reconstruct(std::string inputDir)
+bool Reconstruct(std::string inputDir, bool doInterpolation)
 {
     try
     {
@@ -832,7 +895,7 @@ bool Reconstruct(std::string inputDir)
 
         std::cout << "Compute Heightmap  \n";
 
-        std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth);
+        std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth, doInterpolation);
 
         getScene()->heightMap.swap(heights);
 
@@ -865,7 +928,7 @@ int main(int argc, char* argv[]) try
     bool useLiveCamera = false;
     bool runWizard = false;
     bool verbose = false;
-    
+    bool doInterpolation = false;
 
     if (argc > 1)
     {
@@ -899,6 +962,11 @@ int main(int argc, char* argv[]) try
             if (std::string(argv[i]) == "-live")
             {
                 useLiveCamera = true;
+            }
+
+            if (std::string(argv[i]) == "-interpolate")
+            {
+                doInterpolation = true;
             }
 
 
@@ -960,7 +1028,7 @@ int main(int argc, char* argv[]) try
     if (runWizard)
     {
         std::cout << "RUNNING IN WIZARD MODE " << "\n";
-        Wizard(workDir);
+        Wizard(workDir, doInterpolation);
     }
     else
     if (showOutput)
@@ -968,7 +1036,7 @@ int main(int argc, char* argv[]) try
 
 #ifdef RENDER3D
         std::cout << "RUNNING IN ONLINE CONFIGURATION MODE " << "\n";
-        Configurator(useLiveCamera, workDir);
+        Configurator(useLiveCamera, workDir, doInterpolation);
 #else
     std::cout << "Visualization not supported" << "\n";
 #endif
@@ -977,7 +1045,7 @@ int main(int argc, char* argv[]) try
     else
     {
         std::cout << "RUNNING RECONSTRUCTION WITHOUT UI " << "\n";
-        Reconstruct(workDir);
+        Reconstruct(workDir, doInterpolation);
     }
 
 return PROCESS_OK;

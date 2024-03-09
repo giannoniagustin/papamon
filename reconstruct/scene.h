@@ -61,7 +61,7 @@ public:
 
 	bool is_enabled = false;
 	bool is_visible = true;
-	float camRange = 9.0f;
+	float camRange = 12.0f;
 	float minRange = 0.4f;
 	bool use_for_reconstruction = true;
 
@@ -71,6 +71,7 @@ public:
 	object3D o;
 
 	Camera(std::string name, std::string serial);
+	std::vector<glm::vec3> generatePolygonVisibleArea();
 
 };
 

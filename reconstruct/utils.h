@@ -13,6 +13,16 @@
 
 #include "scene.h"
 
+#ifdef OPENCV
+#include <opencv2/core.hpp>   // Include OpenCV API
+#include <opencv2/highgui.hpp>   // Include OpenCV API
+#include <opencv2/imgcodecs.hpp>   // Include OpenCV API
+#include <opencv2/imgproc.hpp>   // Include OpenCV API
+#include "opencv2/videoio.hpp"
+#include <opencv2/video.hpp>
+#endif
+
+
 #define WARNING_SOMEFILES_ARE_MISSING 1
 #define PROCESS_OK 0
 #define GENERAL_ERROR -1
@@ -55,12 +65,20 @@ void saveAsObj(object3D& o, std::string outputFile);
 
 void getOBJFromFrameSet(object3D& o, rs2::video_frame& color,  rs2::points& points);
 
-std::vector<float> bicubicInterpolation(std::vector<float>& inputHM, int w, int h);
-void showHeightMapAsImage(std::vector<float>& inputHM, int w, int h, std::string name, bool asSeudoColor);
+std::vector<float> bicubicInterpolation(std::vector<float>& inputHM, int w, int h, std::vector<float> mask);
+void showHeightMapAsImage(std::vector<float>& inputHM, int w, int h, std::string name, bool asSeudoColor, double resize = 10.0);
 
 void erode(std::vector<float>& inputHM, int w,  int h, int kernelSize);
 void dilate(std::vector<float>& inputHM, int w, int h, int kernelSize);
 
 bool prepareCameraParameters(rs2::config& cfg);
 bool check_imu_is_supported_by_cam();
+
+
+double _pointPolygonTest(std::vector<glm::vec2> _contour, glm::vec2 pt, bool measureDist);
+
+
+#ifdef OPENCV
+double _pointPolygonTest(std::vector<cv::Point> contour, cv::Point p, bool measureDist);
+#endif
 
