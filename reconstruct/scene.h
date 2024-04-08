@@ -19,6 +19,8 @@ public:
 	std::vector<glm::vec3> tex_coords;
 	std::vector<glm::vec3> colors;
 
+	std::vector<int> cellIndex;
+
 	glm::vec3 min, max;
 	bool visible = true;
 	void computeMinMax();

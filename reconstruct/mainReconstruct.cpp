@@ -31,7 +31,7 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-#define VERSION "version 08Mar2024"
+#define VERSION "version 08Abr2024"
 
 int time_elaps = 0;
 
@@ -198,6 +198,97 @@ std::vector<float> computeHeightMap(object3D& o, int wm, int hm, bool doInterpol
     return values;
 }
 
+
+///////////////////////////////////////////////////////////////////////////
+//
+std::vector<float> computeHeightMapByKNN(object3D& o, int wm, int hm,  int radius)
+{
+    std::cout << "USING KNN" << "\n";
+
+    std::vector<float> values;
+
+    std::vector<int> incidence; // amount of point in this cell
+
+    std::vector<std::vector<glm::vec3>> cells;
+
+    auto mask = fillHeightMapWithVisibleMap(getScene()->heightMap_width, getScene()->heightMap_depth);
+
+    o.computeMinMax();
+    // init structure
+    for (int i = 0; i < wm * hm; i++)
+    {
+        values.push_back(0);
+        incidence.push_back(0);
+        cells.push_back(std::vector<glm::vec3>());
+    }
+    /////////////////////////////////////////////////////////
+    // classify vertexes
+    for (int i = 0; i < o.vertexes.size(); i++)
+    {
+        glm::vec3 v = o.vertexes[i];
+        int ix = (int)(wm * (v.x) / getScene()->roomSize.x);
+        int iz = (int)(hm * (v.z) / getScene()->roomSize.z);
+
+        for (int x = -radius; x <= radius; x++)
+            for (int z = -radius; z <= radius; z++)
+            {
+                if (iz + z < 0 || ix + x < 0) continue;
+                if (iz + z >= hm || ix + x >= wm) continue;
+                int index = (iz + z) * wm + (ix + x);
+
+
+                cells[index].push_back(v);
+            }
+
+
+    }
+
+
+    // compute pixels per cell : height and incidence
+    for (int ix = 0; ix < wm; ix++)
+    {
+        for (int iz = 0; iz < hm; iz++)
+        {
+            int index = iz * wm + ix;
+            double h = 0;
+            int counter = 0;
+            for (int i = 0; i < cells[index].size(); i++)
+            {
+                h += cells[index][i].y;
+                counter += 1;
+            }
+
+            if (mask[index] > 0)
+            {
+                values[iz * wm + ix] = h / std::max(1, counter);
+                incidence[iz * wm + ix] = counter;
+            }
+        }
+    }
+
+
+    getScene()->raw_heightMap = values;
+
+    /////////////////////////////////////
+    // POST PROCESS
+
+    // remove cells with low incidence
+    for (int i = 0; i < wm * hm; i++)
+    {
+        if (incidence[i] < getScene()->min_amounts_of_points)
+            values[i] = 0;
+    }
+
+    showHeightMapAsImage(values, wm, hm, "orig_image_knn", true, 2);
+    /// Apply interpolation
+    values = bicubicInterpolation(values, wm, hm, mask);
+    // if (doErode) for (int i = 0; i < 2; i++) erode(values, wm, hm, 3);
+    // if (doDilate) for (int i = 0; i < 3; i++) dilate(values, wm, hm, 3);
+
+    showHeightMapAsImage(values, wm, hm, "interp_image_knn", true, 2);
+
+    return values;
+}
 
 ///////////////////////////////////////////////
 // Filter
@@ -782,7 +873,7 @@ bool Wizard(std::string inputDir, bool doInterpolation)
 }
 
 
-bool Configurator(bool useLiveCamera, std::string inputDir, bool doInterpolation)
+bool Configurator(bool useLiveCamera, std::string inputDir, bool doInterpolation, bool useKNN)
 {
 #ifdef RENDER3D
     try
@@ -835,7 +926,12 @@ bool Configurator(bool useLiveCamera, std::string inputDir, bool doInterpolation
 
                 o.visible = renderCloudPoints;
 
-                std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth, doInterpolation);
+                std::vector<float> heights;
+                
+                if (useKNN)
+                    heights = computeHeightMapByKNN(o, getScene()->heightMap_width, getScene()->heightMap_depth,  2);
+                else
+                    heights  = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth, doInterpolation);
 
                 getScene()->heightMap.swap(heights);
 
@@ -883,7 +979,7 @@ bool Configurator(bool useLiveCamera, std::string inputDir, bool doInterpolation
 /// //////////////////////////////////////
 /// 
 
-bool Reconstruct(std::string inputDir, bool doInterpolation)
+bool Reconstruct(std::string inputDir, bool doInterpolation, bool useKNN)
 {
     try
     {
@@ -895,7 +991,12 @@ bool Reconstruct(std::string inputDir, bool doInterpolation)
 
         std::cout << "Compute Heightmap  \n";
 
-        std::vector<float> heights = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth, doInterpolation);
+        std::vector<float> heights;
+        
+        if (useKNN)
+            heights = computeHeightMapByKNN(o, getScene()->heightMap_width, getScene()->heightMap_depth,  2);
+        else
+            heights  = computeHeightMap(o, getScene()->heightMap_width, getScene()->heightMap_depth, doInterpolation);
 
         getScene()->heightMap.swap(heights);
 
@@ -929,6 +1030,7 @@ int main(int argc, char* argv[]) try
     bool runWizard = false;
     bool verbose = false;
     bool doInterpolation = false;
+    bool useKNN = false;
 
     if (argc > 1)
     {
@@ -937,6 +1039,12 @@ int main(int argc, char* argv[]) try
             if (std::string(argv[i]) == "-show")
             {
                 showOutput = true;
+            }
+
+
+            if (std::string(argv[i]) == "-knn")
+            {
+                useKNN = true;
             }
 
             if (std::string(argv[i]) == "-config")
@@ -1036,7 +1144,7 @@ int main(int argc, char* argv[]) try
 
 #ifdef RENDER3D
         std::cout << "RUNNING IN ONLINE CONFIGURATION MODE " << "\n";
-        Configurator(useLiveCamera, workDir, doInterpolation);
+        Configurator(useLiveCamera, workDir, doInterpolation, useKNN);
 #else
     std::cout << "Visualization not supported" << "\n";
 #endif
@@ -1045,7 +1153,7 @@ int main(int argc, char* argv[]) try
     else
     {
         std::cout << "RUNNING RECONSTRUCTION WITHOUT UI " << "\n";
-        Reconstruct(workDir, doInterpolation);
+        Reconstruct(workDir, doInterpolation, useKNN);
     }
 
 return PROCESS_OK;
