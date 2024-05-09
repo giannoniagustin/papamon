@@ -91,6 +91,61 @@ Camera::Camera(std::string name, std::string serial)
 	this->serial = serial;
 }
 
+
+std::vector<glm::vec3> Camera::generatePolygonVisibleArea()
+{
+	glm::vec3 kFar, kNear, keyRot;
+
+	// camera draw Triangle
+	kFar.x = this->camRange * 1.10;
+	kFar.y = 0.0;
+	kFar.z = 0.0;
+
+	// camera near Triangle
+	kNear.x = 1.0;
+	kNear.y = 0.0;
+	kNear.z = 0.0;
+
+	std::vector<glm::vec3> visible_area;
+
+	glm::vec4 camPos = glm::vec4(this->camPos.x, this->camPos.y, this->camPos.z,1.0);
+
+	// rotate around camera
+	auto mY1 = glm::rotate(glm::mat4(1.0f), (camRot.y + 270 - 40.0f) * (float)(M_PI / 180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	auto mY2 = glm::rotate(glm::mat4(1.0f), (camRot.y + 270 + 40.0f) * (float)(M_PI / 180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	glm::vec4 camN1 = mY1 * glm::vec4(kNear.x, kNear.y, kNear.z, 1.0f);
+	glm::vec4 camN2 = mY2 * glm::vec4(kNear.x, kNear.y, kNear.z, 1.0f);
+
+	visible_area.push_back(camPos + camN1);
+   // now create arc
+	for (int ang = 0; ang < 80; ang = ang + 2)
+	{
+		auto mY3 = glm::rotate(glm::mat4(1.0f), (camRot.y + 270 - 40.0f + ang) * (float)(M_PI / 180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::vec4 camF1 = mY3 * glm::vec4(kFar.x, kFar.y, kFar.z, 1.0f);
+		visible_area.push_back(camPos + camF1);
+
+	}
+
+	visible_area.push_back(camPos + camN2);
+
+/*
+	// rotate around camera
+	glm::vec4 camF1 = mY1 * glm::vec4(kFar.x, kFar.y, kFar.z, 1.0f);
+	glm::vec4 camF2 = mY2 * glm::vec4(kFar.x, kFar.y, kFar.z, 1.0f);
+
+	
+	
+	visible_area.push_back(camPos + camN1);
+
+	visible_area.push_back(camPos + camF2);
+	*/
+
+	return visible_area;
+	
+
+}
+
 void Mark::calcIndex()
 {
 	this->indexX = (int)((getScene()->heightMap_width * this->posX) / getScene()->roomSize.x);
@@ -310,6 +365,13 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 					cam->camPos.x = coordsM[0].GetFloat();
 					cam->camPos.y = coordsM[1].GetFloat();
 					cam->camPos.z = coordsM[2].GetFloat();
+				}
+
+				if (camera.HasMember("id"))
+				{
+					auto fid = camera.FindMember("id");
+					if (verboseOut) std::cout << "id type:" << kTypeNames[fid->value.GetType()] << "\n";
+					cam->id = fid->value.GetInt();
 				}
 
 				if (camera.HasMember("range"))

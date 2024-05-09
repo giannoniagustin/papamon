@@ -19,6 +19,8 @@ public:
 	std::vector<glm::vec3> tex_coords;
 	std::vector<glm::vec3> colors;
 
+	std::vector<int> cellIndex;
+
 	glm::vec3 min, max;
 	bool visible = true;
 	void computeMinMax();
@@ -61,7 +63,7 @@ public:
 
 	bool is_enabled = false;
 	bool is_visible = true;
-	float camRange = 9.0f;
+	float camRange = 12.0f;
 	float minRange = 0.4f;
 	bool use_for_reconstruction = true;
 
@@ -71,6 +73,7 @@ public:
 	object3D o;
 
 	Camera(std::string name, std::string serial);
+	std::vector<glm::vec3> generatePolygonVisibleArea();
 
 };
 
