@@ -5,6 +5,7 @@
 
 #include <algorithm>            // std::min, std::max
 #include <array>
+#include <chrono>
 
 #include "scene.h"
 #include "glm/glm.hpp"
@@ -19,6 +20,17 @@
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/filewritestream.h"
+
+
+///////////////////////////////// HEIGHT \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+/////
+/////	This returns the height into the height map
+/////
+///////////////////////////////// HEIGHT \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+int MAP_SIZE_X = 50;
+int MAP_SIZE_Y = 50;
+
+static std::vector<glm::vec3> colors = { glm::vec3(1,0.3,0.3), glm::vec3(0.9,1,0.3),glm::vec3(0.3,0.3,1.0),glm::vec3(0.8,0.2,0.9),glm::vec3(0.8,0.8,0.9) };
 
 
 static std::vector<std::string> kTypeNames = { "Null", "False", "True", "Object", "Array", "String", "Number" };
@@ -42,6 +54,29 @@ rapidjson::Document readGeoJSON(const std::string& path, bool use_convert)
 #define M_PI 3.14156
 Scene* _sceneInstance = NULL;
 
+Plane::Plane(glm::vec3 n, float d)
+{
+	this->normal = n;
+	this->distance = d;
+	this->enabled = true;
+}
+
+Scene::Scene()
+{
+	this->marks.push_back(new Mark());
+	this->marks.push_back(new Mark());
+
+}
+
+double Scene::getCellW()
+{
+	return this->roomSize.x / this->heightMap_width;
+}
+double Scene::getCellD()
+{
+	return this->roomSize.z / this->heightMap_depth;
+}
+
 Scene* getScene()
 {
 	if (!_sceneInstance) _sceneInstance = new Scene();
@@ -57,6 +92,182 @@ Camera::Camera(std::string name, std::string serial)
 }
 
 
+std::vector<glm::vec3> Camera::generatePolygonVisibleArea()
+{
+	glm::vec3 kFar, kNear, keyRot;
+
+	// camera draw Triangle
+	kFar.x = this->camRange * 1.10;
+	kFar.y = 0.0;
+	kFar.z = 0.0;
+
+	// camera near Triangle
+	kNear.x = 1.0;
+	kNear.y = 0.0;
+	kNear.z = 0.0;
+
+	std::vector<glm::vec3> visible_area;
+
+	glm::vec4 camPos = glm::vec4(this->camPos.x, this->camPos.y, this->camPos.z,1.0);
+
+	// rotate around camera
+	auto mY1 = glm::rotate(glm::mat4(1.0f), (camRot.y + 270 - 40.0f) * (float)(M_PI / 180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	auto mY2 = glm::rotate(glm::mat4(1.0f), (camRot.y + 270 + 40.0f) * (float)(M_PI / 180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	glm::vec4 camN1 = mY1 * glm::vec4(kNear.x, kNear.y, kNear.z, 1.0f);
+	glm::vec4 camN2 = mY2 * glm::vec4(kNear.x, kNear.y, kNear.z, 1.0f);
+
+	visible_area.push_back(camPos + camN1);
+   // now create arc
+	for (int ang = 0; ang < 80; ang = ang + 2)
+	{
+		auto mY3 = glm::rotate(glm::mat4(1.0f), (camRot.y + 270 - 40.0f + ang) * (float)(M_PI / 180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::vec4 camF1 = mY3 * glm::vec4(kFar.x, kFar.y, kFar.z, 1.0f);
+		visible_area.push_back(camPos + camF1);
+
+	}
+
+	visible_area.push_back(camPos + camN2);
+
+/*
+	// rotate around camera
+	glm::vec4 camF1 = mY1 * glm::vec4(kFar.x, kFar.y, kFar.z, 1.0f);
+	glm::vec4 camF2 = mY2 * glm::vec4(kFar.x, kFar.y, kFar.z, 1.0f);
+
+	
+	
+	visible_area.push_back(camPos + camN1);
+
+	visible_area.push_back(camPos + camF2);
+	*/
+
+	return visible_area;
+	
+
+}
+
+void Mark::calcIndex()
+{
+	this->indexX = (int)((getScene()->heightMap_width * this->posX) / getScene()->roomSize.x);
+	this->indexZ = (int)((getScene()->heightMap_depth * this->posZ) / getScene()->roomSize.z);
+}
+
+
+float getHeight(float* pHeightMap, int X, int Y)
+{
+	// This is used to index into our height map array.
+	// When ever we are dealing with arrays, we want to make sure
+	// that we don't go outside of them, so we make sure that doesn't
+	// happen with a %.  This way x and y will cap out at (MAX_SIZE - 1)
+
+	int x = X % MAP_SIZE_X;					// Error check our x value
+	int y = Y % MAP_SIZE_Y;					// Error check our y value
+
+	if (!pHeightMap) return 0;				// Make sure our data is valid
+
+	// Below, we need to treat the single array like a 2D array.
+	// We can use the equation: index = (x + (y * arrayWidth) ).
+	// This is assuming we are using this assumption array[x][y]
+	// otherwise it's the opposite.  Now that we have the correct index,
+	// we will return the height in that index.
+
+	return pHeightMap[x + (y * MAP_SIZE_X)];	// Index into our height array and return the height
+}
+
+void computeMinMaxHeight(float& _min, float& _max)
+{
+
+	int sx = getScene()->marks[0]->indexX;
+	int sy = getScene()->marks[0]->indexZ;
+
+	int ex = getScene()->marks[1]->indexX;
+	int ey = getScene()->marks[1]->indexZ;
+
+	float* heightMap = getScene()->heightMap.data();
+
+	_min = 10000;
+	_max = 0;
+
+	float volume = 0.0f;
+	float cellX = (float)getScene()->getCellW();
+	float cellY = (float)getScene()->getCellD();
+
+
+	for (int x = sx; x < ex; x++)
+		for (int y = sy; y < ey; y++)
+		{
+			float h = getHeight(heightMap, x, y);
+			_min = std::min(_min, h);
+			_max = std::max(_max, h);
+		}
+
+}
+
+/////////////////////////////////////////////////
+// Calculate volume
+double computeVolumeBetweenMarkers()
+{
+	int sx = getScene()->marks[0]->indexX;
+	int sy = getScene()->marks[0]->indexZ;
+
+	int ex = getScene()->marks[1]->indexX;
+	int ey = getScene()->marks[1]->indexZ;
+
+	float* heightMap = getScene()->heightMap.data();
+
+	float minHeight = 10000, maxHeight = 0;
+
+	float volume = 0;
+	float cellX = (float)getScene()->getCellW();
+	float cellY = (float)getScene()->getCellD();
+
+	computeMinMaxHeight(minHeight, maxHeight);
+
+
+	for (int x = sx; x < ex; x++)
+		for (int y = sy; y < ey; y++)
+		{
+			float height = getHeight(heightMap, x, y) - minHeight;
+
+
+			volume += height * cellX * cellY;
+		}
+
+
+	return volume;
+}
+double computeSurfaceBetweenMarkers()
+{
+
+	return 0;
+}
+
+double computeLinearHDistance()
+{
+	glm::vec2 v0(getScene()->marks[0]->posX, 0);
+	glm::vec2 v1(getScene()->marks[1]->posX, 0);
+
+	return  glm::length((v0 - v1));
+}
+double computeLinearVDistance()
+{
+	glm::vec2 v0(0, getScene()->marks[0]->posZ);
+	glm::vec2 v1(0, getScene()->marks[1]->posZ);
+
+	return  glm::length((v0 - v1));
+}
+
+
+double computeLinearDistance()
+{
+	glm::vec2 v0(getScene()->marks[0]->posX, getScene()->marks[0]->posZ);
+	glm::vec2 v1(getScene()->marks[1]->posX, getScene()->marks[1]->posZ);
+
+	return  glm::length((v0 - v1));
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
 //// Parse a JSON with Scene Data	
 void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 {
@@ -68,8 +279,7 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 	int procMask = 0;
 	double imageWidth = 0;
 	double imageHeight = 0;
-	bool handAreContaminated = false;
-	bool elemtsAreContaminated = false;
+
 
 	if (!geoD.HasMember("info"))
 	{
@@ -157,6 +367,13 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 					cam->camPos.z = coordsM[2].GetFloat();
 				}
 
+				if (camera.HasMember("id"))
+				{
+					auto fid = camera.FindMember("id");
+					if (verboseOut) std::cout << "id type:" << kTypeNames[fid->value.GetType()] << "\n";
+					cam->id = fid->value.GetInt();
+				}
+
 				if (camera.HasMember("range"))
 				{
 					auto fid = camera.FindMember("range");
@@ -186,6 +403,39 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 		}
 	}
 
+
+	if (geoD.HasMember("helpers"))
+	{
+		const rapidjson::Value& helpers = geoD["helpers"];
+
+		if (verboseOut) std::cout << "Reading [helpers] section " << "\n";
+
+		if (helpers.HasMember("x0"))
+		{
+			auto fid = helpers.FindMember("x0");
+			getScene()->marks[0]->posX = fid->value.GetFloat();
+		}
+
+		if (helpers.HasMember("z0"))
+		{
+			auto fid = helpers.FindMember("z0");
+			getScene()->marks[0]->posZ = fid->value.GetFloat();
+		}
+
+		if (helpers.HasMember("x1"))
+		{
+			auto fid = helpers.FindMember("x1");
+			getScene()->marks[1]->posX = fid->value.GetFloat();
+		}
+
+		if (helpers.HasMember("z1"))
+		{
+			auto fid = helpers.FindMember("z1");
+			getScene()->marks[1]->posZ = fid->value.GetFloat();
+		}
+
+
+	}
 	
 
 	if (geoD.HasMember("scene"))
@@ -215,6 +465,28 @@ void parseSceneData(rapidjson::Document& geoD,  bool verboseOut)
 			auto fid = scene.FindMember("scene_depth");
 			if (verboseOut) std::cout << "depth type:" << kTypeNames[fid->value.GetType()] << "\n";
 			getScene()->roomSize.z = fid->value.GetFloat();
+		}
+
+		if (scene.HasMember("heightMap_width"))
+		{
+			auto fid = scene.FindMember("heightMap_width");
+			if (verboseOut) std::cout << "depth type:" << kTypeNames[fid->value.GetType()] << "\n";
+			getScene()->heightMap_depth = fid->value.GetInt();
+		}
+
+		if (scene.HasMember("heightMap_depth"))
+		{
+			auto fid = scene.FindMember("heightMap_depth");
+			if (verboseOut) std::cout << "depth type:" << kTypeNames[fid->value.GetType()] << "\n";
+			getScene()->heightMap_width = fid->value.GetInt();
+		}
+
+
+		if (scene.HasMember("min_amount_of_points"))
+		{
+			auto fid = scene.FindMember("min_amount_of_points");
+			if (verboseOut) std::cout << "depth type:" << kTypeNames[fid->value.GetType()] << "\n";
+			getScene()->min_amounts_of_points = fid->value.GetInt();
 		}
 
 
@@ -324,7 +596,7 @@ rapidjson::Value vecToArray(std::vector<float>& vs, rapidjson::Document::Allocat
 
 
 /// 
-void buildSceneJSON(std::string outputFile)
+void buildSceneJSON(std::string outputFile, std::string code_version)
 {
 
 	rapidjson::Document document;
@@ -338,7 +610,7 @@ void buildSceneJSON(std::string outputFile)
 
 	// create a rapidjson object type
 	rapidjson::Value info(rapidjson::kObjectType);
-	info.AddMember("version", "50", allocator);
+	info.AddMember("version", rapidjson::Value().SetString((char*)code_version.c_str(), code_version.length()), allocator);
 	document.AddMember("info", info, allocator);
 	//  fromScratch["object"]["hello"] = "Yourname";
 
@@ -350,7 +622,19 @@ void buildSceneJSON(std::string outputFile)
 	scene.AddMember("scene_depth", getScene()->roomSize.z, allocator);
 	scene.AddMember("view_offset", vecToArray(getScene()->viewPos, allocator), allocator);
 	scene.AddMember("view_rotation", vecToArray(getScene()->viewRot, allocator), allocator);
+	scene.AddMember("heightMap_width", getScene()->heightMap_depth, allocator);
+	scene.AddMember("heightMap_depth", getScene()->heightMap_width, allocator);
+	scene.AddMember("min_amount_of_points", getScene()->min_amounts_of_points, allocator);
+	scene.AddMember("volume_in_helpers", computeVolumeBetweenMarkers(), allocator);
+	
 	document.AddMember("scene", scene, allocator);
+
+	rapidjson::Value helpers(rapidjson::kObjectType);
+	helpers.AddMember("x0", getScene()->marks[0]->posX, allocator);
+	helpers.AddMember("z0", getScene()->marks[0]->posZ, allocator);
+	helpers.AddMember("x1", getScene()->marks[1]->posX, allocator);
+	helpers.AddMember("z1", getScene()->marks[1]->posZ, allocator);
+	document.AddMember("helpers", helpers, allocator);
 
 	
 
@@ -389,6 +673,16 @@ void buildSceneJSON(std::string outputFile)
 
 }
 
+std::string return_current_time_and_date() {
+	auto t = std::time(nullptr);
+	auto tm = *std::localtime(&t);
+
+	std::ostringstream oss;
+	oss << std::put_time(&tm, "%Y%m%d_%H%M%S");
+	auto str = oss.str();
+	return str;
+}
+
 /// Create JSON with state of
 void buildStateJSON(std::string outputFile)
 {
@@ -401,23 +695,63 @@ void buildStateJSON(std::string outputFile)
 	// must pass an allocator when the object may need to allocate memory
 	rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
 
-
-	int numActive_Cameras = getScene()->cameras.size();
-
 	// create a rapidjson object type
+	std::string dts = return_current_time_and_date();
+	
 	rapidjson::Value info(rapidjson::kObjectType);
-	info.AddMember("date", "50", allocator);
+	info.AddMember("date", rapidjson::Value().SetString((char*)dts.c_str(), dts.length()), allocator);
+
+	int numActive_Cameras = 0;
+	rapidjson::Value cameras_array(rapidjson::kArrayType);
+
+	for (auto cam : getScene()->cameras)
+	{
+		if (cam->o.vertexes.size() > 0)
+		{
+			numActive_Cameras++;
+			rapidjson::Value camO(rapidjson::kObjectType);
+			camO.AddMember("id", cam->id, allocator);
+			camO.AddMember("range", cam->camRange, allocator);
+			camO.AddMember("name", rapidjson::Value().SetString((char*)cam->name.c_str(), cam->name.length()), allocator);
+			camO.AddMember("serial", rapidjson::Value().SetString((char*)cam->serial.c_str(), cam->serial.length()), allocator);
+			camO.AddMember("location", vecToArray(cam->camPos, allocator), allocator);
+			camO.AddMember("orientation", vecToArray(cam->camRot, allocator), allocator);
+
+			cameras_array.PushBack(camO, allocator);
+		}
+	}
+	info.AddMember("cameras", cameras_array, allocator);
+	
 	info.AddMember("active_cameras", numActive_Cameras, allocator);
 	document.AddMember("info", info, allocator);
 	//  fromScratch["object"]["hello"] = "Yourname";
 
 	// create a rapidjson object type
 	rapidjson::Value scene(rapidjson::kObjectType);
-	scene.AddMember("heightMap_width", getScene()->hm, allocator);
-	scene.AddMember("heightMap_depth", getScene()->wm, allocator);
-	scene.AddMember("heightMap", vecToArray(getScene()->heightMap, allocator), allocator);
+	scene.AddMember("room_width", getScene()->roomSize.x, allocator);
+	scene.AddMember("room_depth", getScene()->roomSize.z, allocator);
+	scene.AddMember("room_height", getScene()->roomSize.y, allocator);
+
+	scene.AddMember("cell_size_Depth", getScene()->getCellD(), allocator);
+	scene.AddMember("cell_size_Width", getScene()->getCellW(), allocator);
+	scene.AddMember("min_amounts_of_points", getScene()->min_amounts_of_points, allocator);
+	scene.AddMember("volume_in_helpers", computeVolumeBetweenMarkers(), allocator);
+
+
+	scene.AddMember("heightMap_depth", getScene()->heightMap_depth, allocator);
+	scene.AddMember("heightMap_width", getScene()->heightMap_width, allocator);
+	scene.AddMember("processed_heightMap", vecToArray(getScene()->heightMap, allocator), allocator);
+	scene.AddMember("raw_heightMap", vecToArray(getScene()->raw_heightMap, allocator), allocator);
 	document.AddMember("estimation", scene, allocator);
 
+	document.AddMember("scene", scene, allocator);
+
+	rapidjson::Value helpers(rapidjson::kObjectType);
+	helpers.AddMember("x0", getScene()->marks[0]->posX, allocator);
+	helpers.AddMember("z0", getScene()->marks[0]->posZ, allocator);
+	helpers.AddMember("x1", getScene()->marks[1]->posX, allocator);
+	helpers.AddMember("z1", getScene()->marks[1]->posZ, allocator);
+	document.AddMember("helpers", helpers, allocator);
 
 
 	rapidjson::StringBuffer strbuf;
@@ -430,50 +764,123 @@ void buildStateJSON(std::string outputFile)
 	file.close();
 }
 #ifdef RENDER3D
-void renderHeightMap(std::vector<float>& hs, int h, int w)
+
+
+
+
+
+///////////////////////////////// SET VERTEX COLOR \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+/////
+/////	This sets the color value for a particular index, depending on the height index
+/////
+///////////////////////////////// SET VERTEX COLOR \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+
+void SetVertexColor(float* pHeightMap, int x, int y)
 {
-	glColor3f(1.0f, 1.0f, 1.0f);    // Color Blue
+	if (!pHeightMap) return;					// Make sure our height data is valid
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// Here we set the color for a vertex based on the height index.
+	// To make it darker, I start with -0.15f.  We also get a ratio
+	// of the color from 0 to 1.0 by dividing the height by 256.0f;
+	float fColor = 0.15f + (getHeight(pHeightMap, x, y) / 2.0 );
 
+	if (getScene()->marks[0]->indexX <= x && getScene()->marks[0]->indexZ <= y &&
+		getScene()->marks[1]->indexX > x && getScene()->marks[1]->indexZ > y)
+	{
+		glColor3f(0, fColor, 1.0);
+	}
+	else
+	{
+		// Assign this green shade to the current vertex
+		glColor3f(0, fColor, 0);
+	}
+}
+
+
+///////////////////////////////// RENDER HEIGHT MAP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+/////
+/////	This renders the height map as QUADS
+/////
+///////////////////////////////// RENDER HEIGHT MAP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
+
+void RenderHeightMap(float* pHeightMap)
+{
+	int X = 0, Y = 0;						// Create some variables to walk the array with.
+	float x, y, z;							// Create some variables for readability
+	float fColor = 0.0f;					// Create a variable to hold our color of the polygonf
+
+	if (!pHeightMap) return;					// Make sure our height data is valid
+
+	
 	glPushMatrix();
 
-	glScalef(getScene()->roomSize.x, 1.0, getScene()->roomSize.z);
-	// Draw reference grid
-	for (int i=0;i<h;i++)
-		for (int j = 0; j < w; j++)
+
+
+
+	glBegin(GL_QUADS);					// Render Quads
+
+	// The higher the polygon, the brighter the color is.
+
+	for (X = 0; X < MAP_SIZE_X-1; X ++)
+		for (Y = 0; Y < MAP_SIZE_Y-1; Y++)
 		{
-			float height = 0; // hs[i * w + j];
-			glBegin(GL_QUADS);
-		
-			glVertex3f((1.0*(j+1))/w,height, (1.0*i)/h);
-			glVertex3f((1.0*j)/w, height, (1.0 * i) / h);
-			glVertex3f((1.0 * j) / w, height, (1.0*(i+1))/h);
-			glVertex3f((1.0 * (j + 1)) / w, height, (1.0 * (i + 1)) / h);
+			// Get the (X, Y, Z) value for the bottom left vertex		
+			x = X * getScene()->roomSize.x / MAP_SIZE_X;
+			y = getHeight(pHeightMap, X, Y);
+			z = Y * getScene()->roomSize.z / MAP_SIZE_Y;
 
-			glEnd();
+			// Set the color value of the current vertice
+			SetVertexColor(pHeightMap, X, Y);
 
+			glVertex3f(x, y, z);			// Send this vertex to OpenGL to be rendered (integer points are faster)
+
+			// Get the (X, Y, Z) value for the top left vertex		
+			x = X * getScene()->roomSize.x / MAP_SIZE_X;
+			y = getHeight(pHeightMap, X, Y + 1);
+			z = (Y + 1) * getScene()->roomSize.z / MAP_SIZE_Y;
+
+			// Set the color value of the current vertex
+			SetVertexColor(pHeightMap, X, Y+1);
+
+			glVertex3f(x, y, z);			// Send this vertex to OpenGL to be rendered
+
+			// Get the (X, Y, Z) value for the top right vertex		
+			x = (X + 1) * getScene()->roomSize.x / MAP_SIZE_X;
+			y = getHeight(pHeightMap, X + 1, Y + 1);
+			z = (Y + 1) * getScene()->roomSize.z / MAP_SIZE_Y;
+
+			// Set the color value of the current vertex
+			SetVertexColor(pHeightMap, X+1, Y+1);
+
+			glVertex3f(x, y, z);			// Send this vertex to OpenGL to be rendered
+
+			// Get the (X, Y, Z) value for the bottom right vertex		
+			x = (X + 1) * getScene()->roomSize.x / MAP_SIZE_X;
+			y = getHeight(pHeightMap, X + 1, Y);
+			z = Y * getScene()->roomSize.z / MAP_SIZE_Y;
+
+			// Set the color value of the current vertice
+			SetVertexColor(pHeightMap, X+1, Y);
+
+			glVertex3f(x, y, z);			// Send this vertex to OpenGL to be rendered
 		}
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glColor3f(0.5, 0.5, 0.5);
-	for (int i = 0; i < h-1; i++)
-		for (int j = 0; j < w-1; j++)
-		{
-			
-			glBegin(GL_QUADS);
+	glEnd();
 
-			glVertex3f((1.0 * (j + 1)) / w, hs[i * w + (j+1)], (1.0 * i) / h);
-			glVertex3f((1.0 * j) / w, hs[i * w + (j )], (1.0 * i) / h);
-			glVertex3f((1.0 * j) / w, hs[(i+1) * w + (j + 1)], (1.0 * (i + 1)) / h);
-			glVertex3f((1.0 * (j + 1)) / w, hs[(i+1) * w + (j + 1)], (1.0 * (i + 1)) / h);
-
-			glEnd();
-
-		}
+	// Reset the color
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	glPopMatrix();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
 
+void renderHeightMap(std::vector<float>& hs, int h, int w)
+{
+	MAP_SIZE_X = w;
+	MAP_SIZE_Y = h;
+
+
+	RenderHeightMap(hs.data());
+	return;
+	
 }
 
 void drawAxes()
@@ -499,6 +906,30 @@ void drawAxes()
 
 void drawCube(glm::vec3 roomSize)
 {
+	
+	glPushMatrix();
+	glTranslatef(0.0, 0.0, 0.0);
+
+	glScalef(roomSize.x, roomSize.y, roomSize.z);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+
+	glBegin(GL_QUADS);        // Draw The Cube Using quads
+	
+	glColor4f(0.5f, 0.50f, 0.50f, 0.5f);    // Color Yellow
+	glVertex3f(1.0f, 0.0f, 0.0f);    // Top Right Of The Quad (Back)
+	glVertex3f(0.0f, 0.0f, 0.0f);    // Top Left Of The Quad (Back)
+	glVertex3f(0.0f, 1.0f, 0.0f);    // Bottom Left Of The Quad (Back)
+	glVertex3f(1.0f, 1.0f, 0.0f);    // Bottom Right Of The Quad (Back)
+	glEnd();
+	
+	glPopMatrix();
+	
+	glDisable(GL_BLEND);
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glPushMatrix();
@@ -691,6 +1122,14 @@ void drawCloudPoint(object3D& o, int width, int height)
 	/* this segment actually prints the pointcloud */
 	for (int i = 0; i < o.vertexes.size(); i++)
 		{
+			if (getScene()->colorEachCamera)
+			{
+				int camIndex = (int)o.vertexes[i].w;
+				glm::vec3 color = colors[camIndex];
+				glColor3f(color.x , color.y , color.z );
+
+			}
+			else
 			if (o.colors.size() > 0)
 			{
 				glColor3f(o.colors[i].x / 255.0, o.colors[i].y / 255.0, o.colors[i].z / 255.0);
@@ -746,11 +1185,7 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 
 	glColor3f(1.0, 1.0, 1.0);
 	glEnable(GL_DEPTH_TEST);
-	if (renderSceneBox)
-	{
-		glLineWidth(2.0f);
-		drawCube(getScene()->roomSize);
-	}
+
 
 	for (auto cam : getScene()->cameras)
 	{
@@ -779,7 +1214,7 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 	
 	glColor3f(1.0, 1.0, 1.0);
 
-	if (getScene()->cameras.size() > 0)
+	if (o.visible)
 	{
 		glBegin(GL_POINTS);
 
@@ -787,9 +1222,17 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 		/* this segment actually prints the pointcloud */
 		for (int i = 0; i < o.vertexes.size(); i++)
 		{
+			if (getScene()->colorEachCamera)
+			{
+				int camIndex = (int)o.vertexes[i].w;
+				glm::vec3 color = colors[camIndex];
+				glColor3f(color.x, color.y, color.z);
+
+			}
+			else
 			if (o.colors.size() > 0)
 			{
-				glColor3f(o.colors[i].x / 255.0, o.colors[i].y / 255.0, o.colors[i].z / 255.0);
+				glColor3f(o.colors[i].x / 255.0f, o.colors[i].y / 255.0f, o.colors[i].z / 255.0f);
 			}
 			else
 				glTexCoord2f(o.tex_coords[i].x, o.tex_coords[i].y);
@@ -800,15 +1243,19 @@ void drawScene(object3D& o,glm::vec3 viewPos, glm::vec3 viewRot, bool renderScen
 
 		glEnd();
 
-		o.vertexes.clear();
-		o.tex_coords.clear();
-		o.colors.clear();
+		
 	}
 	glColor3f(1.0, 1.0, 1.0);
 
 	if (getScene()->heightMap.size() > 0 && getScene()->renderHeightMap)
 	{
-		renderHeightMap(getScene()->heightMap, getScene()->wm, getScene()->hm);
+		renderHeightMap(getScene()->heightMap, getScene()->heightMap_depth, getScene()->heightMap_width);
+	}
+
+	if (renderSceneBox)
+	{
+		glLineWidth(2.0f);
+		drawCube(getScene()->roomSize);
 	}
 
 	// OpenGL cleanup

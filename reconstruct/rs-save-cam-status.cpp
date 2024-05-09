@@ -15,6 +15,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include "utils.h"
+#include "scene.h"
 
 #ifdef RENDER3D
 #include "example.hpp"          // Include short list of convenience functions for rendering
@@ -110,12 +111,84 @@ void setImageDataColor(imageData* iD, rs2::video_frame f)
 
 /////////////////////////////////////////////////////////////////////////
 
+rs2::video_frame updateCameraFrames(Camera* live_cam)
+{
+    // Wait for the next set of frames from the camera
+    auto frames = pipe.wait_for_frames();
+
+    // Align all frames to depth viewport
+    frames = align_to_depth.process(frames);
+
+    if (live_cam->pose_data_enabled)
+    {
+        auto f = frames.first_or_default(RS2_STREAM_ACCEL);
+        // Cast the frame to pose_frame and get its data
+        auto pose_data = f.as<rs2::motion_frame>().get_motion_data();
+
+        live_cam->pose_data = { pose_data.x, pose_data.y, pose_data.z };
+    }
+
+    auto color = frames.get_color_frame();
+
+    // For cameras that don't have RGB sensor, we'll map the pointcloud to infrared instead of color
+    if (!color)
+        color = frames.get_infrared_frame();
+
+    int w = color.get_width();
+    int h = color.get_height();
+
+    std::cout << "Read color image. W" << w << " height " << h << "\n";
+
+    // Tell pointcloud object to map to this color frame
+    pc.map_to(color);
+
+    auto depth = frames.get_depth_frame();
+
+    int wd = depth.get_width();
+    int hd = depth.get_height();
+
+    std::cout << "Read depth image. W" << wd << " height " << hd << "\n";
+
+
+    rs2::depth_frame filtered = depth; // Does not copy the frame, only adds a reference
+
+    std::cout << "Try to apply filters " << "\n";
+
+    for (auto filter : filters)
+    {
+        filtered = filter.second->process(filtered);
+
+    }
+
+    std::cout << "Aplyed filters OK " << "\n";
+
+
+    points = pc.calculate(filtered);
+
+    if (!filtered_depth) filtered_depth = new imageData();
+    if (!color_frame) color_frame = new imageData();
+
+
+    std::cout << "Try to fill structures " << "\n";
+
+    // Convert data
+    setImageDataDepth(filtered_depth, depth);
+
+    setImageDataColor(color_frame, color);
+
+    getOBJFromFrameSet(o, color, points);
+
+    std::cout << "Structures ok " << "\n";
+
+    return color;
+}
+
 
 // This sample captures 30 frames and writes the last frame to disk.
 // It can be useful for debugging an embedded system with no display.
 int main(int argc, char* argv[]) try
 {
-    std::cout << "Project PapaMon 24Oct2023" << "\n";
+    std::cout << "Project PapaMon version: 10Jan2024" << "\n";
 
     bool demoMode = false;
 
@@ -153,6 +226,11 @@ int main(int argc, char* argv[]) try
 
 
         }
+    }
+    else
+    {
+        std::cout << "Not enough parameters. Now EXIT" << "\n";
+        return EXIT_FAILURE;
     }
 
     if (demoMode)
@@ -216,16 +294,41 @@ int main(int argc, char* argv[]) try
     }
 
    
-    // Start streaming with default recommended configuration
-    pipe.start();
+    try
+    { 
+        rs2::config cfg;
 
+        if (prepareCameraParameters(cfg))
+        {
+           
+           
+            // Start streaming with default recommended configuration
+            pipe.start(cfg);
 
-    // The following order of emplacement will dictate the orders in which filters are applied
-    filters["Decimate"] = &dec_filter;
-    filters["Threshold"] = &thr_filter;
-    filters["Spatial"] = &spat_filter;
-    filters["Temporal"] = &temp_filter;
+           
+        }
+        else
+        {
+            pipe.start();
+            // auto profile = 
+           
+        }
+            
 
+        thr_filter.set_option(RS2_OPTION_MIN_DISTANCE, 0.3);
+        thr_filter.set_option(RS2_OPTION_MAX_DISTANCE, 10.0);
+
+        // The following order of emplacement will dictate the orders in which filters are applied
+        filters["Decimate"] = &dec_filter;
+        filters["Threshold"] = &thr_filter;
+        filters["Spatial"] = &spat_filter;
+        filters["Temporal"] = &temp_filter;
+    }
+    catch (std::exception& e) //If any filesystem error
+    {
+        std::cout << "camera could not start well. Using default parameters " << "\n";
+        pipe.start();
+    }
 
     std::cout << "waiting for frames .." << "\n";
     // Capture 30 frames to give autoexposure, etc. a chance to settle
@@ -233,7 +336,9 @@ int main(int argc, char* argv[]) try
 
     std::cout << "Ready for capturing frames" << "\n";
 
-   
+    Camera* live_cam = NULL;
+    live_cam = new Camera("live", "1");
+    live_cam->pose_data_enabled = check_imu_is_supported_by_cam();
   
 
     int maxFrames = 2000;
@@ -244,63 +349,7 @@ int main(int argc, char* argv[]) try
     {
         try
         {
-            // Wait for the next set of frames from the camera
-            auto frames = pipe.wait_for_frames();
-
-            // Align all frames to depth viewport
-            frames = align_to_depth.process(frames);
-
-            auto color = frames.get_color_frame();
-
-            // For cameras that don't have RGB sensor, we'll map the pointcloud to infrared instead of color
-            if (!color)
-                color = frames.get_infrared_frame();
-
-            int w = color.get_width();
-            int h = color.get_height();
-
-            std::cout << "Read color image. W" << w << " height " << h << "\n";
-
-            // Tell pointcloud object to map to this color frame
-            pc.map_to(color);
-
-            auto depth = frames.get_depth_frame();
-
-            int wd = depth.get_width();
-            int hd = depth.get_height();
-
-            std::cout << "Read depth image. W" << wd << " height " << hd << "\n";
-
-
-            rs2::depth_frame filtered = depth; // Does not copy the frame, only adds a reference
-
-            std::cout << "Try to apply filters " << "\n";
-
-            for (auto filter : filters)
-            {
-                filtered = filter.second->process(filtered);
-
-            }
-
-            std::cout << "Aplyed filters OK " << "\n";
-
-
-            points = pc.calculate(filtered);
-
-            if (!filtered_depth) filtered_depth = new imageData();
-            if (!color_frame) color_frame = new imageData();
-
-
-            std::cout << "Try to fill structures " << "\n";
-
-            // Convert data
-            setImageDataDepth(filtered_depth, depth);
-
-            setImageDataColor(color_frame, color);
-
-            getOBJFromFrameSet(o, color, points);
-
-            std::cout << "Structures ok " << "\n";
+            updateCameraFrames(live_cam);
 
 
         }
@@ -327,67 +376,11 @@ int main(int argc, char* argv[]) try
 
             while (app) // Application still alive?
             {
-                // Wait for the next set of frames from the camera
-                auto frames = pipe.wait_for_frames();
-
-                // Align all frames to depth viewport
-                frames = align_to_depth.process(frames);
-
-                auto color = frames.get_color_frame();
-
-                // For cameras that don't have RGB sensor, we'll map the pointcloud to infrared instead of color
-                if (!color)
-                    color = frames.get_infrared_frame();
-
-                int w = color.get_width();
-                int h = color.get_height();
-
-                std::cout << "Read color image. W" << w << " height " << h << "\n";
-
-                // Tell pointcloud object to map to this color frame
-                pc.map_to(color);
-
-                auto depth = frames.get_depth_frame();
-
-                int wd = depth.get_width();
-                int hd = depth.get_height();
-
-                std::cout << "Read depth image. W" << wd << " height " << hd << "\n";
-
-
-                rs2::depth_frame filtered = depth; // Does not copy the frame, only adds a reference
-
-                std::cout << "Try to apply filters " << "\n";
-
-                for (auto filter : filters)
-                {
-                    filtered = filter.second->process(filtered);
-
-                }
-
-                std::cout << "Aplyed filters OK " << "\n";
-
-             
-                points = pc.calculate(filtered);
-                
-                if (!filtered_depth) filtered_depth = new imageData();
-                if (!color_frame) color_frame = new imageData();
-
-
-                std::cout << "Try to fill structures " << "\n";
-
-                // Convert data
-                setImageDataDepth(filtered_depth, depth);
-
-                setImageDataColor(color_frame, color);
-
-                getOBJFromFrameSet(o, color, points);
+                rs2::frame color = updateCameraFrames(live_cam);
 
                 std::cout << "Structures ok " << "\n";
 
-                // Upload the color frame to OpenGL
-                app_state.tex.upload(color);
-
+            
 
                 // Draw the pointcloud
                 //draw_pointcloud(app.width(), app.height(), app_state, points);
@@ -447,7 +440,7 @@ int main(int argc, char* argv[]) try
 
         if (points.get_data_size() > 0)
         {
-            savePointsToCSV(o, outputDir + "/" + instanceID + "/points.csv");
+            savePointsToCSV(o,live_cam, outputDir + "/" + instanceID + "/points.csv");
             std::cout << "Saved points.csv " << std::endl;
         }
         else
@@ -460,6 +453,7 @@ int main(int argc, char* argv[]) try
     catch (std::exception e)
     {
         std::cout << "Exception at render loop :" << e.what() << "\n";
+        return -2;
     }
 
    

@@ -1,0 +1,17 @@
+[Unit]
+Description=PapamonMasterApp Python
+Requires=network-online.target
+Wants=network-online.target
+After= network-online.target systemd-user-sessions.service 
+
+[Service]
+Type=simple
+User=papamon
+TimeoutStartSec=200
+ExecStartPre=/bin/sleep 90
+ExecStart=python3 -u /home/papamon/Documents/papamon/MasterApp.py
+WorkingDirectory=/home/papamon/Documents/papamon
+Restart=on-failure
+RestartSec=10
+[Install]
+WantedBy=default.target

@@ -16,7 +16,7 @@
 
 EXE = rs-save-cam-status
 SOURCES = rs-save-cam-status.cpp
-SOURCES += utils.cpp
+SOURCES += utils.cpp scene.cpp
 
 OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
 UNAME_S := $(shell uname -s)

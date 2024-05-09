@@ -11,8 +11,7 @@ class RaspberryController:
             #Lista de raspberry a pedir las imagenes
             file={}
             try:    
-                path=Paths.RASPBERRY
-                print('Path Raspberry: '+path)
+                path=Paths.RASPBERRIES
                 file =File.FileUtil.readFile(path) 
                 mapper = RaspberryMapper()
                 instance = mapper.toRaspberies(dictFile=file) 
@@ -27,11 +26,9 @@ class RaspberryController:
                 print("An error occurred when getRaspberries: ",e)
                 raise    
     @staticmethod
-    def getMe()-> Raspberry:
+    def getMe(path:str)-> Raspberry:
             meFile={}
             try:
-                path=Paths.ME
-                print('Path Me: '+path)
                 meFile =File.FileUtil.readFile(path) 
                 meMapper = RaspberryMapper()
                 instance = meMapper.toRaspberry(dictFile=meFile) 

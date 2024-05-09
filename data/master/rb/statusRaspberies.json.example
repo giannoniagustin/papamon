@@ -1,0 +1,15 @@
+[{
+        "state": false,
+        "message": "",
+        "raspberry": {
+            "id": "",
+            "name": "",
+            "ip": "",
+            "port": ""
+        },
+        "status": {
+            "cameraRunning": null,
+            "lastImage": null
+        }
+    }
+]

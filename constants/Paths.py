@@ -8,20 +8,28 @@ RB_FOLDER = 'rb'
 #CONFIG
 CONFIG_FOLDER='config'
 MASTER_FOLDER='master'
+SLAVE='slave'
+
 FIREBASE_FOLDER = 'firebase'
-ME_FILE='me.json'
+ME_SLAVE_FILE='me.json'
+ME_MASTER_FILE='me.json'
 SCHEDULER_STATUS_FILE='scheduler.json'
+SCHEDULER_STATUS_FILE_EXAMPLE='scheduler.json.example'
+
 SCHEDULER_GET_IMAGES_FILE='schedulerGetImages.json'
 SCHEDULER_GET_IMAGES_FILE_EXAMPLE='schedulerGetImages.json.example'
 
 
-RASPBERRY_FILE = 'raspberry.json'
+RASPBERRIES_FILE = 'raspberries.json'
 FIREBASE_FILE = 'papamon-78c6c-firebase-adminsdk-9jlm9-71107c9a98.json'
 
-ME =os.path.join(CONFIG_FOLDER,ME_FILE)
-RASPBERRY = os.path.join(CONFIG_FOLDER,MASTER_FOLDER,RASPBERRY_FILE)
+ME_SLAVE =os.path.join(CONFIG_FOLDER,SLAVE,ME_SLAVE_FILE)
+ME_MASTER=os.path.join(CONFIG_FOLDER,MASTER_FOLDER,ME_MASTER_FILE)
+RASPBERRIES = os.path.join(CONFIG_FOLDER,MASTER_FOLDER,RASPBERRIES_FILE)
 
 SCHEDULER_STATUS=os.path.join(CONFIG_FOLDER,MASTER_FOLDER,SCHEDULER_STATUS_FILE)
+
+SCHEDULER_STATUS_EXAMPLE=os.path.join(CONFIG_FOLDER,MASTER_FOLDER,SCHEDULER_STATUS_FILE_EXAMPLE)
 SCHEDULER_GET_IMAGES=os.path.join(CONFIG_FOLDER,MASTER_FOLDER,SCHEDULER_GET_IMAGES_FILE)
 SCHEDULER_GET_IMAGES_EXAMPLE=os.path.join(CONFIG_FOLDER,MASTER_FOLDER,SCHEDULER_GET_IMAGES_FILE_EXAMPLE)
 
@@ -46,12 +54,19 @@ IMAGES=os.path.join(documents_folder, 'out_reconstruct')+os.sep#documents_folder
 BUILD_IMAGE_FOLDER=IMAGES+"{}" # 1 id_rquest
    #Builded Image 
 BUILD_IMAGE_FILE=IMAGES+"{}"+os.sep+"{}"+os.sep+"{}"+"{}" # 1 id_request,2 id_rb, 3 id_request, 4 Extension file 
+BUILD_PATH_FILE_RGB=IMAGES+"{}"+os.sep+"{}"+os.sep+"{}" # 1 id_request,2 id_rb, 3 name file
+
+BUILD_PATH_FILE_RECONSTRUCT=IMAGES+"{}"+os.sep+"{}" # 1 id_request,2  name file
+
 RECONSTRUCTION_OUT_FILE=os.sep+"reconstruction.json"
 
 #MASTER PATHS
 #RASPBERIES  STATUS
 STATUS_RASPBERIES_FILE = 'statusRaspberies.json'
+STATUS_RASPBERIES_FILE_EXAMPLE = 'statusRaspberies.json.example'
 STATUS_RASPBERIES=os.path.join(DATA_FOLDER,MASTER_FOLDER, RB_FOLDER,STATUS_RASPBERIES_FILE)
+STATUS_RASPBERIES_EXAMPLE=os.path.join(DATA_FOLDER,MASTER_FOLDER, RB_FOLDER,STATUS_RASPBERIES_FILE_EXAMPLE)
+
 
 #Extensions
 JPG = ".jpg"
@@ -63,3 +78,9 @@ JSON = ".json"
 DEPTH_FILE = 'depth.png'
 POINT_FILE = 'points.csv'
 RGB_FILE = 'rgb.png'
+RECONSTRUCTION_FILE ="reconstruction.json"
+
+#SYNC
+SYNC_FOLDER='sync'
+SYNC_FILE_NAME='sync.json'
+SYNC_SEND_FILE = os.path.join(SYNC_FOLDER,SYNC_FILE_NAME)

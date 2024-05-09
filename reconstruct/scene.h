@@ -9,18 +9,45 @@
 #include "glm/glm.hpp"
 
 
+#define M_PI 3.14156
+
+
 struct object3D
 {
 public:
-	std::vector<glm::vec3> vertexes;
+	std::vector<glm::vec4> vertexes;
 	std::vector<glm::vec3> tex_coords;
 	std::vector<glm::vec3> colors;
 
+	std::vector<int> cellIndex;
+
 	glm::vec3 min, max;
+	bool visible = true;
 	void computeMinMax();
 
 };
 
+class Plane
+{
+public:
+	glm::vec3 normal;
+	float distance;
+	bool enabled;
+
+	Plane(glm::vec3 n, float d);
+};
+
+class Mark
+{
+public:
+	bool enabled = true;
+
+	float posX = 0;
+	float posZ = 0;
+	int indexX, indexZ;
+
+	void calcIndex();
+};
 
 
 class Camera
@@ -36,11 +63,17 @@ public:
 
 	bool is_enabled = false;
 	bool is_visible = true;
-	float camRange = 5.0;
+	float camRange = 12.0f;
+	float minRange = 0.4f;
+	bool use_for_reconstruction = true;
+
+	bool pose_data_enabled = false;
+	glm::vec3 pose_data = { 0.0f  , 0.0f, 0.0f };
 
 	object3D o;
 
 	Camera(std::string name, std::string serial);
+	std::vector<glm::vec3> generatePolygonVisibleArea();
 
 };
 
@@ -53,20 +86,38 @@ public:
 
 	std::vector<Camera*> cameras;
 	std::vector<float> heightMap;
+	std::vector<float> raw_heightMap;
 	bool renderHeightMap = true;
-	// default resolution 10
-	int hm = 10, wm = 10;
+	// default resolution 20
+	int heightMap_width = 20, heightMap_depth = 40;
 	int camerasID = 0;
+	int min_amounts_of_points = 5;
 	int selectedCameraIndex = 0;
 	Camera* selectedCamera = NULL;
+	std::vector<Mark*> marks;
+	bool colorEachCamera = false;
+	int pointSize = 1;
+
+	Scene();
+	double getCellW();
+	double getCellD();
 
 };
 
 
 Scene* getScene();
 
+double computeVolumeBetweenMarkers();
+double computeSurfaceBetweenMarkers();
+double computeLinearDistance();
+double computeLinearHDistance();
+double computeLinearVDistance();
+void computeMinMaxHeight(float& _min, float& _max);
+
+
+
 bool initScene(std::string inputJSONFile, bool verbose);
-void buildSceneJSON(std::string outputFile);
+void buildSceneJSON(std::string outputFile, std::string code_version);
 
 void buildStateJSON(std::string outputFile);
 void drawCloudPoint(object3D& o, int width, int height);

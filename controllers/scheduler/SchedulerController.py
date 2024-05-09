@@ -1,4 +1,5 @@
 
+import os
 from mappers.scheduler.SchedulerMapper import SchedulerMapper
 import constants.Paths as Paths
 from model.Scheduler import Scheduler
@@ -25,12 +26,12 @@ class SchedulerController:
         else:
                 print("Update Scheduler successfully. ")
     @staticmethod
-    def get(pathScheduler:str):
+    def get(pathScheduler:str,pathSchedulerExample:str):
             myFile={}
             try:
                 schedulerMapper = SchedulerMapper()
                 #chequeo si el archivo existe o es vacio y se crea
-                fileExample = schedulerMapper.toJson(File.FileUtil.readFile(Paths.SCHEDULER_GET_IMAGES_EXAMPLE))
+                fileExample = schedulerMapper.toJson(File.FileUtil.readFile(pathSchedulerExample))
                 File.FileUtil.createIsFileEmptyOrNotExist(pathScheduler,fileExample) 
               
                 myFile =File.FileUtil.readFile(pathScheduler) 
@@ -47,8 +48,9 @@ class SchedulerController:
                 raise
 
     @staticmethod
-    def build(job,pathScheduler:str): 
-        scheduler: Scheduler =  SchedulerController.get(pathScheduler)
+    def build(job,pathScheduler:str,pathSchedulerExample:str): 
+        print(os.linesep+"###########################SCHEDULER######################################"+os.linesep)
+        scheduler: Scheduler =  SchedulerController.get(pathScheduler,pathSchedulerExample)
         print(f"Job {pathScheduler} is execute on days  : ")
         #Monday
         for hour in scheduler.monday:
@@ -87,6 +89,11 @@ class SchedulerController:
     @staticmethod
     def buildEveryMinute(job):
      schedule.every(1).minute.do(job)
+
+         
+    @staticmethod
+    def buildEverySecond(job):
+     schedule.every(1).second.do(job)
 
      
             
